@@ -47,12 +47,12 @@ export function Header() {
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-4">
                     <ThemeToggle />
-                    <Button variant="ghost" asChild>
+                    {/* <Button variant="ghost" asChild>
                         <Link href="/candidate/signup">Candidate</Link>
                     </Button>
                     <Button asChild>
                         <Link href="/employer/signup">Employer</Link>
-                    </Button>
+                    </Button> */}
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -88,12 +88,12 @@ export function Header() {
                             </Link>
                         ))}
                         <hr className="border-border/40" />
-                        <Button variant="outline" asChild className="w-full">
+                        {/* <Button variant="outline" asChild className="w-full">
                             <Link href="/candidate/signup">I'm a Candidate</Link>
                         </Button>
                         <Button asChild className="w-full">
                             <Link href="/employer/signup">I'm an Employer</Link>
-                        </Button>
+                        </Button> */}
                     </nav>
                 </div>
             )}

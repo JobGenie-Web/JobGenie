@@ -81,7 +81,7 @@ export function SignupCTA() {
                             ))}
                         </ul>
 
-                        <Button asChild size="lg" variant="outline" className="group/btn gap-2">
+                        <Button asChild size="lg" className="group/btn gap-2">
                             <Link href="/employer/signup">
                                 Start Hiring
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
