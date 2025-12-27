@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const navLinks = [
-    { href: '#features', label: 'Features' },
     { href: '#about', label: 'About' },
+    { href: '#features', label: 'Features' },
     { href: '#contact', label: 'Contact' },
 ];
 
