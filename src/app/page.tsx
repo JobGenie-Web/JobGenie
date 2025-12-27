@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/landing/Hero";
 import { Features } from "@/components/landing/Features";
-import { SignupCTA } from "@/components/landing/SignupCTA";
+// import { SignupCTA } from "@/components/landing/SignupCTA";
 import { Contact } from "@/components/landing/Contact";
 
 export default function Home() {
@@ -12,7 +12,7 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <Features />
-        <SignupCTA />
+        {/* <SignupCTA /> */}
         <Contact />
       </main>
       <Footer />
