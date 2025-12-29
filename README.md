@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JobGenie 🧞‍♂️
 
-## Getting Started
+A modern job portal platform built with Next.js 16, React 19, and Supabase. JobGenie connects job seekers with employers through an intuitive, feature-rich interface.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### For Candidates
+- 📝 **User Registration** - Complete signup flow with email verification
+- 🔐 **Secure Authentication** - Supabase Auth with password hashing
+- 📧 **Email Verification** - OTP-based verification with NodeMailer
+- 🏠 **Dashboard** - Modern collapsible sidebar with navigation
+- 👤 **Profile Management** - Update personal information
+- 💼 **Job Search** - Browse available positions
+- 📄 **Applications** - Track job application status
+
+### For Employers
+- 🏢 **Company Registration** - Employer signup flow
+- 📋 **Job Posting** - Create and manage job listings
+- 👥 **Candidate Management** - Review applications
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **Frontend** | React 19, TypeScript |
+| **Styling** | Tailwind CSS 4, shadcn/ui |
+| **Backend** | Supabase (Auth + Database) |
+| **ORM** | Prisma 7 |
+| **State** | Redux Toolkit |
+| **Email** | NodeMailer |
+| **Icons** | Lucide React |
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── candidate/          # Candidate routes
+│   │   ├── (dashboard)/    # Protected dashboard pages
+│   │   ├── signup/         # Registration
+│   │   └── verify-email/   # Email verification
+│   ├── employer/           # Employer routes
+│   ├── login/              # Login page
+│   └── api/                # API routes
+├── components/
+│   ├── candidate/          # Candidate-specific components
+│   ├── landing/            # Landing page components
+│   ├── layout/             # Header, Footer
+│   └── ui/                 # shadcn/ui components
+├── lib/
+│   ├── supabase/           # Supabase client utilities
+│   ├── validations/        # Zod schemas
+│   └── utils/              # Helper functions
+└── store/                  # Redux store
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 18+
+- npm or yarn
+- Supabase account
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/jobgenie.git
+   cd jobgenie
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Configure the following in `.env`:
+   ```env
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   
+   # SMTP (for email verification)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=your_email@gmail.com
+   SMTP_PASS=your_app_password
+   ```
 
-## Deploy on Vercel
+4. **Set up database**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. **Run development server**
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📜 Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+
+## 🎨 UI Components
+
+This project uses [shadcn/ui](https://ui.shadcn.com/) components:
+- Button, Input, Label
+- Select, Radio Group
+- Avatar, Dropdown Menu
+- Sidebar, Tooltip
+- Sheet, Separator
+
+## 🔐 Authentication Flow
+
+1. **Registration** → Email + Password + Profile info
+2. **Email Verification** → 6-digit OTP sent via email (valid for 15 minutes)
+3. **Login** → Email + Password
+4. **Session** → Supabase Auth + cookies
+
+## 📧 Email Configuration
+
+See `email.config.example` for SMTP setup instructions, including:
+- Gmail with App Passwords
+- Outlook/Microsoft
+- Custom SMTP servers
+
+## 🌙 Theme Support
+
+The app supports both light and dark modes:
+- Toggle available in user dropdown menu
+- System preference detection
+- Persistent theme selection
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Built with ❤️ by the JobGenie Team
