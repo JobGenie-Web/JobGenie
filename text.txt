@@ -1,0 +1,27 @@
+Now I want to create candidate and employer register pages. in here candidate signup i need to collect 
+First name
+Last name
+NIC/Passport
+Gender
+Date of birth
+Residential address	
+Contact no
+Email address
+Password
+
+in Employer signup page need to collect
+Name of the company
+Business Registration (certificate to be uploaded and AI(gemini) will analyze the doc)
+Industry
+Registered address
+Create Admin register 
+First Name
+Last Name
+Email
+Phone
+Password
+
+
+in here company details take first in a form. then after validate Business Registration certificate go to admin register form. it should be a wizard. 1st step company and 2nd step admin. then click the signup button. 
+
+Use Zod for validaion. 
