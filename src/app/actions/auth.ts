@@ -404,14 +404,14 @@ export async function loginCandidate(
     try {
         const supabase = await createClient();
 
-        // Find user by email
-        const { data: user, error: findError } = await supabase
+        // First check if user exists and is a candidate with verified email
+        const { data: userData, error: userError } = await supabase
             .from("users")
-            .select("id, email, password, role, status, email_verified")
+            .select("role, status, email_verified")
             .eq("email", email)
             .single();
 
-        if (findError || !user) {
+        if (userError || !userData) {
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -419,16 +419,7 @@ export async function loginCandidate(
         }
 
         // Check if user is a candidate
-        if (user.role !== "candidate") {
-            return {
-                success: false,
-                message: "Invalid email or password.",
-            };
-        }
-
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
+        if (userData.role !== "candidate") {
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -436,7 +427,7 @@ export async function loginCandidate(
         }
 
         // Check email verification status
-        if (!user.email_verified) {
+        if (!userData.email_verified) {
             return {
                 success: false,
                 message: "Please verify your email before logging in.",
@@ -445,42 +436,44 @@ export async function loginCandidate(
         }
 
         // Check account status
-        if (user.status !== "active") {
+        if (userData.status !== "active") {
             return {
                 success: false,
                 message: "Your account is not active. Please contact support.",
             };
         }
 
-        // Get candidate profile for name
-        const { data: candidate } = await supabase
-            .from("candidates")
-            .select("first_name, last_name")
-            .eq("user_id", user.id)
-            .single();
-
-        // Import JWT utilities dynamically to avoid issues with server actions
-        const { signToken, getTokenExpiry } = await import("@/lib/jwt");
-
-        // Generate JWT token
-        const token = await signToken({
-            userId: user.id,
-            email: user.email,
-            role: user.role,
-            firstName: candidate?.first_name || "",
-            lastName: candidate?.last_name || "",
+        // Use Supabase Auth for login - this handles session automatically
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
         });
 
-        // Set HTTP-only cookie with the token
-        const { cookies } = await import("next/headers");
-        const cookieStore = await cookies();
-        cookieStore.set("auth-token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            expires: getTokenExpiry(),
-        });
+        if (authError) {
+            console.error("Supabase auth error:", authError);
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        if (!authData.session) {
+            return {
+                success: false,
+                message: "Failed to create session. Please try again.",
+            };
+        }
+
+        // Development: Log session and token for debugging
+        if (process.env.NODE_ENV === "development") {
+            console.log("=== LOGIN SUCCESS ===");
+            console.log("User ID:", authData.user?.id);
+            console.log("Email:", authData.user?.email);
+            console.log("Access Token:", authData.session.access_token);
+            console.log("Refresh Token:", authData.session.refresh_token);
+            console.log("Expires At:", new Date(authData.session.expires_at! * 1000).toISOString());
+            console.log("=====================");
+        }
 
         return {
             success: true,

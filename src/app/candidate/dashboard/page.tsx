@@ -3,17 +3,30 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, User, Briefcase, FileText, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { verifyToken } from '@/lib/jwt';
+import { createClient } from '@/lib/supabase/server';
 
 async function getCurrentUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
+    const supabase = await createClient();
 
-    if (!token) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
         return null;
     }
 
-    return await verifyToken(token);
+    // Get additional user data from candidates table
+    const { data: candidate } = await supabase
+        .from('candidates')
+        .select('first_name, last_name')
+        .eq('user_id', user.id)
+        .single();
+
+    return {
+        id: user.id,
+        email: user.email || '',
+        firstName: candidate?.first_name || user.user_metadata?.first_name || '',
+        lastName: candidate?.last_name || user.user_metadata?.last_name || '',
+    };
 }
 
 export default async function CandidateDashboardPage() {
