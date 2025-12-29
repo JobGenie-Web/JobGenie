@@ -386,3 +386,113 @@ export async function resendVerificationCode(
     }
 }
 
+export async function loginCandidate(
+    _prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Basic validation
+    if (!email || !password) {
+        return {
+            success: false,
+            message: "Email and password are required.",
+        };
+    }
+
+    try {
+        const supabase = await createClient();
+
+        // Find user by email
+        const { data: user, error: findError } = await supabase
+            .from("users")
+            .select("id, email, password, role, status, email_verified")
+            .eq("email", email)
+            .single();
+
+        if (findError || !user) {
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        // Check if user is a candidate
+        if (user.role !== "candidate") {
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        // Check email verification status
+        if (!user.email_verified) {
+            return {
+                success: false,
+                message: "Please verify your email before logging in.",
+                redirectTo: `/candidate/verify-email?email=${encodeURIComponent(email)}`,
+            };
+        }
+
+        // Check account status
+        if (user.status !== "active") {
+            return {
+                success: false,
+                message: "Your account is not active. Please contact support.",
+            };
+        }
+
+        // Get candidate profile for name
+        const { data: candidate } = await supabase
+            .from("candidates")
+            .select("first_name, last_name")
+            .eq("user_id", user.id)
+            .single();
+
+        // Import JWT utilities dynamically to avoid issues with server actions
+        const { signToken, getTokenExpiry } = await import("@/lib/jwt");
+
+        // Generate JWT token
+        const token = await signToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            firstName: candidate?.first_name || "",
+            lastName: candidate?.last_name || "",
+        });
+
+        // Set HTTP-only cookie with the token
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        cookieStore.set("auth-token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            expires: getTokenExpiry(),
+        });
+
+        return {
+            success: true,
+            message: "Login successful!",
+            redirectTo: "/candidate/dashboard",
+        };
+    } catch (error) {
+        console.error("Login error:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
+    }
+}
+
