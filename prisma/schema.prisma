@@ -62,10 +62,10 @@ model Candidate {
   contact_no              String   @db.VarChar(20)
   email                   String   @db.VarChar(255)
   gender                  Gender
-  current_position        String  @db.VarChar(200)
-  industry                String  @db.VarChar(100)
-  address                 String @db.Text
-  phone                   String  @db.VarChar(20)
+  current_position        String   @db.VarChar(200)
+  industry                String   @db.VarChar(100)
+  address                 String   @db.Text
+  phone                   String   @db.VarChar(20)
   alternative_phone       String?  @db.VarChar(20)
   country                 String?  @db.VarChar(100)
   
@@ -84,6 +84,7 @@ model Candidate {
   profile_image           String?  @db.Text // URL or base64
   
   approval_status         ApprovalStatus @default(pending)
+  profile_completed       Boolean @default(false)
   
   // Metadata
   created_at              DateTime @default(now())
@@ -147,6 +148,7 @@ model Education {
   education_type  EducationType @default(academic) // academic or professional
   degree_diploma  String?   @db.VarChar(200) // Qualification
   institution     String?   @db.VarChar(200)
+  status          EducationStatus @default(incomplete)
   
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
@@ -411,6 +413,11 @@ enum LocationType {
 enum EducationType {
   academic
   professional
+}
+
+enum EducationStatus {
+  incomplete
+  complete
 }
 
 enum ApprovalStatus {
