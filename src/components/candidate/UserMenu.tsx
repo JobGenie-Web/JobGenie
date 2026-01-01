@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +28,9 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
     const [mounted, setMounted] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const { theme, setTheme } = useTheme();
+    const router = useRouter();
 
     const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U';
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User';
@@ -38,12 +41,33 @@ export function UserMenu({ user }: UserMenuProps) {
     }, []);
 
     const handleLogout = async () => {
-        // Submit logout form
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/api/auth/logout';
-        document.body.appendChild(form);
-        form.submit();
+        try {
+            setIsLoggingOut(true);
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.redirectTo) {
+                router.push(data.redirectTo);
+                router.refresh();
+            } else {
+                // Fallback redirect
+                router.push('/login');
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Fallback redirect on error
+            router.push('/login');
+            router.refresh();
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     // Show avatar placeholder during SSR

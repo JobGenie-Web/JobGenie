@@ -25,3 +25,6 @@ Password
 in here company details take first in a form. then after validate Business Registration certificate go to admin register form. it should be a wizard. 1st step company and 2nd step admin. then click the signup button. 
 
 Use Zod for validaion. 
+
+
+in here candidate after successfully login check  profile_completed  status. if it is false redirect to create profile page. if it is true redirect to dashboard. in create profile I want to collect all data of the candidate

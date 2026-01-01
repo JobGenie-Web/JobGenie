@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
     candidateRegistrationSchema,
     type CandidateRegistrationData,
@@ -12,6 +13,7 @@ import {
     getVerificationExpiry,
     sendVerificationEmail,
 } from "@/lib/email";
+import crypto from "crypto";
 
 export type ActionState = {
     success: boolean;
@@ -97,11 +99,7 @@ export async function registerCandidate(
         const verificationCode = generateVerificationCode();
         const verificationExpiry = getVerificationExpiry();
 
-        // Debug logging - using local time format
-        console.log("[REGISTER DEBUG] Current local time:", new Date().toLocaleString());
-        console.log("[REGISTER DEBUG] Expiry local time:", verificationExpiry.isoString);
-        console.log("[REGISTER DEBUG] Expiry timestamp (ms):", verificationExpiry.timestamp);
-        console.log("[REGISTER DEBUG] Code:", verificationCode);
+
 
         // Hash the password before storing
         const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -204,10 +202,11 @@ export async function verifyEmail(
     }
 
     try {
-        const supabase = await createClient();
+        // Use admin client to bypass RLS for verification operations
+        const adminClient = createAdminClient();
 
         // Find user by email
-        const { data: user, error: findError } = await supabase
+        const { data: user, error: findError } = await adminClient
             .from("users")
             .select("id, email_verification_token, verification_token_expires_at, email_verified")
             .eq("email", email)
@@ -228,8 +227,12 @@ export async function verifyEmail(
             };
         }
 
-        // Check if code matches
-        if (user.email_verification_token !== code) {
+        // Check if code matches using timing-safe comparison
+        const storedToken = user.email_verification_token || '';
+        const isCodeValid = storedToken.length === code.length &&
+            crypto.timingSafeEqual(Buffer.from(storedToken), Buffer.from(code));
+
+        if (!isCodeValid) {
             return {
                 success: false,
                 message: "Invalid verification code. Please try again.",
@@ -251,10 +254,7 @@ export async function verifyEmail(
             String(nowDate.getMinutes()).padStart(2, '0') + ':' +
             String(nowDate.getSeconds()).padStart(2, '0');
 
-        // Debug logging
-        console.log("[DEBUG] Stored expiry:", storedExpiry);
-        console.log("[DEBUG] Current local time:", nowLocalString);
-        console.log("[DEBUG] Is expired (string compare):", storedExpiry < nowLocalString);
+
 
         // Compare as strings - this works because ISO format is chronologically sortable
         if (storedExpiry < nowLocalString) {
@@ -265,7 +265,7 @@ export async function verifyEmail(
         }
 
         // Update user as verified
-        const { error: updateError } = await supabase
+        const { error: updateError } = await adminClient
             .from("users")
             .update({
                 email_verified: true,
@@ -309,10 +309,11 @@ export async function resendVerificationCode(
     }
 
     try {
-        const supabase = await createClient();
+        // Use admin client to bypass RLS for verification operations
+        const adminClient = createAdminClient();
 
         // Find user by email
-        const { data: user, error: findError } = await supabase
+        const { data: user, error: findError } = await adminClient
             .from("users")
             .select("id, email_verified")
             .eq("email", email)
@@ -336,13 +337,10 @@ export async function resendVerificationCode(
         const verificationCode = generateVerificationCode();
         const verificationExpiry = getVerificationExpiry();
 
-        // Debug logging for resend (using local time)
-        console.log("[RESEND DEBUG] New code:", verificationCode);
-        console.log("[RESEND DEBUG] New expiry (local):", verificationExpiry.isoString);
-        console.log("[RESEND DEBUG] Current local time:", new Date().toLocaleString());
+
 
         // Update user with new code
-        const { error: updateError } = await supabase
+        const { error: updateError } = await adminClient
             .from("users")
             .update({
                 email_verification_token: verificationCode,
@@ -360,7 +358,7 @@ export async function resendVerificationCode(
         }
 
         // Get user's first name for email
-        const { data: candidate } = await supabase
+        const { data: candidate } = await adminClient
             .from("candidates")
             .select("first_name")
             .eq("user_id", user.id)
@@ -402,10 +400,13 @@ export async function loginCandidate(
     }
 
     try {
+        // Use admin client to check user status (bypasses RLS)
+        // This is needed because RLS policies block queries before authentication
+        const adminClient = createAdminClient();
         const supabase = await createClient();
 
         // First check if user exists and is a candidate with verified email
-        const { data: userData, error: userError } = await supabase
+        const { data: userData, error: userError } = await adminClient
             .from("users")
             .select("role, status, email_verified")
             .eq("email", email)
@@ -464,16 +465,7 @@ export async function loginCandidate(
             };
         }
 
-        // Development: Log session and token for debugging
-        if (process.env.NODE_ENV === "development") {
-            console.log("=== LOGIN SUCCESS ===");
-            console.log("User ID:", authData.user?.id);
-            console.log("Email:", authData.user?.email);
-            console.log("Access Token:", authData.session.access_token);
-            console.log("Refresh Token:", authData.session.refresh_token);
-            console.log("Expires At:", new Date(authData.session.expires_at! * 1000).toISOString());
-            console.log("=====================");
-        }
+
 
         return {
             success: true,

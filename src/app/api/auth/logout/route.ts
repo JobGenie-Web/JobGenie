@@ -5,8 +5,20 @@ export async function POST() {
     const supabase = await createClient();
 
     // Sign out from Supabase - this clears the session
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
 
-    // Redirect to login page
-    return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+    if (error) {
+        return NextResponse.json(
+            { success: false, message: 'Failed to sign out' },
+            { status: 500 }
+        );
+    }
+
+    // Return success - client should handle redirect
+    return NextResponse.json({
+        success: true,
+        message: 'Signed out successfully',
+        redirectTo: '/login',
+    });
 }
+
