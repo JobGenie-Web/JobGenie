@@ -95,8 +95,16 @@ model Candidate {
   work_experiences        WorkExperience[]
   educations              Education[]
   awards                  Award[]
-  projects                Project[] // Only for IT industry
-  certificates            Certificate[] // Only for IT industry
+  projects                Project[] // IT industry
+  certificates            Certificate[] // IT industry
+  
+  // Banking & Finance industry specific
+  financial_licenses      FinancialLicense[]
+  banking_skills          BankingSkill[]
+  compliance_trainings    ComplianceTraining[]
+  
+  // Universal - works across all industries
+  industry_specializations IndustrySpecialization[]
   
   @@index([user_id])
   @@index([industry])
@@ -229,6 +237,108 @@ model Certificate {
   @@index([issue_date])
   @@index([expiry_date])
   @@map("certificates")
+}
+
+// ============================================
+// BANKING & FINANCE - FINANCIAL LICENSES
+// ============================================
+
+model FinancialLicense {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id        String   @db.Uuid
+  
+  license_type        FinancialLicenseType
+  license_name        String   @db.VarChar(200)  // e.g., "CFA Level 3", "FRM"
+  issuing_authority   String   @db.VarChar(200)  // e.g., "CFA Institute", "GARP"
+  license_number      String?  @db.VarChar(100)
+  issue_date          DateTime? @db.Date
+  expiry_date         DateTime? @db.Date
+  status              LicenseStatus @default(active)
+  
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  
+  candidate           Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  
+  @@index([candidate_id])
+  @@index([license_type])
+  @@index([status])
+  @@index([expiry_date])
+  @@map("financial_licenses")
+}
+
+// ============================================
+// BANKING & FINANCE - BANKING SKILLS
+// ============================================
+
+model BankingSkill {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id      String   @db.Uuid
+  
+  skill_category    BankingSkillCategory
+  skill_name        String   @db.VarChar(200)
+  proficiency_level ProficiencyLevel @default(intermediate)
+  years_experience  Int?     @default(0)
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  candidate         Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  
+  @@index([candidate_id])
+  @@index([skill_category])
+  @@index([proficiency_level])
+  @@map("banking_skills")
+}
+
+// ============================================
+// BANKING & FINANCE - COMPLIANCE TRAINING
+// ============================================
+
+model ComplianceTraining {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id        String   @db.Uuid
+  
+  training_name       String   @db.VarChar(300)
+  training_type       ComplianceTrainingType
+  provider            String?  @db.VarChar(200)
+  completion_date     DateTime? @db.Date
+  validity_period     String?  @db.VarChar(50) // "annual", "2 years", "lifetime"
+  expiry_date         DateTime? @db.Date
+  certificate_url     String?  @db.VarChar(500)
+  
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  
+  candidate           Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  
+  @@index([candidate_id])
+  @@index([training_type])
+  @@index([expiry_date])
+  @@map("compliance_trainings")
+}
+
+// ============================================
+// UNIVERSAL - INDUSTRY SPECIALIZATION
+// ============================================
+
+model IndustrySpecialization {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id    String   @db.Uuid
+  
+  industry        IndustryType
+  specialization  String   @db.VarChar(200)  // e.g., "Mobile Development", "Trade Finance"
+  description     String?  @db.Text
+  years_experience Int?    @default(0)
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  
+  @@index([candidate_id])
+  @@index([industry])
+  @@map("industry_specializations")
 }
 
 // ============================================
@@ -440,4 +550,117 @@ enum JobStatus {
   paused
   closed
   archived
+}
+
+// ============================================
+// BANKING & FINANCE ENUMS
+// ============================================
+
+enum FinancialLicenseType {
+  cfa               // Chartered Financial Analyst
+  cpa               // Certified Public Accountant
+  acca              // Association of Chartered Certified Accountants
+  cima              // Chartered Institute of Management Accountants
+  frm               // Financial Risk Manager
+  cfp               // Certified Financial Planner
+  caia              // Chartered Alternative Investment Analyst
+  chfc              // Chartered Financial Consultant
+  casl              // Chartered Adviser for Senior Living
+  aml_certification // Anti-Money Laundering Certification
+  securities_license // Securities dealer license
+  banking_license   // Core banking certification
+  insurance_license // Insurance underwriting/broker license
+  cma               // Certified Management Accountant
+  cia               // Certified Internal Auditor
+  other
+}
+
+enum LicenseStatus {
+  active
+  expired
+  pending_renewal
+  revoked
+  suspended
+}
+
+enum BankingSkillCategory {
+  // Core Banking
+  retail_banking
+  corporate_banking
+  investment_banking
+  private_banking
+  commercial_banking
+  
+  // Financial Analysis
+  credit_analysis
+  financial_modeling
+  risk_assessment
+  portfolio_management
+  financial_reporting
+  
+  // Compliance & Regulatory
+  aml_kyc           // Anti-Money Laundering / Know Your Customer
+  regulatory_compliance
+  internal_audit
+  external_audit
+  fraud_detection
+  
+  // Trading & Markets
+  forex_trading
+  securities_trading
+  derivatives
+  fixed_income
+  equity_research
+  
+  // Software & Systems
+  core_banking_systems  // Temenos, Finacle, Flexcube, etc.
+  trading_platforms     // Bloomberg, Reuters, etc.
+  erp_systems           // SAP, Oracle
+  treasury_systems
+  
+  // Specialized Areas
+  wealth_management
+  loan_processing
+  trade_finance
+  treasury_operations
+  payments_settlement
+  client_relationship
+  
+  other
+}
+
+enum ProficiencyLevel {
+  beginner
+  intermediate
+  advanced
+  expert
+}
+
+enum ComplianceTrainingType {
+  aml_cft            // Anti-Money Laundering & Counter Terrorism Financing
+  kyc                // Know Your Customer
+  data_privacy       // GDPR, Data Protection
+  fraud_prevention
+  sanctions_screening
+  code_of_conduct
+  information_security
+  regulatory_updates
+  whistleblower_policy
+  market_abuse
+  insider_trading
+  customer_due_diligence
+  risk_management
+  credit_risk
+  operational_risk
+  other
+}
+
+enum IndustryType {
+  it_software
+  banking
+  finance_investment
+  insurance
+  fintech
+  accounting
+  other
 }

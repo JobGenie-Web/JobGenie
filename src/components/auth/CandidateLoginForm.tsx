@@ -45,6 +45,8 @@ export function CandidateLoginForm() {
         if (state?.success && state.redirectTo) {
             // Small delay to show success message before redirect
             const timer = setTimeout(() => {
+                // Refresh to sync cookies from server action, then navigate
+                router.refresh();
                 router.push(state.redirectTo!);
             }, 500);
             return () => clearTimeout(timer);

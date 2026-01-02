@@ -1,0 +1,11 @@
+export { IndustryStep } from "./IndustryStep";
+export { BasicInfoStep } from "./BasicInfoStep";
+export { ExperienceStep } from "./ExperienceStep";
+export { EducationStep } from "./EducationStep";
+export { AwardsStep } from "./AwardsStep";
+export { ProjectsStep } from "./ProjectsStep";
+export { CertificatesStep } from "./CertificatesStep";
+export { LicensesStep } from "./LicensesStep";
+export { BankingSkillsStep } from "./BankingSkillsStep";
+export { ComplianceStep } from "./ComplianceStep";
+export { SummaryStep } from "./SummaryStep";

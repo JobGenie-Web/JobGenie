@@ -1,0 +1,204 @@
+"use server";
+
+import { GoogleGenAI } from "@google/genai";
+import { cvExtractionResultSchema, type CVExtractionResult } from "@/lib/validations/profile-schema";
+
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+
+export type CVExtractionState = {
+    success: boolean;
+    message: string;
+    data?: CVExtractionResult;
+    error?: string;
+};
+
+const EXTRACTION_PROMPT = `You are an expert CV/Resume parser. Extract the following information from the provided CV/resume content and return it as a JSON object.
+
+IMPORTANT: 
+- Return ONLY valid JSON, no markdown formatting or code blocks
+- For dates, use format "YYYY-MM-DD" or "YYYY-MM" if day is not available
+- If information is not found, omit the field or use null
+- For isCurrent in work experience, set to true if it says "Present" or "Current" in end date
+
+Extract this structure:
+{
+    "firstName": "string",
+    "lastName": "string", 
+    "email": "string",
+    "phone": "string",
+    "address": "string",
+    "currentPosition": "string (most recent job title)",
+    "yearsOfExperience": number,
+    "professionalSummary": "string (extract or generate from CV content, 50-200 words)",
+    "workExperiences": [
+        {
+            "jobTitle": "string",
+            "company": "string",
+            "startDate": "YYYY-MM-DD",
+            "endDate": "YYYY-MM-DD or null if current",
+            "description": "string",
+            "isCurrent": boolean
+        }
+    ],
+    "educations": [
+        {
+            "degreeDiploma": "string",
+            "institution": "string",
+            "status": "complete or incomplete"
+        }
+    ],
+    "skills": ["string array of skills"],
+    "certificates": [
+        {
+            "certificateName": "string",
+            "issuingAuthority": "string",
+            "issueDate": "YYYY-MM-DD"
+        }
+    ],
+    "projects": [
+        {
+            "projectName": "string",
+            "description": "string",
+            "demoUrl": "string or null"
+        }
+    ]
+}
+
+CV Content:
+`;
+
+export async function extractCVData(
+    fileBase64: string,
+    mimeType: string
+): Promise<CVExtractionState> {
+    try {
+        if (!process.env.GEMINI_API_KEY) {
+            return {
+                success: false,
+                message: "Gemini API key not configured",
+                error: "GEMINI_API_KEY not found in environment variables",
+            };
+        }
+
+        // Prepare the content based on file type
+        const parts = [];
+
+        if (mimeType === "application/pdf" || mimeType.includes("image")) {
+            // For PDF and images, use inline data
+            parts.push({
+                inlineData: {
+                    mimeType: mimeType,
+                    data: fileBase64,
+                },
+            });
+            parts.push({ text: EXTRACTION_PROMPT + "\n[File content provided above]" });
+        } else {
+            // For text-based documents, decode and include as text
+            const textContent = Buffer.from(fileBase64, "base64").toString("utf-8");
+            parts.push({ text: EXTRACTION_PROMPT + textContent });
+        }
+
+        const result = await genAI.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [{ role: "user", parts: parts as any[] }],
+        });
+        const text = result.text || "";
+
+        // Clean the response (remove markdown code blocks if present)
+        let cleanedText = text
+            .replace(/```json\n?/g, "")
+            .replace(/```\n?/g, "")
+            .trim();
+
+        // Parse JSON
+        let parsedData: unknown;
+        try {
+            parsedData = JSON.parse(cleanedText);
+        } catch (parseError) {
+            console.error("JSON parse error:", parseError);
+            console.error("Raw text:", cleanedText);
+            return {
+                success: false,
+                message: "Failed to parse extracted data. Please try again or enter manually.",
+                error: "Invalid JSON response from Gemini",
+            };
+        }
+
+        // Validate with Zod schema
+        const validationResult = cvExtractionResultSchema.safeParse(parsedData);
+
+        if (!validationResult.success) {
+            console.error("Validation errors:", validationResult.error);
+            // Return partial data even if validation fails
+            return {
+                success: true,
+                message: "Extracted data (some fields may be incomplete)",
+                data: parsedData as CVExtractionResult,
+            };
+        }
+
+        return {
+            success: true,
+            message: "CV data extracted successfully!",
+            data: validationResult.data,
+        };
+    } catch (error) {
+        console.error("CV extraction error:", error);
+        return {
+            success: false,
+            message: "Failed to extract CV data. Please try again or enter manually.",
+            error: error instanceof Error ? error.message : "Unknown error",
+        };
+    }
+}
+
+export async function generateProfessionalSummary(
+    workExperiences: { jobTitle?: string; company?: string; description?: string }[],
+    skills: string[],
+    currentPosition: string,
+    yearsOfExperience: number,
+    industry: string
+): Promise<{ success: boolean; summary?: string; error?: string }> {
+    try {
+        if (!process.env.GEMINI_API_KEY) {
+            return {
+                success: false,
+                error: "Gemini API key not configured",
+            };
+        }
+
+        const experienceText = workExperiences
+            .slice(0, 3)
+            .map((exp) => `${exp.jobTitle} at ${exp.company}: ${exp.description || ""}`)
+            .join("\n");
+
+        const prompt = `Generate a professional summary for a job candidate with the following profile. 
+The summary should be 50-150 words, written in first person, highlighting key strengths and experience.
+
+Industry: ${industry}
+Current Position: ${currentPosition}
+Years of Experience: ${yearsOfExperience}
+Key Skills: ${skills.slice(0, 10).join(", ")}
+Recent Experience:
+${experienceText}
+
+Write a compelling professional summary that would be suitable for a CV/resume. Return ONLY the summary text, no quotes or formatting.`;
+
+        const result = await genAI.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+        const summary = result.text?.trim() || "";
+
+        return {
+            success: true,
+            summary,
+        };
+    } catch (error) {
+        console.error("Summary generation error:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+        };
+    }
+}

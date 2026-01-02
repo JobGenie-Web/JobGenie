@@ -465,12 +465,29 @@ export async function loginCandidate(
             };
         }
 
+        // Debug: Log session details (remove in production)
+        console.log("=== LOGIN DEBUG ===");
+        console.log("Session exists:", !!authData.session);
+        console.log("Access token (first 50 chars):", authData.session.access_token?.substring(0, 50));
+        console.log("User ID:", authData.user?.id);
+        console.log("===================");
 
+        // Check if profile is completed
+        const { data: candidateData } = await supabase
+            .from("candidates")
+            .select("profile_completed")
+            .eq("user_id", authData.user.id)
+            .single();
+
+        // Redirect based on profile completion status
+        const redirectTo = candidateData?.profile_completed
+            ? "/candidate/dashboard"
+            : "/candidate/create-profile";
 
         return {
             success: true,
             message: "Login successful!",
-            redirectTo: "/candidate/dashboard",
+            redirectTo,
         };
     } catch (error) {
         console.error("Login error:", error);
