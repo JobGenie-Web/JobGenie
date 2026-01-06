@@ -7,9 +7,9 @@ export const INDUSTRY_OPTIONS = [
     { value: "it_software", label: "Information Technology" },
     { value: "banking", label: "Banking" },
     { value: "finance_investment", label: "Finance & Investment" },
-    { value: "insurance", label: "Insurance" },
-    { value: "fintech", label: "FinTech" },
-    { value: "accounting", label: "Accounting" },
+    // { value: "insurance", label: "Insurance" },
+    // { value: "fintech", label: "FinTech" },
+    // { value: "accounting", label: "Accounting" },
 ] as const;
 
 export const IT_INDUSTRIES = ["it_software", "fintech"] as const;

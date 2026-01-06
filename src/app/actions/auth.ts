@@ -284,6 +284,11 @@ export async function verifyEmail(
             };
         }
 
+        // Sign out the user to ensure they go to login page
+        // This prevents middleware from redirecting authenticated users to dashboard
+        const supabase = await createClient();
+        await supabase.auth.signOut();
+
         return {
             success: true,
             message: "Email verified successfully! You can now log in.",
