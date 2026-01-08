@@ -45,9 +45,9 @@ export function CandidateLoginForm() {
         if (state?.success && state.redirectTo) {
             // Small delay to show success message before redirect
             const timer = setTimeout(() => {
-                // Refresh to sync cookies from server action, then navigate
-                router.refresh();
-                router.push(state.redirectTo!);
+                // Use window.location.href for full page reload to ensure cookies are synced
+                // This prevents middleware redirect loops by ensuring session is fully established
+                window.location.href = state.redirectTo!;
             }, 500);
             return () => clearTimeout(timer);
         }
@@ -59,6 +59,7 @@ export function CandidateLoginForm() {
             return () => clearTimeout(timer);
         }
     }, [state, router]);
+
 
     // Password visibility toggle
     const [showPassword, setShowPassword] = useState(false);

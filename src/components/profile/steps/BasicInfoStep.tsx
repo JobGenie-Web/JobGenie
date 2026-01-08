@@ -183,8 +183,16 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious }: BasicInfoS
                                 type="number"
                                 min="0"
                                 max="50"
-                                value={data.yearsOfExperience}
-                                onChange={(e) => updateField("yearsOfExperience", parseInt(e.target.value) || 0)}
+                                step="1"
+                                value={data.yearsOfExperience || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Only accept integers (no decimals)
+                                    if (value === "" || /^\d+$/.test(value)) {
+                                        updateField("yearsOfExperience", value === "" ? 0 : parseInt(value));
+                                    }
+                                }}
+                                placeholder="Enter years"
                             />
                         </FormField>
                         <FormField label="Experience Level" id="experienceLevel">

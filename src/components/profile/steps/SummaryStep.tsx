@@ -18,9 +18,11 @@ import type {
     AwardData,
     ProjectData,
     CertificateData,
-    FinancialLicenseData,
-    BankingSkillData,
-    ComplianceTrainingData,
+    FinanceAcademicEducationData,
+    FinanceProfessionalEducationData,
+    BankingAcademicEducationData,
+    BankingProfessionalEducationData,
+    BankingSpecializedTrainingData,
 } from "@/lib/validations/profile-schema";
 
 interface SummaryStepProps {
@@ -33,9 +35,11 @@ interface SummaryStepProps {
     awards: AwardData[];
     projects?: ProjectData[];
     certificates?: CertificateData[];
-    financialLicenses?: FinancialLicenseData[];
-    bankingSkills?: BankingSkillData[];
-    complianceTrainings?: ComplianceTrainingData[];
+    financeAcademicEducation?: FinanceAcademicEducationData[];
+    financeProfessionalEducation?: FinanceProfessionalEducationData[];
+    bankingAcademicEducation?: BankingAcademicEducationData[];
+    bankingProfessionalEducation?: BankingProfessionalEducationData[];
+    bankingSpecializedTraining?: BankingSpecializedTrainingData[];
     onSubmit: () => void;
     onPrevious: () => void;
     isLoading: boolean;
@@ -51,9 +55,11 @@ export function SummaryStep({
     awards,
     projects,
     certificates,
-    financialLicenses,
-    bankingSkills,
-    complianceTrainings,
+    financeAcademicEducation,
+    financeProfessionalEducation,
+    bankingAcademicEducation,
+    bankingProfessionalEducation,
+    bankingSpecializedTraining,
     onSubmit,
     onPrevious,
     isLoading,
@@ -68,18 +74,7 @@ export function SummaryStep({
         setGenerationError(null);
 
         try {
-            // Collect skills for summary generation
-            const skills: string[] = [];
-            if (bankingSkills?.length) {
-                skills.push(...bankingSkills.map((s) => s.skillName));
-            }
-            // Add default skills based on industry
-            if (projects?.length) {
-                const projectDescriptions = projects
-                    .filter((p) => p.description)
-                    .map((p) => p.description!);
-                skills.push(...projectDescriptions.slice(0, 3));
-            }
+            // No banking skills anymore - removed
 
             const result = await generateProfessionalSummary(
                 workExperiences.map((exp) => ({
@@ -87,7 +82,7 @@ export function SummaryStep({
                     company: exp.company,
                     description: exp.description,
                 })),
-                skills,
+                [], // skills array - empty now
                 basicInfo.currentPosition,
                 basicInfo.yearsOfExperience,
                 industryLabel
@@ -195,35 +190,58 @@ export function SummaryStep({
                         </div>
                     )}
 
-                    {/* Banking/Finance Specific */}
-                    {financialLicenses && financialLicenses.length > 0 && (
+                    {/* Finance Education */}
+                    {financeAcademicEducation && financeAcademicEducation.length > 0 && (
                         <div>
-                            <h4 className="font-medium mb-2">Financial Licenses ({financialLicenses.length})</h4>
-                            <div className="flex flex-wrap gap-1">
-                                {financialLicenses.map((lic, i) => (
-                                    <Badge key={i} variant="outline">{lic.licenseName}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {bankingSkills && bankingSkills.length > 0 && (
-                        <div>
-                            <h4 className="font-medium mb-2">Banking Skills ({bankingSkills.length})</h4>
-                            <div className="flex flex-wrap gap-1">
-                                {bankingSkills.slice(0, 6).map((skill, i) => (
-                                    <Badge key={i} variant="secondary">{skill.skillName}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {complianceTrainings && complianceTrainings.length > 0 && (
-                        <div>
-                            <h4 className="font-medium mb-2">Compliance Training ({complianceTrainings.length})</h4>
+                            <h4 className="font-medium mb-2">Finance Academic Education ({financeAcademicEducation.length})</h4>
                             <ul className="text-sm text-muted-foreground space-y-1">
-                                {complianceTrainings.slice(0, 2).map((training, i) => (
-                                    <li key={i}>• {training.trainingName}</li>
+                                {financeAcademicEducation.slice(0, 2).map((edu, i) => (
+                                    <li key={i}>• {edu.degreeDiploma} - {edu.institution}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {financeProfessionalEducation && financeProfessionalEducation.length > 0 && (
+                        <div>
+                            <h4 className="font-medium mb-2">Finance Professional Education ({financeProfessionalEducation.length})</h4>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                {financeProfessionalEducation.slice(0, 2).map((edu, i) => (
+                                    <li key={i}>• {edu.professionalQualification} - {edu.institution}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Banking Education */}
+                    {bankingAcademicEducation && bankingAcademicEducation.length > 0 && (
+                        <div>
+                            <h4 className="font-medium mb-2">Banking Academic Education ({bankingAcademicEducation.length})</h4>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                {bankingAcademicEducation.slice(0, 2).map((edu, i) => (
+                                    <li key={i}>• {edu.degreeDiploma} - {edu.institution}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {bankingProfessionalEducation && bankingProfessionalEducation.length > 0 && (
+                        <div>
+                            <h4 className="font-medium mb-2">Banking Professional Education ({bankingProfessionalEducation.length})</h4>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                {bankingProfessionalEducation.slice(0, 2).map((edu, i) => (
+                                    <li key={i}>• {edu.professionalQualification} - {edu.institution}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {bankingSpecializedTraining && bankingSpecializedTraining.length > 0 && (
+                        <div>
+                            <h4 className="font-medium mb-2">Banking Specialized Training ({bankingSpecializedTraining.length})</h4>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                {bankingSpecializedTraining.slice(0, 2).map((training, i) => (
+                                    <li key={i}>• {training.certificateName} - {training.issuingAuthority}</li>
                                 ))}
                             </ul>
                         </div>

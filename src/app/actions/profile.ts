@@ -182,7 +182,7 @@ export async function completeFullProfile(
                 address: data.basicInfo.address,
                 country: data.basicInfo.country || null,
                 current_position: data.basicInfo.currentPosition,
-                years_of_experience: data.basicInfo.yearsOfExperience,
+                years_of_experience: Math.round(data.basicInfo.yearsOfExperience), // Convert to integer
                 experience_level: data.basicInfo.experienceLevel,
                 expected_monthly_salary: data.basicInfo.expectedMonthlySalary || null,
                 availability_status: data.basicInfo.availabilityStatus,
@@ -214,8 +214,9 @@ export async function completeFullProfile(
                 employment_type: exp.employmentType || "full_time",
                 location: exp.location || null,
                 location_type: exp.locationType || "onsite",
-                start_date: exp.startDate || null,
-                end_date: exp.isCurrent ? null : exp.endDate || null,
+                // Convert YYYY-MM format to YYYY-MM-DD for database
+                start_date: exp.startDate ? `${exp.startDate}-01` : null,
+                end_date: exp.isCurrent ? null : (exp.endDate ? `${exp.endDate}-01` : null),
                 description: exp.description || null,
                 is_current: exp.isCurrent || false,
                 created_at: now,
@@ -234,7 +235,7 @@ export async function completeFullProfile(
                 education_type: edu.educationType || "academic",
                 degree_diploma: edu.degreeDiploma,
                 institution: edu.institution,
-                status: edu.status || "complete",
+                status: edu.status || "incomplete", // Changed from 'complete' to match schema
                 created_at: now,
                 updated_at: now,
             }));
@@ -295,62 +296,84 @@ export async function completeFullProfile(
             if (certError) console.error("Certificate insert error:", certError);
         }
 
-        // Banking/Finance: Financial Licenses
-        if (data.financialLicenses && data.financialLicenses.length > 0) {
-            await supabase.from("financial_licenses").delete().eq("candidate_id", candidateId);
+        // Finance Industry: Academic and Professional Education
+        if (data.financeAcademicEducation && data.financeAcademicEducation.length > 0) {
+            await supabase.from("finance_academic_education").delete().eq("candidate_id", candidateId);
             const now = new Date().toISOString();
-            const licenseRecords = data.financialLicenses.map((lic) => ({
+            const records = data.financeAcademicEducation.map((edu) => ({
                 candidate_id: candidateId,
-                license_type: lic.licenseType,
-                license_name: lic.licenseName,
-                issuing_authority: lic.issuingAuthority,
-                license_number: lic.licenseNumber || null,
-                issue_date: lic.issueDate || null,
-                expiry_date: lic.expiryDate || null,
-                status: lic.status || "active",
+                degree_diploma: edu.degreeDiploma,
+                institution: edu.institution,
+                status: edu.status || "incomplete",
                 created_at: now,
                 updated_at: now,
             }));
-            const { error: licError } = await supabase.from("financial_licenses").insert(licenseRecords);
-            if (licError) console.error("Financial license insert error:", licError);
+            const { error } = await supabase.from("finance_academic_education").insert(records);
+            if (error) console.error("Finance academic education insert error:", error);
         }
 
-        // Banking/Finance: Banking Skills
-        if (data.bankingSkills && data.bankingSkills.length > 0) {
-            await supabase.from("banking_skills").delete().eq("candidate_id", candidateId);
+        if (data.financeProfessionalEducation && data.financeProfessionalEducation.length > 0) {
+            await supabase.from("finance_professional_education").delete().eq("candidate_id", candidateId);
             const now = new Date().toISOString();
-            const skillRecords = data.bankingSkills.map((skill) => ({
+            const records = data.financeProfessionalEducation.map((edu) => ({
                 candidate_id: candidateId,
-                skill_category: skill.skillCategory,
-                skill_name: skill.skillName,
-                proficiency_level: skill.proficiencyLevel || "intermediate",
-                years_experience: skill.yearsExperience || 0,
+                professional_qualification: edu.professionalQualification,
+                institution: edu.institution,
+                status: edu.status || "incomplete",
                 created_at: now,
                 updated_at: now,
             }));
-            const { error: skillError } = await supabase.from("banking_skills").insert(skillRecords);
-            if (skillError) console.error("Banking skill insert error:", skillError);
+            const { error } = await supabase.from("finance_professional_education").insert(records);
+            if (error) console.error("Finance professional education insert error:", error);
         }
 
-        // Banking/Finance: Compliance Trainings
-        if (data.complianceTrainings && data.complianceTrainings.length > 0) {
-            await supabase.from("compliance_trainings").delete().eq("candidate_id", candidateId);
+        // Banking Industry: Academic, Professional, and Specialized Training
+        if (data.bankingAcademicEducation && data.bankingAcademicEducation.length > 0) {
+            await supabase.from("banking_academic_education").delete().eq("candidate_id", candidateId);
             const now = new Date().toISOString();
-            const trainingRecords = data.complianceTrainings.map((training) => ({
+            const records = data.bankingAcademicEducation.map((edu) => ({
                 candidate_id: candidateId,
-                training_name: training.trainingName,
-                training_type: training.trainingType,
-                provider: training.provider || null,
-                completion_date: training.completionDate || null,
-                validity_period: training.validityPeriod || null,
-                expiry_date: training.expiryDate || null,
-                certificate_url: training.certificateUrl || null,
+                degree_diploma: edu.degreeDiploma,
+                institution: edu.institution,
+                status: edu.status || "incomplete",
                 created_at: now,
                 updated_at: now,
             }));
-            const { error: trainingError } = await supabase.from("compliance_trainings").insert(trainingRecords);
-            if (trainingError) console.error("Compliance training insert error:", trainingError);
+            const { error } = await supabase.from("banking_academic_education").insert(records);
+            if (error) console.error("Banking academic education insert error:", error);
         }
+
+        if (data.bankingProfessionalEducation && data.bankingProfessionalEducation.length > 0) {
+            await supabase.from("banking_professional_education").delete().eq("candidate_id", candidateId);
+            const now = new Date().toISOString();
+            const records = data.bankingProfessionalEducation.map((edu) => ({
+                candidate_id: candidateId,
+                professional_qualification: edu.professionalQualification,
+                institution: edu.institution,
+                status: edu.status || "incomplete",
+                created_at: now,
+                updated_at: now,
+            }));
+            const { error } = await supabase.from("banking_professional_education").insert(records);
+            if (error) console.error("Banking professional education insert error:", error);
+        }
+
+        if (data.bankingSpecializedTraining && data.bankingSpecializedTraining.length > 0) {
+            await supabase.from("banking_specialized_training").delete().eq("candidate_id", candidateId);
+            const now = new Date().toISOString();
+            const records = data.bankingSpecializedTraining.map((training) => ({
+                candidate_id: candidateId,
+                certificate_name: training.certificateName,
+                issuing_authority: training.issuingAuthority,
+                certificate_issue_month: training.certificateIssueMonth || null,
+                status: training.status || "incomplete",
+                created_at: now,
+                updated_at: now,
+            }));
+            const { error } = await supabase.from("banking_specialized_training").insert(records);
+            if (error) console.error("Banking specialized training insert error:", error);
+        }
+
 
         revalidatePath("/candidate/dashboard");
         revalidatePath("/candidate/profile");

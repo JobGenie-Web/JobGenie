@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 import { CVUpload } from "./CVUpload";
 import { IndustryStep } from "./steps/IndustryStep";
 import { BasicInfoStep } from "./steps/BasicInfoStep";
@@ -11,8 +12,8 @@ import { ExperienceStep } from "./steps/ExperienceStep";
 import { EducationStep } from "./steps/EducationStep";
 import { AwardsStep } from "./steps/AwardsStep";
 import { ProjectsStep } from "./steps/ProjectsStep";
-import { BankingSkillsStep } from "./steps/BankingSkillsStep";
-import { ComplianceStep } from "./steps/ComplianceStep";
+import { FinanceEducationStep } from "./steps/FinanceEducationStep";
+import { BankingEducationStep } from "./steps/BankingEducationStep";
 import { SummaryStep } from "./steps/SummaryStep";
 import { completeFullProfile } from "@/app/actions/profile";
 import { IT_INDUSTRIES, BANKING_FINANCE_INDUSTRIES } from "@/lib/validations/profile-schema";
@@ -23,13 +24,15 @@ import type {
     AwardData,
     ProjectData,
     CertificateData,
-    FinancialLicenseData,
-    BankingSkillData,
-    ComplianceTrainingData,
+    FinanceAcademicEducationData,
+    FinanceProfessionalEducationData,
+    BankingAcademicEducationData,
+    BankingProfessionalEducationData,
+    BankingSpecializedTrainingData,
     CVExtractionResult,
     BasicInfoData,
 } from "@/lib/validations/profile-schema";
-import { CertificatesStep, LicensesStep } from "./steps";
+import { CertificatesStep } from "./steps";
 
 interface CreateProfileWizardProps {
     userId: string;
@@ -81,25 +84,32 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
     const [awards, setAwards] = useState<AwardData[]>([]);
     const [projects, setProjects] = useState<ProjectData[]>([]);
     const [certificates, setCertificates] = useState<CertificateData[]>([]);
-    const [financialLicenses, setFinancialLicenses] = useState<FinancialLicenseData[]>([]);
-    const [bankingSkills, setBankingSkills] = useState<BankingSkillData[]>([]);
-    const [complianceTrainings, setComplianceTrainings] = useState<ComplianceTrainingData[]>([]);
+    // Finance education
+    const [financeAcademicEducation, setFinanceAcademicEducation] = useState<FinanceAcademicEducationData[]>([]);
+    const [financeProfessionalEducation, setFinanceProfessionalEducation] = useState<FinanceProfessionalEducationData[]>([]);
+
+    // Banking education  
+    const [bankingAcademicEducation, setBankingAcademicEducation] = useState<BankingAcademicEducationData[]>([]);
+    const [bankingProfessionalEducation, setBankingProfessionalEducation] = useState<BankingProfessionalEducationData[]>([]);
+    const [bankingSpecializedTraining, setBankingSpecializedTraining] = useState<BankingSpecializedTrainingData[]>([]);
 
     // Determine visible steps based on industry
     const isITIndustry = IT_INDUSTRIES.includes(industry as typeof IT_INDUSTRIES[number]);
-    const isBankingFinance = BANKING_FINANCE_INDUSTRIES.includes(industry as typeof BANKING_FINANCE_INDUSTRIES[number]);
+    const isFinanceIndustry = industry === "finance_investment";
+    const isBankingIndustry = industry === "banking";
 
     const steps: Step[] = [
         { id: "industry", title: "Industry & CV", visible: true },
         { id: "basic", title: "Basic Info", visible: true },
         { id: "experience", title: "Experience", visible: true },
-        { id: "education", title: "Education", visible: true },
-        { id: "awards", title: "Awards", visible: true },
+        // Standard education only for IT and other industries (not Finance/Banking)
+        { id: "education", title: "Education", visible: !isFinanceIndustry && !isBankingIndustry },
+        // Industry-specific education replaces standard education
+        { id: "financeEducation", title: "Education", visible: isFinanceIndustry },
+        { id: "bankingEducation", title: "Education", visible: isBankingIndustry },
         { id: "projects", title: "Projects", visible: isITIndustry },
         { id: "certificates", title: "Certificates", visible: isITIndustry },
-        { id: "licenses", title: "Licenses", visible: isBankingFinance },
-        { id: "bankingSkills", title: "Skills", visible: isBankingFinance },
-        { id: "compliance", title: "Compliance", visible: isBankingFinance },
+        { id: "awards", title: "Awards", visible: true },
         { id: "summary", title: "Summary", visible: true },
     ].filter((step) => step.visible);
 
@@ -142,7 +152,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                     educationType: "academic" as const,
                     degreeDiploma: edu.degreeDiploma || "",
                     institution: edu.institution || "",
-                    status: (edu.status === "complete" ? "complete" : "incomplete") as "complete" | "incomplete",
+                    status: (edu.status === "complete" ? "general" : "incomplete") as "general" | "incomplete",
                 }))
             );
         }
@@ -202,17 +212,32 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                 awards,
                 projects: isITIndustry ? projects : undefined,
                 certificates: isITIndustry ? certificates : undefined,
-                financialLicenses: isBankingFinance ? financialLicenses : undefined,
-                bankingSkills: isBankingFinance ? bankingSkills : undefined,
-                complianceTrainings: isBankingFinance ? complianceTrainings : undefined,
+                financeAcademicEducation: isFinanceIndustry ? financeAcademicEducation : undefined,
+                financeProfessionalEducation: isFinanceIndustry ? financeProfessionalEducation : undefined,
+                bankingAcademicEducation: isBankingIndustry ? bankingAcademicEducation : undefined,
+                bankingProfessionalEducation: isBankingIndustry ? bankingProfessionalEducation : undefined,
+                bankingSpecializedTraining: isBankingIndustry ? bankingSpecializedTraining : undefined,
             };
 
             const result = await completeFullProfile(userId, profileData);
 
             if (result.success) {
-                router.push("/candidate/dashboard");
+                toast.success(result.message || "Profile completed successfully!");
+                setTimeout(() => {
+                    window.location.href = "/candidate/dashboard";
+                }, 1000);
             } else {
-                setError(result.message);
+                // Display field-specific errors
+                if (result.errors && Object.keys(result.errors).length > 0) {
+                    // Show each field error
+                    Object.entries(result.errors).forEach(([field, messages]) => {
+                        const errorMessage = Array.isArray(messages) ? messages.join(", ") : messages;
+                        toast.error(`${field}: ${errorMessage}`);
+                    });
+                } else {
+                    // Fallback to generic message
+                    toast.error(result.message || "Failed to complete profile. Please try again.");
+                }
             }
         } catch (err) {
             setError("An unexpected error occurred. Please try again.");
@@ -222,8 +247,9 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         }
     }, [
         userId, industry, basicInfo, professionalSummary, workExperiences,
-        educations, awards, projects, certificates, financialLicenses,
-        bankingSkills, complianceTrainings, isITIndustry, isBankingFinance, router
+        educations, awards, projects, certificates, financeAcademicEducation,
+        financeProfessionalEducation, bankingAcademicEducation, bankingProfessionalEducation,
+        bankingSpecializedTraining, isITIndustry, isFinanceIndustry, isBankingIndustry, router
     ]);
 
     const renderStep = () => {
@@ -294,29 +320,26 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                         onPrevious={handlePrevious}
                     />
                 );
-            case "licenses":
+            case "financeEducation":
                 return (
-                    <LicensesStep
-                        licenses={financialLicenses}
-                        onChange={setFinancialLicenses}
+                    <FinanceEducationStep
+                        academicEducation={financeAcademicEducation}
+                        professionalEducation={financeProfessionalEducation}
+                        onAcademicChange={setFinanceAcademicEducation}
+                        onProfessionalChange={setFinanceProfessionalEducation}
                         onNext={handleNext}
                         onPrevious={handlePrevious}
                     />
                 );
-            case "bankingSkills":
+            case "bankingEducation":
                 return (
-                    <BankingSkillsStep
-                        skills={bankingSkills}
-                        onChange={setBankingSkills}
-                        onNext={handleNext}
-                        onPrevious={handlePrevious}
-                    />
-                );
-            case "compliance":
-                return (
-                    <ComplianceStep
-                        trainings={complianceTrainings}
-                        onChange={setComplianceTrainings}
+                    <BankingEducationStep
+                        academicEducation={bankingAcademicEducation}
+                        professionalEducation={bankingProfessionalEducation}
+                        specializedTraining={bankingSpecializedTraining}
+                        onAcademicChange={setBankingAcademicEducation}
+                        onProfessionalChange={setBankingProfessionalEducation}
+                        onSpecializedChange={setBankingSpecializedTraining}
                         onNext={handleNext}
                         onPrevious={handlePrevious}
                     />
@@ -333,9 +356,11 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                         awards={awards}
                         projects={isITIndustry ? projects : undefined}
                         certificates={isITIndustry ? certificates : undefined}
-                        financialLicenses={isBankingFinance ? financialLicenses : undefined}
-                        bankingSkills={isBankingFinance ? bankingSkills : undefined}
-                        complianceTrainings={isBankingFinance ? complianceTrainings : undefined}
+                        financeAcademicEducation={isFinanceIndustry ? financeAcademicEducation : undefined}
+                        financeProfessionalEducation={isFinanceIndustry ? financeProfessionalEducation : undefined}
+                        bankingAcademicEducation={isBankingIndustry ? bankingAcademicEducation : undefined}
+                        bankingProfessionalEducation={isBankingIndustry ? bankingProfessionalEducation : undefined}
+                        bankingSpecializedTraining={isBankingIndustry ? bankingSpecializedTraining : undefined}
                         onSubmit={handleSubmit}
                         onPrevious={handlePrevious}
                         isLoading={isLoading}

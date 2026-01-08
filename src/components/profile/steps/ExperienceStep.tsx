@@ -156,19 +156,19 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor={`startDate-${index}`}>Start Date</Label>
+                                    <Label htmlFor={`startDate-${index}`}>Start Month</Label>
                                     <Input
                                         id={`startDate-${index}`}
-                                        type="date"
+                                        type="month"
                                         value={exp.startDate || ""}
                                         onChange={(e) => handleUpdate(index, "startDate", e.target.value)}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor={`endDate-${index}`}>End Date</Label>
+                                    <Label htmlFor={`endDate-${index}`}>End Month</Label>
                                     <Input
                                         id={`endDate-${index}`}
-                                        type="date"
+                                        type="month"
                                         value={exp.endDate || ""}
                                         onChange={(e) => handleUpdate(index, "endDate", e.target.value)}
                                         disabled={exp.isCurrent}

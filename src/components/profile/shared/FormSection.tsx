@@ -7,13 +7,17 @@ interface FormSectionProps {
     description?: string;
     children: React.ReactNode;
     className?: string;
+    icon?: React.ReactNode;
 }
 
-export function FormSection({ title, description, children, className }: FormSectionProps) {
+export function FormSection({ title, description, children, className, icon }: FormSectionProps) {
     return (
         <Card className={className}>
             <CardHeader>
-                <CardTitle>{title}</CardTitle>
+                <div className="flex items-center gap-2">
+                    {icon && <div className="text-primary">{icon}</div>}
+                    <CardTitle>{title}</CardTitle>
+                </div>
                 {description && <CardDescription>{description}</CardDescription>}
             </CardHeader>
             <CardContent>{children}</CardContent>

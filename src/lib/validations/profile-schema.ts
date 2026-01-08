@@ -30,40 +30,29 @@ export const locationTypeSchema = z.enum(["remote", "hybrid", "onsite"]);
 
 export const educationTypeSchema = z.enum(["academic", "professional"]);
 
-export const educationStatusSchema = z.enum(["incomplete", "complete"]);
+export const educationStatusSchema = z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]);
 
 export const availabilityStatusSchema = z.enum(["available", "open_to_opportunities", "not_looking"]);
 
 export const industryTypeSchema = z.enum(["it_software", "banking", "finance_investment", "insurance", "fintech", "accounting", "other"]);
 
 // ============================================
-// BANKING & FINANCE ENUMS
+// FINANCE & BANKING EDUCATION STATUS ENUMS
 // ============================================
-export const financialLicenseTypeSchema = z.enum([
-    "cfa", "cpa", "acca", "cima", "frm", "cfp", "caia", "chfc", "casl",
-    "aml_certification", "securities_license", "banking_license", "insurance_license",
-    "cma", "cia", "other"
+export const financeEducationStatusSchema = z.enum([
+    "incomplete",
+    "first_class",
+    "second_class_upper",
+    "second_class_lower",
+    "general"
 ]);
 
-export const licenseStatusSchema = z.enum(["active", "expired", "pending_renewal", "revoked", "suspended"]);
-
-export const bankingSkillCategorySchema = z.enum([
-    "retail_banking", "corporate_banking", "investment_banking", "private_banking", "commercial_banking",
-    "credit_analysis", "financial_modeling", "risk_assessment", "portfolio_management", "financial_reporting",
-    "aml_kyc", "regulatory_compliance", "internal_audit", "external_audit", "fraud_detection",
-    "forex_trading", "securities_trading", "derivatives", "fixed_income", "equity_research",
-    "core_banking_systems", "trading_platforms", "erp_systems", "treasury_systems",
-    "wealth_management", "loan_processing", "trade_finance", "treasury_operations", "payments_settlement", "client_relationship",
-    "other"
-]);
-
-export const proficiencyLevelSchema = z.enum(["beginner", "intermediate", "advanced", "expert"]);
-
-export const complianceTrainingTypeSchema = z.enum([
-    "aml_cft", "kyc", "data_privacy", "fraud_prevention", "sanctions_screening",
-    "code_of_conduct", "information_security", "regulatory_updates", "whistleblower_policy",
-    "market_abuse", "insider_trading", "customer_due_diligence", "risk_management",
-    "credit_risk", "operational_risk", "other"
+export const bankingEducationStatusSchema = z.enum([
+    "incomplete",
+    "first_class",
+    "second_class_upper",
+    "second_class_lower",
+    "general"
 ]);
 
 // ============================================
@@ -92,7 +81,7 @@ export const educationSchema = z.object({
     educationType: educationTypeSchema.default("academic"),
     degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: educationStatusSchema.default("complete"),
+    status: educationStatusSchema.default("incomplete"), // Changed from 'complete' to match schema enum
 });
 
 export type EducationData = z.infer<typeof educationSchema>;
@@ -139,49 +128,56 @@ export const certificateSchema = z.object({
 export type CertificateData = z.infer<typeof certificateSchema>;
 
 // ============================================
-// BANKING - FINANCIAL LICENSE SCHEMA
+// FINANCE INDUSTRY - EDUCATION SCHEMAS
 // ============================================
-export const financialLicenseSchema = z.object({
+export const financeAcademicEducationSchema = z.object({
     id: z.string().optional(),
-    licenseType: financialLicenseTypeSchema,
-    licenseName: z.string().min(1, "License name is required").max(200),
-    issuingAuthority: z.string().min(1, "Issuing authority is required").max(200),
-    licenseNumber: z.string().max(100).optional(),
-    issueDate: z.string().optional(),
-    expiryDate: z.string().optional().nullable(),
-    status: licenseStatusSchema.default("active"),
+    degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
+    institution: z.string().min(1, "Institution is required").max(200),
+    status: financeEducationStatusSchema.default("incomplete"),
 });
 
-export type FinancialLicenseData = z.infer<typeof financialLicenseSchema>;
+export type FinanceAcademicEducationData = z.infer<typeof financeAcademicEducationSchema>;
 
-// ============================================
-// BANKING - SKILL SCHEMA
-// ============================================
-export const bankingSkillSchema = z.object({
+export const financeProfessionalEducationSchema = z.object({
     id: z.string().optional(),
-    skillCategory: bankingSkillCategorySchema,
-    skillName: z.string().min(1, "Skill name is required").max(200),
-    proficiencyLevel: proficiencyLevelSchema.default("intermediate"),
-    yearsExperience: z.number().min(0).max(50).optional(),
+    professionalQualification: z.string().min(1, "Professional qualification is required").max(300),
+    institution: z.string().min(1, "Institution is required").max(200),
+    status: financeEducationStatusSchema.default("incomplete"),
 });
 
-export type BankingSkillData = z.infer<typeof bankingSkillSchema>;
+export type FinanceProfessionalEducationData = z.infer<typeof financeProfessionalEducationSchema>;
 
 // ============================================
-// BANKING - COMPLIANCE TRAINING SCHEMA
+// BANKING INDUSTRY - EDUCATION SCHEMAS
 // ============================================
-export const complianceTrainingSchema = z.object({
+export const bankingAcademicEducationSchema = z.object({
     id: z.string().optional(),
-    trainingName: z.string().min(1, "Training name is required").max(300),
-    trainingType: complianceTrainingTypeSchema,
-    provider: z.string().max(200).optional(),
-    completionDate: z.string().optional(),
-    validityPeriod: z.string().max(50).optional(),
-    expiryDate: z.string().optional().nullable(),
-    certificateUrl: z.string().url().max(500).optional().or(z.literal("")),
+    degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
+    institution: z.string().min(1, "Institution is required").max(200),
+    status: bankingEducationStatusSchema.default("incomplete"),
 });
 
-export type ComplianceTrainingData = z.infer<typeof complianceTrainingSchema>;
+export type BankingAcademicEducationData = z.infer<typeof bankingAcademicEducationSchema>;
+
+export const bankingProfessionalEducationSchema = z.object({
+    id: z.string().optional(),
+    professionalQualification: z.string().min(1, "Professional qualification is required").max(300),
+    institution: z.string().min(1, "Institution is required").max(200),
+    status: bankingEducationStatusSchema.default("incomplete"),
+});
+
+export type BankingProfessionalEducationData = z.infer<typeof bankingProfessionalEducationSchema>;
+
+export const bankingSpecializedTrainingSchema = z.object({
+    id: z.string().optional(),
+    certificateName: z.string().min(1, "Certificate/Training name is required").max(300),
+    issuingAuthority: z.string().min(1, "Issuing Authority/Institution is required").max(200),
+    certificateIssueMonth: z.string().optional(),
+    status: bankingEducationStatusSchema.default("incomplete"),
+});
+
+export type BankingSpecializedTrainingData = z.infer<typeof bankingSpecializedTrainingSchema>;
 
 // ============================================
 // BASIC INFO SCHEMA
@@ -218,10 +214,13 @@ export const completeProfileSchema = z.object({
     // IT Industry specific
     projects: z.array(projectSchema).optional(),
     certificates: z.array(certificateSchema).optional(),
-    // Banking/Finance specific
-    financialLicenses: z.array(financialLicenseSchema).optional(),
-    bankingSkills: z.array(bankingSkillSchema).optional(),
-    complianceTrainings: z.array(complianceTrainingSchema).optional(),
+    // Finance Industry specific
+    financeAcademicEducation: z.array(financeAcademicEducationSchema).optional(),
+    financeProfessionalEducation: z.array(financeProfessionalEducationSchema).optional(),
+    // Banking Industry specific
+    bankingAcademicEducation: z.array(bankingAcademicEducationSchema).optional(),
+    bankingProfessionalEducation: z.array(bankingProfessionalEducationSchema).optional(),
+    bankingSpecializedTraining: z.array(bankingSpecializedTrainingSchema).optional(),
 });
 
 export type CompleteProfileData = z.infer<typeof completeProfileSchema>;

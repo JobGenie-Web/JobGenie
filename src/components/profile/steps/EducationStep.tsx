@@ -22,15 +22,18 @@ const EDUCATION_TYPES = [
 ];
 
 const EDUCATION_STATUSES = [
-    { value: "complete", label: "Completed" },
     { value: "incomplete", label: "In Progress / Incomplete" },
+    { value: "first_class", label: "First Class" },
+    { value: "second_class_upper", label: "Second Class Upper" },
+    { value: "second_class_lower", label: "Second Class Lower" },
+    { value: "general", label: "General" },
 ];
 
 const emptyEducation: EducationData = {
     educationType: "academic",
     degreeDiploma: "",
     institution: "",
-    status: "complete",
+    status: "incomplete", // Changed to match schema
 };
 
 export function EducationStep({ educations, onChange, onNext, onPrevious }: EducationStepProps) {
