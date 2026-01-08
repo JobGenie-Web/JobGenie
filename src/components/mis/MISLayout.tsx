@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { CandidateSidebar } from "./CandidateSidebar";
-import { CandidateHeader } from "./CandidateHeader";
+import { MISSidebar } from "./MISSidebar";
+import { MISHeader } from "./MISHeader";
 import { createClient } from "@/lib/supabase/server";
 
-interface CandidateLayoutProps {
+interface MISLayoutProps {
     children: React.ReactNode;
     pageTitle?: string;
     pageDescription?: string;
@@ -19,23 +19,23 @@ async function getCurrentUser() {
         return null;
     }
 
-    // Get additional user data from candidates table
-    const { data: candidate } = await supabase
-        .from('candidates')
+    // Get additional user data from users table
+    const { data: userData } = await supabase
+        .from('users')
         .select('first_name, last_name, profile_image')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
     return {
         id: user.id,
         email: user.email || '',
-        firstName: candidate?.first_name || user.user_metadata?.first_name || '',
-        lastName: candidate?.last_name || user.user_metadata?.last_name || '',
-        profileImage: candidate?.profile_image || undefined,
+        firstName: userData?.first_name || user.user_metadata?.first_name || '',
+        lastName: userData?.last_name || user.user_metadata?.last_name || '',
+        profileImage: userData?.profile_image || undefined,
     };
 }
 
-export async function CandidateLayout({ children, pageTitle, pageDescription }: CandidateLayoutProps) {
+export async function MISLayout({ children, pageTitle, pageDescription }: MISLayoutProps) {
     const user = await getCurrentUser();
 
     if (!user) {
@@ -45,9 +45,9 @@ export async function CandidateLayout({ children, pageTitle, pageDescription }: 
     return (
         <SidebarProvider>
             <div className="flex min-h-screen w-full">
-                <CandidateSidebar />
+                <MISSidebar />
                 <SidebarInset className="flex flex-col flex-1">
-                    <CandidateHeader
+                    <MISHeader
                         user={user}
                         pageTitle={pageTitle}
                         pageDescription={pageDescription}

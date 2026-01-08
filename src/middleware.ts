@@ -22,6 +22,7 @@ const roleRoutes: Record<string, string[]> = {
     mis: [
         '/mis/dashboard',
         '/mis/users',
+        '/mis/users/add',
         '/mis/candidates',
         '/mis/employers',
         '/mis/jobs',
@@ -33,7 +34,15 @@ const roleRoutes: Record<string, string[]> = {
 const allProtectedRoutes = Object.values(roleRoutes).flat();
 
 // Routes that should redirect to dashboard if authenticated
-const authRoutes = ['/login', '/candidate/login', '/candidate/signup', '/employer/login', '/employer/signup'];
+const authRoutes = [
+    '/login',
+    '/candidate/login',
+    '/candidate/signup',
+    '/employer/login',
+    '/employer/signup',
+    '/mis/login',
+    '/mis/register',
+];
 
 // Get the default dashboard for a role
 function getDashboardForRole(role: string): string {
@@ -181,5 +190,7 @@ export const config = {
         '/candidate/signup',
         '/employer/login',
         '/employer/signup',
+        '/mis/login',
+        '/mis/register',
     ],
 };

@@ -1,15 +1,12 @@
 import { User } from 'lucide-react';
+import { CandidateLayout } from '@/components/candidate';
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">My Profile</h1>
-                <p className="text-muted-foreground">
-                    Manage your personal information and CV
-                </p>
-            </div>
-
+        <CandidateLayout
+            pageTitle="My Profile"
+            pageDescription="Manage your personal information and CV"
+        >
             <div className="rounded-xl border border-border bg-card p-8 text-center">
                 <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted p-4">
                     <User className="h-8 w-8 text-muted-foreground" />
@@ -19,6 +16,6 @@ export default function ProfilePage() {
                     This page is under development. Check back soon!
                 </p>
             </div>
-        </div>
+        </CandidateLayout>
     );
 }

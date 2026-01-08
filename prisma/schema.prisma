@@ -28,6 +28,9 @@ model User {
   verification_token_expires_at DateTime?
   password_reset_token          String?   @db.VarChar(255)
   password_reset_expires_at     DateTime?
+  invitation_token              String?   @unique
+  invitation_token_expires_at   DateTime?
+  invited_by                    String?
   
   // Metadata
   last_login_at                 DateTime?

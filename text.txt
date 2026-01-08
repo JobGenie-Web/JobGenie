@@ -28,3 +28,6 @@ Use Zod for validaion.
 
 
 in here candidate after successfully login check  profile_completed  status. if it is false redirect to create profile page. if it is true redirect to dashboard. in create profile I want to collect all data of the candidate
+
+
+use Zod, Shadcn components and keep consistancy with the other pages and functionalities. I need the fastest application. there fore use optimized queries here. follow a clean and clear file and folder structure.

@@ -4,6 +4,28 @@ import { NextResponse } from 'next/server';
 export async function POST() {
     const supabase = await createClient();
 
+    // Get user role before signing out
+    const { data: { user } } = await supabase.auth.getUser();
+    let redirectPath = '/login'; // Default redirect
+
+    if (user) {
+        // Fetch user role from database
+        const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        // Set redirect based on role
+        if (userData?.role === 'mis') {
+            redirectPath = '/mis/login';
+        } else if (userData?.role === 'employer') {
+            redirectPath = '/employer/login';
+        } else {
+            redirectPath = '/login'; // candidate or default
+        }
+    }
+
     // Sign out from Supabase - this clears the session
     const { error } = await supabase.auth.signOut();
 
@@ -14,11 +36,11 @@ export async function POST() {
         );
     }
 
-    // Return success - client should handle redirect
+    // Return success with role-specific redirect
     return NextResponse.json({
         success: true,
         message: 'Signed out successfully',
-        redirectTo: '/login',
+        redirectTo: redirectPath,
     });
 }
 

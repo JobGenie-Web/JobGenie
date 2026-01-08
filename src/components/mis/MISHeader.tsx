@@ -1,11 +1,10 @@
 "use client";
 
 import { useSidebar } from "@/components/ui/sidebar";
-import { UserMenu } from "./UserMenu";
-import { Separator } from "@/components/ui/separator";
+import { UserMenu } from "../candidate/UserMenu";
 import { cn } from "@/lib/utils";
 
-interface CandidateHeaderProps {
+interface MISHeaderProps {
     user: {
         firstName: string;
         lastName: string;
@@ -16,7 +15,7 @@ interface CandidateHeaderProps {
     pageDescription?: string;
 }
 
-export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateHeaderProps) {
+export function MISHeader({ user, pageTitle, pageDescription }: MISHeaderProps) {
     const { toggleSidebar, state } = useSidebar();
     const isCollapsed = state === "collapsed";
 
