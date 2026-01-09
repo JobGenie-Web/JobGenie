@@ -190,6 +190,11 @@ export async function completeFullProfile(
                 employment_type: data.basicInfo.employmentType,
                 professional_summary: data.professionalSummary,
                 profile_completed: true,
+                // Reset approval status for resubmission
+                approval_status: "pending",
+                approval_status_message_seen: false,
+                rejected_at: null,
+                rejection_reason: null,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", candidateId);

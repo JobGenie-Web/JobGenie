@@ -90,7 +90,7 @@ export async function middleware(request: NextRequest) {
     // Create Supabase client with cookie handling
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
                 getAll() {
@@ -143,6 +143,29 @@ export async function middleware(request: NextRequest) {
         if (requiredRole && userData.role !== requiredRole) {
             // Redirect to their correct dashboard
             return NextResponse.redirect(new URL(getDashboardForRole(userData.role), request.url));
+        }
+
+        // Additional check for candidates: verify approval status
+        if (userData.role === 'candidate' && requiredRole === 'candidate') {
+            const { data: candidateData } = await supabase
+                .from('candidates')
+                .select('approval_status, profile_completed')
+                .eq('user_id', user.id)
+                .single();
+
+            // Only restrict if profile is completed but not approved
+            if (candidateData?.profile_completed && candidateData.approval_status !== 'approved') {
+                // Allow access to dashboard and profile routes
+                const allowedRoutes = ['/candidate/dashboard', '/candidate/profile', '/candidate/create-profile'];
+                const isAllowedRoute = allowedRoutes.some(route => pathname.startsWith(route));
+
+                if (!isAllowedRoute) {
+                    // Redirect to dashboard with info message
+                    const dashboardUrl = new URL('/candidate/dashboard', request.url);
+                    dashboardUrl.searchParams.set('info', 'approval_pending');
+                    return NextResponse.redirect(dashboardUrl);
+                }
+            }
         }
     }
 

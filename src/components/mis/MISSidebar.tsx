@@ -36,7 +36,7 @@ const navigationItems = [
         icon: LayoutDashboard,
     },
     {
-        title: "User Management",
+        title: "MIS User Management",
         href: "/mis/users",
         icon: Users,
     },

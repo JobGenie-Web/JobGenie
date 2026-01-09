@@ -89,12 +89,20 @@ model Candidate {
   approval_status         ApprovalStatus @default(pending)
   profile_completed       Boolean @default(false)
   
+  // Approval workflow tracking
+  approval_status_message_seen Boolean @default(false)
+  approved_at             DateTime?
+  rejected_at             DateTime?
+  reviewed_by             String?  @db.Uuid
+  rejection_reason        String?  @db.Text
+  
   // Metadata
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
   
   // Relations
   user                    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer                MisUser? @relation(fields: [reviewed_by], references: [user_id], onDelete: SetNull)
   work_experiences        WorkExperience[]
   educations              Education[]
   awards                  Award[]
@@ -432,6 +440,7 @@ model MisUser {
   created_at     DateTime           @default(now())
   updated_at     DateTime           @updatedAt
   user           User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reviewed_candidates Candidate[]
 
   @@map("mis_user")
 }

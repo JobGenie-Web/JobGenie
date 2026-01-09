@@ -2,13 +2,74 @@ import Link from 'next/link';
 import { User, Briefcase, FileText, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CandidateLayout } from '@/components/candidate';
+import { ApprovalStatusNotification } from '@/components/candidate/ApprovalStatusNotification';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function CandidateDashboardPage() {
+    // Fetch candidate approval status
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    let showNotification = false;
+    let approvalStatus: "approved" | "rejected" | null = null;
+    let rejectionReason: string | null = null;
+    let isPending = false;
+
+    if (user) {
+        const { data: candidateData } = await supabase
+            .from('candidates')
+            .select('approval_status, approval_status_message_seen, rejection_reason')
+            .eq('user_id', user.id)
+            .single();
+
+        if (candidateData && !candidateData.approval_status_message_seen) {
+            if (candidateData.approval_status === 'approved' || candidateData.approval_status === 'rejected') {
+                showNotification = true;
+                approvalStatus = candidateData.approval_status as "approved" | "rejected";
+                rejectionReason = candidateData.rejection_reason;
+            }
+        }
+
+        // Check if candidate is pending
+        if (candidateData?.approval_status === 'pending') {
+            isPending = true;
+        }
+    }
+
     return (
         <CandidateLayout
             pageTitle="Dashboard"
             pageDescription="Welcome back! Manage your job applications and profile."
         >
+            {showNotification && approvalStatus && (
+                <ApprovalStatusNotification
+                    approvalStatus={approvalStatus}
+                    rejectionReason={rejectionReason}
+                />
+            )}
+
+            {/* Pending Status Alert */}
+            {isPending && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-4 dark:border-green-900/50 dark:bg-green-900/10">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                            <svg className="h-5 w-5 text-green-600 dark:text-green-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-green-900 dark:text-green-200">
+                                Please be patient. Our MIS Admin is reviewing your profile...
+                            </p>
+                            <p className="mt-0.5 text-xs text-green-700 dark:text-green-300">
+                                You will be notified once the review is complete.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-6">
                 {/* Quick Actions Grid */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
