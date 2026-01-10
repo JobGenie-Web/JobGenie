@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { CandidateSidebar } from "./CandidateSidebar";
 import { CandidateHeader } from "./CandidateHeader";
+import { Toaster } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/server";
 
 interface CandidateLayoutProps {
@@ -58,6 +59,7 @@ export async function CandidateLayout({ children, pageTitle, pageDescription }: 
                     </main>
                 </SidebarInset>
             </div>
+            <Toaster />
         </SidebarProvider>
     );
 }
