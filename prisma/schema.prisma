@@ -71,6 +71,7 @@ model Candidate {
   phone                   String   @db.VarChar(20)
   alternative_phone       String?  @db.VarChar(20)
   country                 String?  @db.VarChar(100)
+  membership_no           String?  @db.VarChar(20)
   
   years_of_experience     Int?      @default(0)
   experience_level        ExperienceLevel? @default(entry)

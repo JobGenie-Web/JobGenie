@@ -14,6 +14,7 @@ import {
     sendVerificationEmail,
 } from "@/lib/email";
 import crypto from "crypto";
+import { generateMembershipNumber } from "@/lib/utils/membership";
 
 export type ActionState = {
     success: boolean;
@@ -127,6 +128,9 @@ export async function registerCandidate(
             };
         }
 
+        // Generate unique membership number
+        const membershipNumber = await generateMembershipNumber();
+
         // Store additional candidate profile data
         const { error: profileError } = await supabase.from("candidates").insert({
             user_id: authData.user.id,
@@ -141,6 +145,7 @@ export async function registerCandidate(
             email: data.email,
             current_position: "",
             industry: "",
+            membership_no: membershipNumber,
             created_at: now,
             updated_at: now,
         });
