@@ -23,6 +23,7 @@ interface UserMenuProps {
         lastName: string;
         email: string;
         profileImage?: string;
+        membershipNo?: string;
     };
 }
 
@@ -96,6 +97,11 @@ export function UserMenu({ user }: UserMenuProps) {
                         <p className="text-xs leading-none text-muted-foreground">
                             {user.email}
                         </p>
+                        {user.membershipNo && (
+                            <p className="text-xs leading-none font-mono mt-1 text-green-500 font-bold">
+                                Membership No: {user.membershipNo}
+                            </p>
+                        )}
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

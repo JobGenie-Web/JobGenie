@@ -11,6 +11,7 @@ interface CandidateHeaderProps {
         lastName: string;
         email: string;
         profileImage?: string;
+        membershipNo?: string;
     };
     pageTitle?: string;
     pageDescription?: string;

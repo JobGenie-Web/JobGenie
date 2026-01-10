@@ -38,6 +38,7 @@ interface CandidateData {
     professional_summary?: string;
     approval_status: string;
     rejection_reason?: string;
+    membership_no?: string;
     work_experiences: Array<{
         job_title: string;
         company: string;
@@ -176,6 +177,12 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                             <p className="text-muted-foreground">Name</p>
                                             <p className="font-medium">{candidate.first_name} {candidate.last_name}</p>
                                         </div>
+                                        {candidate.membership_no && (
+                                            <div>
+                                                <p className="text-muted-foreground">Membership No.</p>
+                                                <p className="font-medium font-mono">{candidate.membership_no}</p>
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="text-muted-foreground">Email</p>
                                             <p className="font-medium">{candidate.email}</p>
