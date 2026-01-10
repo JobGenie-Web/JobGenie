@@ -8,7 +8,7 @@ export default async function MISDashboardPage() {
 
     // Fetch counts for dashboard stats
     const [candidatesCount, employersCount, jobsCount] = await Promise.all([
-        supabase.from('candidates').select('id', { count: 'exact', head: true }),
+        supabase.from('candidates').select('id', { count: 'exact', head: true }).eq('profile_completed', true),
         supabase.from('employers').select('id', { count: 'exact', head: true }),
         supabase.from('jobs').select('id', { count: 'exact', head: true }),
     ]);
