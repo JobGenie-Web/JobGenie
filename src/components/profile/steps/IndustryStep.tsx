@@ -15,6 +15,7 @@ interface IndustryStepProps {
     industry: string;
     onIndustryChange: (industry: string) => void;
     onCVExtracted: (data: CVExtractionResult) => void;
+    onFileSelect: (file: File | null) => void;
     onSkipCV: () => void;
     onNext: () => void;
 }
@@ -23,6 +24,7 @@ export function IndustryStep({
     industry,
     onIndustryChange,
     onCVExtracted,
+    onFileSelect,
     onSkipCV,
     onNext,
 }: IndustryStepProps) {
@@ -54,6 +56,7 @@ export function IndustryStep({
                     <CardContent>
                         <CVUpload
                             onExtracted={onCVExtracted}
+                            onFileSelect={onFileSelect}
                             onSkip={onSkipCV}
                         />
                     </CardContent>

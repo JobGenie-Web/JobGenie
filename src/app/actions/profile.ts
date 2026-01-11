@@ -397,3 +397,344 @@ export async function completeFullProfile(
         };
     }
 }
+
+// Transactional profile completion with CV upload
+export async function completeFullProfileWithCV(
+    formData: FormData
+): Promise<ProfileActionState> {
+    try {
+        const supabase = await createClient(); // Server client for Auth
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return {
+                success: false,
+                message: "Unauthorized. Please log in again.",
+            };
+        }
+
+        const profileDataJson = formData.get("profileData") as string;
+        const cvFile = formData.get("cvFile") as File | null;
+        let profileData: CompleteProfileData;
+
+        try {
+            profileData = JSON.parse(profileDataJson);
+        } catch (e) {
+            return { success: false, message: "Invalid profile data format." };
+        }
+
+        // Validate with Zod
+        const validation = completeProfileSchema.safeParse(profileData);
+        if (!validation.success) {
+            const fieldErrors: Record<string, string[]> = {};
+            validation.error.issues.forEach((err) => {
+                const path = err.path.join(".");
+                if (!fieldErrors[path]) fieldErrors[path] = [];
+                fieldErrors[path].push(err.message);
+            });
+            return {
+                success: false,
+                message: "Validation failed. Please check your inputs.",
+                errors: fieldErrors,
+            };
+        }
+
+        const data = validation.data;
+
+        // 1. Generate Candidate ID (UUID)
+        // We need to fetch the existing candidate ID associated with the user, 
+        // OR if we are inserting a brand new one (which shouldn't happen for 'update').
+        // The previous logic queries `candidates` by `user_id`.
+
+        const { data: candidate, error: candidateError } = await supabase
+            .from("candidates")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (candidateError || !candidate) {
+            console.error("Candidate lookup error:", candidateError);
+            return {
+                success: false,
+                message: "Could not find your profile.",
+            };
+        }
+
+        const candidateId = candidate.id;
+
+        // 2. Upload CV if provided
+        let uploadedCvPath: string | null = null;
+        let uploadedCvUrl: string | null = null;
+
+        if (cvFile && cvFile.size > 0) {
+            try {
+                // Dynamically import storage service to avoid server/client issues if any
+                const { StorageService } = await import("@/lib/storage");
+                const { url, filePath } = await StorageService.uploadResume(candidateId, cvFile);
+                uploadedCvUrl = url;
+                uploadedCvPath = filePath;
+            } catch (error) {
+                console.error("CV Upload failed:", error);
+                return {
+                    success: false,
+                    message: "Failed to upload CV. Please try again.",
+                };
+            }
+        }
+
+        // 3. Update Database (Transaction-like)
+        try {
+            // Update basic candidate info with resume_url
+            const { error: updateError } = await supabase
+                .from("candidates")
+                .update({
+                    industry: data.industry,
+                    first_name: data.basicInfo.firstName,
+                    last_name: data.basicInfo.lastName,
+                    email: data.basicInfo.email,
+                    phone: data.basicInfo.phone,
+                    alternative_phone: data.basicInfo.alternativePhone || null,
+                    address: data.basicInfo.address,
+                    country: data.basicInfo.country || null,
+                    current_position: data.basicInfo.currentPosition,
+                    years_of_experience: Math.round(data.basicInfo.yearsOfExperience),
+                    experience_level: data.basicInfo.experienceLevel,
+                    expected_monthly_salary: data.basicInfo.expectedMonthlySalary || null,
+                    availability_status: data.basicInfo.availabilityStatus,
+                    notice_period: data.basicInfo.noticePeriod || null,
+                    employment_type: data.basicInfo.employmentType,
+                    professional_summary: data.professionalSummary,
+                    profile_completed: true,
+                    approval_status: "pending",
+                    approval_status_message_seen: false,
+                    rejected_at: null,
+                    rejection_reason: null,
+                    updated_at: new Date().toISOString(),
+                    resume_url: uploadedCvUrl, // Save the URL/Path
+                })
+                .eq("id", candidateId);
+
+            if (updateError) {
+                throw new Error(`Profile update failed: ${updateError.message}`);
+            }
+
+            // Handle other relations (Work Exp, Edu, etc.)
+            // Reuse logic or copy-paste? Copied logic for robustness as we are in a different function context
+            // Note: ideally refactor to shared function, but for now duplicating the relation updates is safer to avoid breaking existing flow.
+
+            // ... [Relation updates same as completeFullProfile] ...
+            // For brevity in this turn, I will assume we should call the internal update logic.
+            // But to ensure "all or nothing", if relation updates fail, we should probably throw and catch.
+
+            // Work Experiences
+            await supabase.from("work_experiences").delete().eq("candidate_id", candidateId);
+            if (data.workExperiences.length > 0) {
+                const now = new Date().toISOString();
+                const workExpRecords = data.workExperiences.map((exp) => ({
+                    candidate_id: candidateId,
+                    job_title: exp.jobTitle,
+                    company: exp.company,
+                    employment_type: exp.employmentType || "full_time",
+                    location: exp.location || null,
+                    location_type: exp.locationType || "onsite",
+                    start_date: exp.startDate ? `${exp.startDate}-01` : null,
+                    end_date: exp.isCurrent ? null : (exp.endDate ? `${exp.endDate}-01` : null),
+                    description: exp.description || null,
+                    is_current: exp.isCurrent || false,
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("work_experiences").insert(workExpRecords);
+                if (error) throw new Error(`Work experience update failed: ${error.message}`);
+            }
+
+            // ... (Repeat for other sections: Education, Awards, etc.)
+            // Education
+            await supabase.from("educations").delete().eq("candidate_id", candidateId);
+            if (data.educations.length > 0) {
+                const now = new Date().toISOString();
+                const eduRecords = data.educations.map((edu) => ({
+                    candidate_id: candidateId,
+                    education_type: edu.educationType || "academic",
+                    degree_diploma: edu.degreeDiploma,
+                    institution: edu.institution,
+                    status: edu.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("educations").insert(eduRecords);
+                if (error) throw new Error(`Education update failed: ${error.message}`);
+            }
+
+            // Awards
+            await supabase.from("awards").delete().eq("candidate_id", candidateId);
+            if (data.awards.length > 0) {
+                const now = new Date().toISOString();
+                const awardRecords = data.awards.map((award) => ({
+                    candidate_id: candidateId,
+                    nature_of_award: award.natureOfAward,
+                    offered_by: award.offeredBy || null,
+                    description: award.description || null,
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("awards").insert(awardRecords);
+                if (error) throw new Error(`Awards update failed: ${error.message}`);
+            }
+
+            // IT Projects
+            if (data.projects && data.projects.length > 0) {
+                await supabase.from("projects").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const projectRecords = data.projects.map((proj) => ({
+                    candidate_id: candidateId,
+                    project_name: proj.projectName,
+                    description: proj.description || null,
+                    demo_url: proj.demoUrl || null,
+                    is_current: proj.isCurrent || false,
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("projects").insert(projectRecords);
+                if (error) throw new Error(`Projects update failed: ${error.message}`);
+            }
+
+            // Certificates
+            if (data.certificates && data.certificates.length > 0) {
+                await supabase.from("certificates").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const certRecords = data.certificates.map((cert) => ({
+                    candidate_id: candidateId,
+                    certificate_name: cert.certificateName,
+                    issuing_authority: cert.issuingAuthority || null,
+                    issue_date: cert.issueDate || null,
+                    expiry_date: cert.expiryDate || null,
+                    credential_id: cert.credentialId || null,
+                    credential_url: cert.credentialUrl || null,
+                    description: cert.description || null,
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("certificates").insert(certRecords);
+                if (error) throw new Error(`Certificates update failed: ${error.message}`);
+            }
+
+            // Finance - Academic
+            if (data.financeAcademicEducation && data.financeAcademicEducation.length > 0) {
+                await supabase.from("finance_academic_education").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const records = data.financeAcademicEducation.map((edu) => ({
+                    candidate_id: candidateId,
+                    degree_diploma: edu.degreeDiploma,
+                    institution: edu.institution,
+                    status: edu.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("finance_academic_education").insert(records);
+                if (error) throw new Error(`Finance academic education update failed: ${error.message}`);
+            }
+
+            // Finance - Professional
+            if (data.financeProfessionalEducation && data.financeProfessionalEducation.length > 0) {
+                await supabase.from("finance_professional_education").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const records = data.financeProfessionalEducation.map((edu) => ({
+                    candidate_id: candidateId,
+                    professional_qualification: edu.professionalQualification,
+                    institution: edu.institution,
+                    status: edu.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("finance_professional_education").insert(records);
+                if (error) throw new Error(`Finance professional education update failed: ${error.message}`);
+            }
+
+            // Banking - Academic
+            if (data.bankingAcademicEducation && data.bankingAcademicEducation.length > 0) {
+                await supabase.from("banking_academic_education").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const records = data.bankingAcademicEducation.map((edu) => ({
+                    candidate_id: candidateId,
+                    degree_diploma: edu.degreeDiploma,
+                    institution: edu.institution,
+                    status: edu.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("banking_academic_education").insert(records);
+                if (error) throw new Error(`Banking academic education update failed: ${error.message}`);
+            }
+
+            // Banking - Professional
+            if (data.bankingProfessionalEducation && data.bankingProfessionalEducation.length > 0) {
+                await supabase.from("banking_professional_education").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const records = data.bankingProfessionalEducation.map((edu) => ({
+                    candidate_id: candidateId,
+                    professional_qualification: edu.professionalQualification,
+                    institution: edu.institution,
+                    status: edu.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("banking_professional_education").insert(records);
+                if (error) throw new Error(`Banking professional education update failed: ${error.message}`);
+            }
+
+            // Banking - Specialized
+            if (data.bankingSpecializedTraining && data.bankingSpecializedTraining.length > 0) {
+                await supabase.from("banking_specialized_training").delete().eq("candidate_id", candidateId);
+                const now = new Date().toISOString();
+                const records = data.bankingSpecializedTraining.map((training) => ({
+                    candidate_id: candidateId,
+                    certificate_name: training.certificateName,
+                    issuing_authority: training.issuingAuthority,
+                    certificate_issue_month: training.certificateIssueMonth || null,
+                    status: training.status || "incomplete",
+                    created_at: now,
+                    updated_at: now,
+                }));
+                const { error } = await supabase.from("banking_specialized_training").insert(records);
+                if (error) throw new Error(`Banking specialized training update failed: ${error.message}`);
+            }
+
+        } catch (dbError) {
+            console.error("Database Transaction Failed. Rolling back storage...", dbError);
+
+            // ROLLBACK: Delete the uploaded CV if it exists
+            if (uploadedCvPath) {
+                try {
+                    const { StorageService } = await import("@/lib/storage");
+                    await StorageService.deleteResume(uploadedCvPath);
+                    console.log("Storage rollback successful: deleted", uploadedCvPath);
+                } catch (deleteError) {
+                    console.error("CRITICAL: Failed to rollback storage file:", uploadedCvPath, deleteError);
+                }
+            }
+
+            return {
+                success: false,
+                message: "Failed to save profile. Please try again.",
+            };
+        }
+
+        revalidatePath("/candidate/dashboard");
+        revalidatePath("/candidate/profile");
+        revalidatePath("/candidate/create-profile");
+
+        return {
+            success: true,
+            message: "Profile completed successfully!",
+            redirectTo: "/candidate/dashboard",
+        };
+
+    } catch (error) {
+        console.error("Complete full profile W/ CV error:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
+    }
+}

@@ -11,6 +11,7 @@ import type { CVExtractionResult } from "@/lib/validations/profile-schema";
 
 interface CVUploadProps {
     onExtracted: (data: CVExtractionResult) => void;
+    onFileSelect?: (file: File | null) => void;
     onSkip: () => void;
     isLoading?: boolean;
 }
@@ -23,7 +24,7 @@ const ALLOWED_TYPES = [
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-export function CVUpload({ onExtracted, onSkip, isLoading: parentLoading }: CVUploadProps) {
+export function CVUpload({ onExtracted, onFileSelect, onSkip, isLoading: parentLoading }: CVUploadProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
@@ -48,6 +49,7 @@ export function CVUpload({ onExtracted, onSkip, isLoading: parentLoading }: CVUp
         }
 
         setFile(selectedFile);
+        if (onFileSelect) onFileSelect(selectedFile);
         setExtractionResult(null);
         setIsExtracting(true);
         setUploadProgress(0);
@@ -122,6 +124,7 @@ export function CVUpload({ onExtracted, onSkip, isLoading: parentLoading }: CVUp
 
     const clearFile = () => {
         setFile(null);
+        if (onFileSelect) onFileSelect(null);
         setExtractionResult(null);
         setUploadProgress(0);
     };

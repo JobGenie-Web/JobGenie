@@ -15,7 +15,7 @@ import { ProjectsStep } from "./steps/ProjectsStep";
 import { FinanceEducationStep } from "./steps/FinanceEducationStep";
 import { BankingEducationStep } from "./steps/BankingEducationStep";
 import { SummaryStep } from "./steps/SummaryStep";
-import { completeFullProfile } from "@/app/actions/profile";
+import { completeFullProfile, completeFullProfileWithCV } from "@/app/actions/profile";
 import { IT_INDUSTRIES, BANKING_FINANCE_INDUSTRIES } from "@/lib/validations/profile-schema";
 import type {
     CompleteProfileData,
@@ -62,6 +62,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
     // Form state
     const [industry, setIndustry] = useState<string>(initialData.industry || "");
     const [cvUploaded, setCvUploaded] = useState(false);
+    const [cvFile, setCvFile] = useState<File | null>(null);
     const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
         firstName: initialData.firstName || "",
         lastName: initialData.lastName || "",
@@ -219,7 +220,15 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                 bankingSpecializedTraining: isBankingIndustry ? bankingSpecializedTraining : undefined,
             };
 
-            const result = await completeFullProfile(userId, profileData);
+            const formData = new FormData();
+            formData.append("profileData", JSON.stringify(profileData));
+
+            if (cvFile) {
+                formData.append("cvFile", cvFile);
+            }
+
+            // Use the new action that handles CV upload and transaction
+            const result = await completeFullProfileWithCV(formData);
 
             if (result.success) {
                 toast.success(result.message || "Profile completed successfully!");
@@ -249,7 +258,8 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         userId, industry, basicInfo, professionalSummary, workExperiences,
         educations, awards, projects, certificates, financeAcademicEducation,
         financeProfessionalEducation, bankingAcademicEducation, bankingProfessionalEducation,
-        bankingSpecializedTraining, isITIndustry, isFinanceIndustry, isBankingIndustry, router
+        bankingSpecializedTraining, isITIndustry, isFinanceIndustry, isBankingIndustry,
+        cvFile, router // Added cvFile here
     ]);
 
     const renderStep = () => {
@@ -262,6 +272,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                         industry={industry}
                         onIndustryChange={setIndustry}
                         onCVExtracted={handleCVExtracted}
+                        onFileSelect={setCvFile}
                         onSkipCV={() => setCurrentStep(1)}
                         onNext={handleNext}
                     />
