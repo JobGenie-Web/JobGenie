@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CandidateLayout } from '@/components/candidate';
 import { ApprovalStatusNotification } from '@/components/candidate/ApprovalStatusNotification';
 import { createClient } from '@/lib/supabase/server';
+import { RestrictionToastListener } from '@/components/candidate/RestrictionToastListener';
 
 export default async function CandidateDashboardPage() {
     // Fetch candidate approval status
@@ -41,6 +42,8 @@ export default async function CandidateDashboardPage() {
             pageTitle="Dashboard"
             pageDescription="Welcome back! Manage your job applications and profile."
         >
+            <RestrictionToastListener />
+
             {showNotification && approvalStatus && (
                 <ApprovalStatusNotification
                     approvalStatus={approvalStatus}

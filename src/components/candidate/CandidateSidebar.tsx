@@ -68,7 +68,7 @@ export function CandidateSidebar() {
                     {/* Logo */}
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground overflow-hidden">
                         <Image
-                            src="/logo.png"
+                            src="/logo.jpg"
                             alt="JobGenie"
                             width={36}
                             height={36}
