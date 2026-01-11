@@ -17,8 +17,17 @@ import {
 } from "@/types/profile-types";
 import { GraduationCap, Award as AwardIcon, Building, Pencil, Trash2, Plus } from "lucide-react";
 import { EducationDialog } from "./dialogs/EducationDialog";
+import { FinanceEducationDialog } from "./dialogs/FinanceEducationDialog";
+import { BankingEducationDialog } from "./dialogs/BankingEducationDialog";
 import { DeleteConfirmDialog } from "./dialogs/DeleteConfirmDialog";
 import { deleteEducation } from "@/app/actions/profile-mutations";
+import {
+    deleteFinanceAcademicEducation,
+    deleteFinanceProfessionalEducation,
+    deleteBankingAcademicEducation,
+    deleteBankingProfessionalEducation,
+    deleteBankingSpecializedTraining,
+} from "@/app/actions/finance-banking-mutations";
 import { useToast } from "@/hooks/use-toast";
 
 interface EducationSectionProps {
@@ -49,7 +58,18 @@ export function EducationSection({
     const [educationType, setEducationType] = useState<"academic" | "professional">("academic");
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [eduToDelete, setEduToDelete] = useState<string | null>(null);
+    const [deleteType, setDeleteType] = useState<"general" | "finance_academic" | "finance_professional" | "banking_academic" | "banking_professional" | "banking_training">("general");
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Finance Education dialog states
+    const [financeDialogOpen, setFinanceDialogOpen] = useState(false);
+    const [selectedFinanceEducation, setSelectedFinanceEducation] = useState<FinanceAcademicEducation | FinanceProfessionalEducation | null>(null);
+    const [financeEducationType, setFinanceEducationType] = useState<"academic" | "professional">("academic");
+
+    // Banking Education dialog states
+    const [bankingDialogOpen, setBankingDialogOpen] = useState(false);
+    const [selectedBankingEducation, setSelectedBankingEducation] = useState<BankingAcademicEducation | BankingProfessionalEducation | BankingSpecializedTraining | null>(null);
+    const [bankingEducationType, setBankingEducationType] = useState<"academic" | "professional" | "training">("academic");
 
     const hasAnyEducation = educations.length > 0 ||
         financeAcademic.length > 0 ||
@@ -90,9 +110,36 @@ export function EducationSection({
         setDialogOpen(true);
     };
 
-    const handleDeleteClick = (id: string) => {
+    const handleDeleteClick = (id: string, type: "general" | "finance_academic" | "finance_professional" | "banking_academic" | "banking_professional" | "banking_training" = "general") => {
         setEduToDelete(id);
+        setDeleteType(type);
         setDeleteDialogOpen(true);
+    };
+
+    // Finance Education handlers
+    const handleFinanceEdit = (edu: FinanceAcademicEducation | FinanceProfessionalEducation, type: "academic" | "professional") => {
+        setSelectedFinanceEducation(edu);
+        setFinanceEducationType(type);
+        setFinanceDialogOpen(true);
+    };
+
+    const handleFinanceAdd = (type: "academic" | "professional") => {
+        setSelectedFinanceEducation(null);
+        setFinanceEducationType(type);
+        setFinanceDialogOpen(true);
+    };
+
+    // Banking Education handlers
+    const handleBankingEdit = (edu: BankingAcademicEducation | BankingProfessionalEducation | BankingSpecializedTraining, type: "academic" | "professional" | "training") => {
+        setSelectedBankingEducation(edu);
+        setBankingEducationType(type);
+        setBankingDialogOpen(true);
+    };
+
+    const handleBankingAdd = (type: "academic" | "professional" | "training") => {
+        setSelectedBankingEducation(null);
+        setBankingEducationType(type);
+        setBankingDialogOpen(true);
     };
 
     const handleDeleteConfirm = async () => {
@@ -255,10 +302,8 @@ export function EducationSection({
         );
     };
 
-    // Finance industry education (view only for now)
+    // Finance industry education with CRUD
     const renderFinanceEducation = () => {
-        if (financeAcademic.length === 0 && financeProfessional.length === 0) return null;
-
         return (
             <Tabs defaultValue="academic" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
@@ -267,16 +312,47 @@ export function EducationSection({
                 </TabsList>
 
                 <TabsContent value="academic" className="space-y-4 mt-4">
-                    {financeAcademic.map((edu, index) => (
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFinanceAdd("academic")}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Academic Education
+                        </Button>
+                    </div>
+                    {financeAcademic.length > 0 ? financeAcademic.map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
-                            <div className="flex gap-4">
+                            <div className="group relative flex gap-4">
                                 <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+
+                                {/* Edit/Delete buttons */}
+                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleFinanceEdit(edu, "academic")}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteClick(edu.id, "finance_academic")}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1 pr-16 md:pr-0">
                                     <h3 className="font-semibold">{edu.degree_diploma}</h3>
                                     <p className="text-sm text-muted-foreground">{edu.institution}</p>
                                     <Badge variant="outline" className={`mt-2 text-xs ${getStatusColor(edu.status)}`}>
@@ -285,20 +361,53 @@ export function EducationSection({
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No academic education added</p>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="professional" className="space-y-4 mt-4">
-                    {financeProfessional.map((edu, index) => (
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFinanceAdd("professional")}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Professional Education
+                        </Button>
+                    </div>
+                    {financeProfessional.length > 0 ? financeProfessional.map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
-                            <div className="flex gap-4">
+                            <div className="group relative flex gap-4">
                                 <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <AwardIcon className="h-6 w-6 text-primary" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+
+                                {/* Edit/Delete buttons */}
+                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleFinanceEdit(edu, "professional")}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteClick(edu.id, "finance_professional")}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1 pr-16 md:pr-0">
                                     <h3 className="font-semibold">{edu.professional_qualification}</h3>
                                     <p className="text-sm text-muted-foreground">{edu.institution}</p>
                                     <Badge variant="outline" className={`mt-2 text-xs ${getStatusColor(edu.status)}`}>
@@ -307,16 +416,16 @@ export function EducationSection({
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No professional education added</p>
+                    )}
                 </TabsContent>
             </Tabs>
         );
     };
 
-    // Banking industry education (view only for now)
+    // Banking industry education with CRUD
     const renderBankingEducation = () => {
-        if (bankingAcademic.length === 0 && bankingProfessional.length === 0 && bankingTraining.length === 0) return null;
-
         return (
             <Tabs defaultValue="academic" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
@@ -326,16 +435,47 @@ export function EducationSection({
                 </TabsList>
 
                 <TabsContent value="academic" className="space-y-4 mt-4">
-                    {bankingAcademic.map((edu, index) => (
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBankingAdd("academic")}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Academic Education
+                        </Button>
+                    </div>
+                    {bankingAcademic.length > 0 ? bankingAcademic.map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
-                            <div className="flex gap-4">
+                            <div className="group relative flex gap-4">
                                 <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+
+                                {/* Edit/Delete buttons */}
+                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleBankingEdit(edu, "academic")}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteClick(edu.id, "banking_academic")}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1 pr-16 md:pr-0">
                                     <h3 className="font-semibold">{edu.degree_diploma}</h3>
                                     <p className="text-sm text-muted-foreground">{edu.institution}</p>
                                     <Badge variant="outline" className={`mt-2 text-xs ${getStatusColor(edu.status)}`}>
@@ -344,20 +484,53 @@ export function EducationSection({
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No academic education added</p>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="professional" className="space-y-4 mt-4">
-                    {bankingProfessional.map((edu, index) => (
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBankingAdd("professional")}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Professional Education
+                        </Button>
+                    </div>
+                    {bankingProfessional.length > 0 ? bankingProfessional.map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
-                            <div className="flex gap-4">
+                            <div className="group relative flex gap-4">
                                 <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <AwardIcon className="h-6 w-6 text-primary" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+
+                                {/* Edit/Delete buttons */}
+                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleBankingEdit(edu, "professional")}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteClick(edu.id, "banking_professional")}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1 pr-16 md:pr-0">
                                     <h3 className="font-semibold">{edu.professional_qualification}</h3>
                                     <p className="text-sm text-muted-foreground">{edu.institution}</p>
                                     <Badge variant="outline" className={`mt-2 text-xs ${getStatusColor(edu.status)}`}>
@@ -366,26 +539,61 @@ export function EducationSection({
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No professional education added</p>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="training" className="space-y-4 mt-4">
-                    {bankingTraining.map((training, index) => (
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBankingAdd("training")}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Specialized Training
+                        </Button>
+                    </div>
+                    {bankingTraining.length > 0 ? bankingTraining.map((training, index) => (
                         <div key={training.id}>
                             {index > 0 && <Separator className="my-4" />}
-                            <div className="flex gap-4">
+                            <div className="group relative flex gap-4">
                                 <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <Building className="h-6 w-6 text-primary" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+
+                                {/* Edit/Delete buttons */}
+                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleBankingEdit(training, "training")}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteClick(training.id, "banking_training")}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1 pr-16 md:pr-0">
                                     <h3 className="font-semibold">{training.certificate_name}</h3>
                                     <p className="text-sm text-muted-foreground">{training.issuing_authority}</p>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No specialized training added</p>
+                    )}
                 </TabsContent>
             </Tabs>
         );
@@ -402,17 +610,31 @@ export function EducationSection({
                 </CardHeader>
                 <CardContent>
                     {industry.toLowerCase().includes("it") && educations.length > 0 && renderGeneralEducation()}
-                    {industry.toLowerCase().includes("finance") && (financeAcademic.length > 0 || financeProfessional.length > 0) && renderFinanceEducation()}
-                    {industry.toLowerCase().includes("banking") && (bankingAcademic.length > 0 || bankingProfessional.length > 0 || bankingTraining.length > 0) && renderBankingEducation()}
+                    {industry.toLowerCase().includes("finance") && renderFinanceEducation()}
+                    {industry.toLowerCase().includes("banking") && renderBankingEducation()}
                 </CardContent>
             </Card>
 
-            {/* Dialogs - Only for General Education */}
+            {/* Dialogs */}
             <EducationDialog
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 education={selectedEducation}
                 educationType={educationType}
+            />
+
+            <FinanceEducationDialog
+                open={financeDialogOpen}
+                onOpenChange={setFinanceDialogOpen}
+                education={selectedFinanceEducation}
+                educationType={financeEducationType}
+            />
+
+            <BankingEducationDialog
+                open={bankingDialogOpen}
+                onOpenChange={setBankingDialogOpen}
+                education={selectedBankingEducation}
+                educationType={bankingEducationType}
             />
 
             <DeleteConfirmDialog
