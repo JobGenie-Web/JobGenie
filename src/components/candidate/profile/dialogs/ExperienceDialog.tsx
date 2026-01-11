@@ -111,9 +111,16 @@ export function ExperienceDialog({ open, onOpenChange, experience }: ExperienceD
     async function onSubmit(data: ExperienceFormData) {
         setIsSubmitting(true);
         try {
+            // Convert YYYY-MM dates to YYYY-MM-01 for PostgreSQL date type
+            const formattedData = {
+                ...data,
+                start_date: data.start_date ? `${data.start_date}-01` : data.start_date,
+                end_date: data.end_date ? `${data.end_date}-01` : data.end_date,
+            };
+
             const result = isEditing
-                ? await updateExperience(experience.id, data)
-                : await addExperience(data);
+                ? await updateExperience(experience.id, formattedData)
+                : await addExperience(formattedData);
 
             if (result.success) {
                 toast({
@@ -131,9 +138,10 @@ export function ExperienceDialog({ open, onOpenChange, experience }: ExperienceD
                 });
             }
         } catch (error) {
+            console.error(`Error ${isEditing ? "updating" : "adding"} experience:`, error);
             toast({
                 title: "Error",
-                description: "Failed to save experience",
+                description: "An unexpected error occurred",
                 variant: "destructive",
             });
         } finally {

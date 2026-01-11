@@ -38,12 +38,12 @@ export function AboutSection({ profile }: AboutSectionProps) {
             </CardHeader>
             <CardContent className="space-y-4">
                 {profile.professional_summary && (
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground text-justify leading-relaxed">
                         {profile.professional_summary}
                     </p>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 py-2 gap-4">
                     {profile.years_of_experience !== null && (
                         <div className="flex items-start gap-3">
                             <div className="p-2 rounded-lg bg-primary/10">

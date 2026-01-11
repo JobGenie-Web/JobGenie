@@ -83,7 +83,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
@@ -107,7 +107,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <AwardIcon className="h-6 w-6 text-primary" />
                                     </div>
@@ -145,7 +145,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
@@ -167,7 +167,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <AwardIcon className="h-6 w-6 text-primary" />
                                     </div>
@@ -204,7 +204,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
@@ -226,7 +226,7 @@ export function EducationSection({
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <AwardIcon className="h-6 w-6 text-primary" />
                                     </div>
@@ -248,7 +248,7 @@ export function EducationSection({
                         <div key={training.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 hidden md:flex">
                                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <Building className="h-6 w-6 text-primary" />
                                     </div>

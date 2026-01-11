@@ -195,7 +195,7 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
                                 {/* Company Header */}
                                 <div className="mb-6">
                                     <div className="flex gap-4">
-                                        <div className="flex-shrink-0">
+                                        <div className="flex-shrink-0 hidden md:flex">
                                             <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center">
                                                 <Briefcase className="h-7 w-7 text-primary" />
                                             </div>
@@ -210,14 +210,14 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
                                 </div>
 
                                 {/* Positions at this company */}
-                                <div className="space-y-6 ml-[72px]">
+                                <div className="space-y-6 md:ml-[72px]">
                                     {groupedByCompany[company].map((exp, posIndex) => (
                                         <div key={exp.id}>
                                             {posIndex > 0 && <Separator className="my-6" />}
 
                                             <div className="group relative">
-                                                {/* Edit/Delete buttons */}
-                                                <div className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                                {/* Edit/Delete buttons - Always visible on mobile, hover on desktop */}
+                                                <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -236,7 +236,7 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
                                                     </Button>
                                                 </div>
 
-                                                <h4 className="font-semibold text-lg">
+                                                <h4 className="font-semibold text-lg pr-16 md:pr-0">
                                                     {exp.job_title || "Position"}
                                                 </h4>
 
