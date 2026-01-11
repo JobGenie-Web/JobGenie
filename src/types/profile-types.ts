@@ -115,7 +115,7 @@ export interface CandidateProfile {
     notice_period: string | null;
     employment_type: string | null;
     professional_summary: string | null;
-    profile_image: string | null;
+    profile_image_url: string | null;
     membership_no: string | null;
     approval_status: string;
     resume_url: string | null;

@@ -415,6 +415,7 @@ export async function completeFullProfileWithCV(
 
         const profileDataJson = formData.get("profileData") as string;
         const cvFile = formData.get("cvFile") as File | null;
+        const profileImageFile = formData.get("profileImageFile") as File | null;
         let profileData: CompleteProfileData;
 
         try {
@@ -462,7 +463,25 @@ export async function completeFullProfileWithCV(
 
         const candidateId = candidate.id;
 
-        // 2. Upload CV if provided
+        // 2. Upload Profile Image if provided
+        let uploadedProfileImageUrl: string | null = null;
+
+        if (profileImageFile && profileImageFile.size > 0) {
+            try {
+                // Dynamically import storage service
+                const { StorageService } = await import("@/lib/storage");
+                const { url } = await StorageService.uploadProfileImage(candidateId, profileImageFile);
+                uploadedProfileImageUrl = url;
+            } catch (error) {
+                console.error("Profile Image Upload failed:", error);
+                return {
+                    success: false,
+                    message: "Failed to upload profile image. Please try again.",
+                };
+            }
+        }
+
+        // 3. Upload CV if provided
         let uploadedCvPath: string | null = null;
         let uploadedCvUrl: string | null = null;
 
@@ -511,6 +530,7 @@ export async function completeFullProfileWithCV(
                     rejection_reason: null,
                     updated_at: new Date().toISOString(),
                     resume_url: uploadedCvUrl, // Save the URL/Path
+                    profile_image_url: uploadedProfileImageUrl,
                 })
                 .eq("id", candidateId);
 

@@ -197,6 +197,7 @@ export const basicInfoSchema = z.object({
     availabilityStatus: availabilityStatusSchema.default("available"),
     noticePeriod: z.string().max(50).optional(),
     employmentType: employmentTypeSchema.default("full_time"),
+    profileImageUrl: z.string().optional(),
 });
 
 export type BasicInfoData = z.infer<typeof basicInfoSchema>;

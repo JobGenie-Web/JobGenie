@@ -42,7 +42,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 {/* Avatar - Overlapping cover */}
                 <div className="flex items-start justify-between -mt-16 mb-4">
                     <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
-                        <AvatarImage src={profile.profile_image || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
+                        <AvatarImage src={profile.profile_image_url || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
                         <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
                             {initials}
                         </AvatarFallback>

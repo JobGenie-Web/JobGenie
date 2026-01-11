@@ -22,7 +22,7 @@ async function getCurrentUser() {
     // Get additional user data from users table
     const { data: userData } = await supabase
         .from('users')
-        .select('first_name, last_name, profile_image')
+        .select('first_name, last_name, profile_image_url')
         .eq('id', user.id)
         .single();
 
@@ -31,7 +31,7 @@ async function getCurrentUser() {
         email: user.email || '',
         firstName: userData?.first_name || user.user_metadata?.first_name || '',
         lastName: userData?.last_name || user.user_metadata?.last_name || '',
-        profileImage: userData?.profile_image || undefined,
+        profileImage: userData?.profile_image_url || undefined,
     };
 }
 

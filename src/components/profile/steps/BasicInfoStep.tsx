@@ -14,6 +14,7 @@ interface BasicInfoStepProps {
     onChange: (data: BasicInfoData) => void;
     onNext: () => void;
     onPrevious: () => void;
+    onImageSelect: (file: File | null) => void;
 }
 
 const EXPERIENCE_LEVELS = [
@@ -69,13 +70,32 @@ function FormField({
     );
 }
 
-export function BasicInfoStep({ data, onChange, onNext, onPrevious }: BasicInfoStepProps) {
+export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelect }: BasicInfoStepProps) {
     const updateField = <K extends keyof BasicInfoData>(key: K, value: BasicInfoData[K]) => {
         onChange({ ...data, [key]: value });
     };
 
     const canProceed = data.firstName && data.lastName && data.email && data.phone &&
         data.address && data.currentPosition;
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert("File size must be less than 5MB");
+                return;
+            }
+            if (!file.type.startsWith("image/")) {
+                alert("Please upload an image file");
+                return;
+            }
+
+            // Create object URL for preview
+            const objectUrl = URL.createObjectURL(file);
+            updateField("profileImageUrl", objectUrl);
+            onImageSelect(file);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -101,6 +121,35 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious }: BasicInfoS
                                 placeholder="Doe"
                             />
                         </FormField>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="shrink-0">
+                            {data.profileImageUrl ? (
+                                <img
+                                    src={data.profileImageUrl}
+                                    alt="Profile Preview"
+                                    className="h-24 w-24 rounded-full object-cover border-2 border-primary/20"
+                                />
+                            ) : (
+                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted border-2 border-dashed border-muted-foreground/25">
+                                    <User className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="profileImage" className="text-base font-medium">Profile Picture</Label>
+                            <p className="text-sm text-muted-foreground pb-2">
+                                Upload a professional picture (Max 5MB)
+                            </p>
+                            <Input
+                                id="profileImage"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="w-full max-w-xs"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
@@ -297,6 +346,6 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious }: BasicInfoS
                 onNext={onNext}
                 canProceed={!!canProceed}
             />
-        </div>
+        </div >
     );
 }

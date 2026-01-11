@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Loader2, User, Briefcase, GraduationCap, Award, FolderGit2, BadgeCheck as CertIcon, CheckCircle2, XCircle, RotateCcw, FileText } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -40,6 +41,7 @@ interface CandidateData {
     rejection_reason?: string;
     membership_no?: string;
     resume_url?: string;
+    profile_image_url?: string;
     work_experiences: Array<{
         job_title: string;
         company: string;
@@ -173,17 +175,24 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                         <User className="h-5 w-5 text-primary" />
                                         <h3 className="text-lg font-semibold">Basic Information</h3>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
+
+                                    {/* Profile Image */}
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <Avatar className="h-20 w-20 border-2 border-border">
+                                            <AvatarImage src={candidate.profile_image_url || undefined} alt={`${candidate.first_name} ${candidate.last_name}`} />
+                                            <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+                                                {candidate.first_name[0]}{candidate.last_name[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
                                         <div>
-                                            <p className="text-muted-foreground">Name</p>
-                                            <p className="font-medium">{candidate.first_name} {candidate.last_name}</p>
+                                            <p className="font-semibold text-base">{candidate.first_name} {candidate.last_name}</p>
+                                            {candidate.membership_no && (
+                                                <p className="text-sm text-muted-foreground font-mono">Member: {candidate.membership_no}</p>
+                                            )}
                                         </div>
-                                        {candidate.membership_no && (
-                                            <div>
-                                                <p className="text-muted-foreground">Membership No.</p>
-                                                <p className="font-medium font-mono">{candidate.membership_no}</p>
-                                            </div>
-                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <p className="text-muted-foreground">Email</p>
                                             <p className="font-medium">{candidate.email}</p>

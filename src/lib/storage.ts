@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 
 const RESUME_BUCKET = "resume";
+const PROFILE_IMAGE_BUCKET = "profile-images";
 
 /**
  * Watermarks a PDF file with the company logo.
@@ -54,7 +55,8 @@ export async function uploadFile(
     bucket: string,
     filePath: string,
     fileBody: ArrayBuffer | Uint8Array | Buffer,
-    contentType: string
+    contentType: string,
+    allowedMimeTypes: string[] = ["application/pdf"] // Default to PDF for backward compatibility
 ) {
     const supabase = createAdminClient();
 
@@ -66,7 +68,7 @@ export async function uploadFile(
         const { error: createError } = await supabase.storage.createBucket(bucket, {
             public: true, // Make public to allow resume_url access
             fileSizeLimit: 5242880, // 5MB limit
-            allowedMimeTypes: ["application/pdf"],
+            allowedMimeTypes: allowedMimeTypes,
         });
 
         if (createError) {
@@ -132,10 +134,30 @@ export const StorageService = {
         const fileName = `resume_${Date.now()}.pdf`; // Standardize name
         const filePath = `${candidateId}/${fileName}`;
 
-        const url = await uploadFile(RESUME_BUCKET, filePath, fileData, "application/pdf");
+        const url = await uploadFile(RESUME_BUCKET, filePath, fileData, "application/pdf", ["application/pdf"]);
         return { url, filePath };
     },
     deleteResume: async (filePath: string) => {
         await deleteFile(RESUME_BUCKET, filePath);
+    },
+    uploadProfileImage: async (candidateId: string, file: File) => {
+        const buffer = await file.arrayBuffer();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `profile_${Date.now()}.${fileExt}`;
+        const filePath = `${candidateId}/${fileName}`;
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            throw new Error("Invalid file type. Only images are allowed.");
+        }
+
+        const url = await uploadFile(PROFILE_IMAGE_BUCKET, filePath, buffer, file.type, [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/gif",
+            "image/webp"
+        ]);
+        return { url, filePath };
     }
 };

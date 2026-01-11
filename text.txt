@@ -38,3 +38,13 @@ use Zod, Shadcn components and keep consistancy with the other pages and functio
 Also both create profile and store cv tasks must do in same time. if any task fail. other task must stop. so if fail to create candidate cannot store cv and if fail to store cv cannot create profile. logo is in public folder
 
 deeply gothrough the codebase and supabase.  use Shadcn components and keep consistancy with the other pages and functionalities. I need the fastest application. there fore use optimized queries here. follow a clean and clear file and folder structure.
+
+
+
+@mcp:supabase-mcp-server: act as a senior software engineer. now I want to store cv in supabase. after candidate extracting data from the cv when candidate create the profile that data must include a common cv. for all candidates in every industry this cv format is same. there should a resume_copy folder and common cv should save in a folder named with relevant candidate id in resume_copy folder. then resume url should save under resume_copy_url in candidate table. but when storing cv want to add the logo as a watermark to the cv.
+
+Also create profile and store original cv and store common cv tasks must do in same time. if any task fail. other tasks must stop. logo is in public folder
+
+deeply gothrough the codebase and supabase.  use Shadcn components and keep consistancy with the other pages and functionalities. I need the fastest application. there fore use optimized queries here. follow a clean and clear file and folder structure.
+
+common cv should not be boring.

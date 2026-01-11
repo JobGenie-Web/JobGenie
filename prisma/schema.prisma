@@ -87,7 +87,7 @@ model Candidate {
   employment_type         EmploymentType? @default(full_time)
   
   professional_summary    String?  @db.VarChar(1000)
-  profile_image           String?  @db.Text // URL or base64
+  profile_image_url       String?  @db.VarChar(255)
   
   approval_status         ApprovalStatus @default(pending)
   profile_completed       Boolean @default(false)

@@ -63,6 +63,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
     const [industry, setIndustry] = useState<string>(initialData.industry || "");
     const [cvUploaded, setCvUploaded] = useState(false);
     const [cvFile, setCvFile] = useState<File | null>(null);
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [basicInfo, setBasicInfo] = useState<BasicInfoData>({
         firstName: initialData.firstName || "",
         lastName: initialData.lastName || "",
@@ -227,6 +228,14 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                 formData.append("cvFile", cvFile);
             }
 
+            if (cvFile) {
+                formData.append("cvFile", cvFile);
+            }
+
+            if (profileImageFile) {
+                formData.append("profileImageFile", profileImageFile);
+            }
+
             // Use the new action that handles CV upload and transaction
             const result = await completeFullProfileWithCV(formData);
 
@@ -259,7 +268,8 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         educations, awards, projects, certificates, financeAcademicEducation,
         financeProfessionalEducation, bankingAcademicEducation, bankingProfessionalEducation,
         bankingSpecializedTraining, isITIndustry, isFinanceIndustry, isBankingIndustry,
-        cvFile, router // Added cvFile here
+        bankingSpecializedTraining, isITIndustry, isFinanceIndustry, isBankingIndustry,
+        cvFile, profileImageFile, router
     ]);
 
     const renderStep = () => {
@@ -282,6 +292,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                     <BasicInfoStep
                         data={basicInfo}
                         onChange={setBasicInfo}
+                        onImageSelect={setProfileImageFile}
                         onNext={handleNext}
                         onPrevious={handlePrevious}
                     />
