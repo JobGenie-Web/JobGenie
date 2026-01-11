@@ -49,8 +49,8 @@ const navigationItems = [
         icon: User,
     },
     {
-        title: "My Resume",
-        href: "/candidate/resume",
+        title: "My Resumes",
+        href: "/candidate/resumes",
         icon: FileText,
     },
     {

@@ -1,7 +1,8 @@
-import { Mail, Phone, MapPin, Briefcase, Calendar } from "lucide-react";
+import { Mail, Phone, MapPin, Briefcase, Calendar, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CandidateProfile } from "@/types/profile-types";
 
 interface ProfileHeaderProps {
@@ -73,6 +74,17 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                         <Briefcase className="h-4 w-4" />
                         {profile.current_position}
                     </p>
+
+                    {profile.resume_url && (
+                        <div className="mt-3">
+                            <Button variant="default" size="sm" className="h-8 gap-2 bg-green-500" asChild>
+                                <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">
+                                    <FileText className="h-3.5 w-3.5" />
+                                    View Resume
+                                </a>
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Contact Information */}

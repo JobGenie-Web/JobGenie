@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, User, Briefcase, GraduationCap, Award, FolderGit2, BadgeCheck as CertIcon, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { X, Loader2, User, Briefcase, GraduationCap, Award, FolderGit2, BadgeCheck as CertIcon, CheckCircle2, XCircle, RotateCcw, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -39,6 +39,7 @@ interface CandidateData {
     approval_status: string;
     rejection_reason?: string;
     membership_no?: string;
+    resume_url?: string;
     work_experiences: Array<{
         job_title: string;
         company: string;
@@ -251,7 +252,19 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                                 <p className="font-medium">{candidate.notice_period}</p>
                                             </div>
                                         )}
+                                        {candidate.resume_url && (
+                                            <div className="col-span-2 my-4">
+                                                <p className="text-muted-foreground mb-1">Resume</p>
+                                                <Button variant="default" size="sm" asChild className="h-9 bg-green-500">
+                                                    <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
+                                                        <FileText className="mr-2 h-4 w-4" />
+                                                        View Candidate Resume
+                                                    </a>
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
+
                                     {candidate.professional_summary && (
                                         <div className="mt-3">
                                             <p className="text-muted-foreground text-sm">Professional Summary</p>
@@ -468,8 +481,9 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                             )}
                         </div>
                     </>
-                )}
-            </SheetContent>
-        </Sheet>
+                )
+                }
+            </SheetContent >
+        </Sheet >
     );
 }

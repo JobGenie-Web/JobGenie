@@ -50,7 +50,9 @@ export async function GET(
                 professional_summary,
                 approval_status,
                 rejection_reason,
+                rejection_reason,
                 membership_no,
+                resume_url,
                 work_experiences (
                     job_title,
                     company,

@@ -118,6 +118,7 @@ export interface CandidateProfile {
     profile_image: string | null;
     membership_no: string | null;
     approval_status: string;
+    resume_url: string | null;
 
     // Relations
     work_experiences: WorkExperience[];
