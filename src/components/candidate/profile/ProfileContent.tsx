@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { CandidateProfile } from "@/types/profile-types";
 import { ProfileHeader } from "./ProfileHeader";
 import { AboutSection } from "./AboutSection";
@@ -60,6 +61,8 @@ function ErrorState({ message }: { message: string }) {
 }
 
 export function ProfileContent() {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -67,7 +70,10 @@ export function ProfileContent() {
     useEffect(() => {
         async function fetchProfile() {
             try {
-                const response = await fetch("/api/candidate/profile");
+                setIsLoading(true);
+                const response = await fetch("/api/candidate/profile", {
+                    cache: "no-store" // Prevent caching to always get fresh data
+                });
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -88,7 +94,7 @@ export function ProfileContent() {
         }
 
         fetchProfile();
-    }, []);
+    }, [pathname, searchParams]); // Refetch when route changes (triggered by router.refresh())
 
     if (isLoading) {
         return <ProfileSkeleton />;

@@ -147,7 +147,28 @@ export function EducationSection({
 
         setIsDeleting(true);
         try {
-            const result = await deleteEducation(eduToDelete);
+            let result;
+
+            // Route to the appropriate delete function based on education type
+            switch (deleteType) {
+                case "finance_academic":
+                    result = await deleteFinanceAcademicEducation(eduToDelete);
+                    break;
+                case "finance_professional":
+                    result = await deleteFinanceProfessionalEducation(eduToDelete);
+                    break;
+                case "banking_academic":
+                    result = await deleteBankingAcademicEducation(eduToDelete);
+                    break;
+                case "banking_professional":
+                    result = await deleteBankingProfessionalEducation(eduToDelete);
+                    break;
+                case "banking_training":
+                    result = await deleteBankingSpecializedTraining(eduToDelete);
+                    break;
+                default:
+                    result = await deleteEducation(eduToDelete);
+            }
 
             if (result.success) {
                 toast({
@@ -156,7 +177,8 @@ export function EducationSection({
                 });
                 setDeleteDialogOpen(false);
                 setEduToDelete(null);
-                router.refresh();
+                setDeleteType("general"); // Reset to default
+                router.refresh(); // Refresh to show updated data immediately
             } else {
                 toast({
                     title: "Error",
