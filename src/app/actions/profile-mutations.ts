@@ -7,10 +7,12 @@ import {
     projectSchema,
     certificationSchema,
     awardSchema,
+    educationSchema,
     type ExperienceFormData,
     type ProjectFormData,
     type CertificationFormData,
     type AwardFormData,
+    type EducationFormData,
 } from "@/lib/validations/profile";
 
 type ActionResponse = {
@@ -510,5 +512,136 @@ export async function deleteAward(id: string): Promise<ActionResponse> {
     } catch (error) {
         console.error("Error in deleteAward:", error);
         return { success: false, error: "Failed to delete award" };
+    }
+}
+
+// ==================== EDUCATION MUTATIONS ====================
+
+export async function addEducation(data: EducationFormData): Promise<ActionResponse> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const { data: candidate } = await supabase
+            .from("candidates")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!candidate) {
+            return { success: false, error: "Candidate profile not found" };
+        }
+
+        const validated = educationSchema.parse(data);
+
+        const { error } = await supabase
+            .from("educations")
+            .insert({
+                candidate_id: candidate.id,
+                ...validated,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            });
+
+        if (error) {
+            console.error("Error adding education:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/candidate/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Error in addEducation:", error);
+        return { success: false, error: "Failed to add education" };
+    }
+}
+
+export async function updateEducation(id: string, data: EducationFormData): Promise<ActionResponse> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const { data: education } = await supabase
+            .from("educations")
+            .select("candidate_id, candidates!inner(user_id)")
+            .eq("id", id)
+            .single();
+
+        if (!education || (education.candidates as any).user_id !== user.id) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const validated = educationSchema.parse(data);
+
+        // Convert undefined to null for database update
+        const updateData = {
+            education_type: validated.education_type,
+            degree_diploma: validated.degree_diploma ?? null,
+            professional_qualification: validated.professional_qualification ?? null,
+            institution: validated.institution,
+            status: validated.status,
+            updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+            .from("educations")
+            .update(updateData)
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error updating education:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/candidate/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Error in updateEducation:", error);
+        return { success: false, error: "Failed to update education" };
+    }
+}
+
+export async function deleteEducation(id: string): Promise<ActionResponse> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const { data: education } = await supabase
+            .from("educations")
+            .select("candidate_id, candidates!inner(user_id)")
+            .eq("id", id)
+            .single();
+
+        if (!education || (education.candidates as any).user_id !== user.id) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const { error } = await supabase
+            .from("educations")
+            .delete()
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error deleting education:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/candidate/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Error in deleteEducation:", error);
+        return { success: false, error: "Failed to delete education" };
     }
 }

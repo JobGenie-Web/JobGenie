@@ -21,7 +21,7 @@ export const educationSchema = z.object({
     degree_diploma: z.string().optional(),
     professional_qualification: z.string().optional(),
     institution: z.string().min(1, "Institution is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Finance Academic Education Schema
@@ -29,7 +29,7 @@ export const financeAcademicSchema = z.object({
     id: z.string().optional(),
     degree_diploma: z.string().min(1, "Degree/Diploma is required"),
     institution: z.string().min(1, "Institution is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Finance Professional Education Schema
@@ -37,7 +37,7 @@ export const financeProfessionalSchema = z.object({
     id: z.string().optional(),
     professional_qualification: z.string().min(1, "Professional qualification is required"),
     institution: z.string().min(1, "Institution is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Banking Academic Education Schema
@@ -45,7 +45,7 @@ export const bankingAcademicSchema = z.object({
     id: z.string().optional(),
     degree_diploma: z.string().min(1, "Degree/Diploma is required"),
     institution: z.string().min(1, "Institution is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Banking Professional Education Schema
@@ -53,7 +53,7 @@ export const bankingProfessionalSchema = z.object({
     id: z.string().optional(),
     professional_qualification: z.string().min(1, "Professional qualification is required"),
     institution: z.string().min(1, "Institution is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Banking Specialized Training Schema
@@ -62,7 +62,7 @@ export const bankingTrainingSchema = z.object({
     certificate_name: z.string().min(1, "Certificate name is required"),
     issuing_authority: z.string().min(1, "Issuing authority is required"),
     certificate_issue_month: z.string().min(1, "Issue month is required"),
-    status: z.enum(["incomplete", "first_class", "second_upper", "second_lower", "third_class", "pass"]),
+    status: z.enum(["incomplete", "first_class", "second_class_upper", "second_class_lower", "general"]),
 });
 
 // Project Schema
