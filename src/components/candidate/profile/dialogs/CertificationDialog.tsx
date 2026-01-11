@@ -99,6 +99,15 @@ export function CertificationDialog({ open, onOpenChange, certification }: Certi
                 expiry_date: data.expiry_date && data.expiry_date.trim() !== ""
                     ? `${data.expiry_date}-01`
                     : undefined,
+                credential_id: data.credential_id && data.credential_id.trim() !== ""
+                    ? data.credential_id
+                    : undefined,
+                credential_url: data.credential_url && data.credential_url.trim() !== ""
+                    ? data.credential_url
+                    : undefined,
+                description: data.description && data.description.trim() !== ""
+                    ? data.description
+                    : undefined,
             };
 
             const result = isEditing

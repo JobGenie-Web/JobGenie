@@ -70,9 +70,20 @@ export function AwardDialog({ open, onOpenChange, award }: AwardDialogProps) {
     async function onSubmit(data: AwardFormData) {
         setIsSubmitting(true);
         try {
+            // Clean up optional fields - convert empty strings to undefined
+            const formattedData = {
+                ...data,
+                offered_by: data.offered_by && data.offered_by.trim() !== ""
+                    ? data.offered_by
+                    : undefined,
+                description: data.description && data.description.trim() !== ""
+                    ? data.description
+                    : undefined,
+            };
+
             const result = isEditing
-                ? await updateAward(award.id, data)
-                : await addAward(data);
+                ? await updateAward(award.id, formattedData)
+                : await addAward(formattedData);
 
             if (result.success) {
                 toast({

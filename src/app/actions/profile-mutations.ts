@@ -412,6 +412,8 @@ export async function addAward(data: AwardFormData): Promise<ActionResponse> {
             .insert({
                 candidate_id: candidate.id,
                 ...validated,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
             });
 
         if (error) {
@@ -448,9 +450,17 @@ export async function updateAward(id: string, data: AwardFormData): Promise<Acti
 
         const validated = awardSchema.parse(data);
 
+        // Convert undefined to null for database update (to clear fields)
+        const updateData = {
+            nature_of_award: validated.nature_of_award,
+            offered_by: validated.offered_by ?? null,
+            description: validated.description ?? null,
+            updated_at: new Date().toISOString(),
+        };
+
         const { error } = await supabase
             .from("awards")
-            .update(validated)
+            .update(updateData)
             .eq("id", id);
 
         if (error) {

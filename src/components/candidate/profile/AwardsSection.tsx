@@ -29,37 +29,9 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
     const [awardToDelete, setAwardToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    if (!awards || awards.length === 0) {
-        return (
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5" />
-                        Awards & Achievements
-                    </CardTitle>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            setSelectedAward(null);
-                            setDialogOpen(true);
-                        }}
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Award
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                        No awards added yet. Click "Add Award" to get started.
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
-
     const displayedAwards = showAll ? awards : awards.slice(0, 3);
-    const hasMore = awards.length > 3;
+    const hasMore = awards && awards.length > 3;
+    const isEmpty = !awards || awards.length === 0;
 
     const toggleDescription = (id: string) => {
         setExpandedDescriptions(prev => ({
@@ -132,82 +104,90 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-6">
-                        {displayedAwards.map((award, index) => (
-                            <div key={award.id}>
-                                {index > 0 && <Separator className="my-6" />}
-                                <div className="group relative flex gap-4">
-                                    {/* Icon - hidden on mobile */}
-                                    <div className="flex-shrink-0 hidden md:flex">
-                                        <div className="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                                            <Trophy className="h-6 w-6 text-amber-600 dark:text-amber-500" />
-                                        </div>
-                                    </div>
+                    {isEmpty ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                            No awards added yet. Click "Add Award" to get started.
+                        </p>
+                    ) : (
+                        <>
+                            <div className="space-y-6">
+                                {displayedAwards.map((award, index) => (
+                                    <div key={award.id}>
+                                        {index > 0 && <Separator className="my-6" />}
+                                        <div className="group relative flex gap-4">
+                                            {/* Icon - hidden on mobile */}
+                                            <div className="flex-shrink-0 hidden md:flex">
+                                                <div className="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                                    <Trophy className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                                                </div>
+                                            </div>
 
-                                    {/* Edit/Delete buttons - Always visible on mobile, hover on desktop */}
-                                    <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => handleEdit(award)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-destructive hover:text-destructive"
-                                            onClick={() => handleDeleteClick(award.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-
-                                    <div className="flex-1 min-w-0 pr-16 md:pr-0">
-                                        <h3 className="font-semibold text-lg">
-                                            {award.nature_of_award || "Award"}
-                                        </h3>
-                                        {award.offered_by && (
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                {award.offered_by}
-                                            </p>
-                                        )}
-                                        {award.description && (
-                                            <div className="mt-2">
-                                                <p
-                                                    className={`text-sm text-muted-foreground leading-relaxed ${!expandedDescriptions[award.id] ? 'line-clamp-2' : ''
-                                                        }`}
-                                                >
-                                                    {award.description}
-                                                </p>
+                                            {/* Edit/Delete buttons - Always visible on mobile, hover on desktop */}
+                                            <div className="absolute -right-2 -top-2 flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                 <Button
-                                                    variant="link"
-                                                    size="sm"
-                                                    onClick={() => toggleDescription(award.id)}
-                                                    className="px-0 h-auto mt-1 text-xs"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleEdit(award)}
                                                 >
-                                                    {expandedDescriptions[award.id] ? "Read Less" : "Read More"}
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                                    onClick={() => handleDeleteClick(award.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
 
-                    {/* View All Button */}
-                    {hasMore && (
-                        <div className="mt-6 text-center">
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowAll(!showAll)}
-                                className="w-full md:w-auto"
-                            >
-                                {showAll ? "Show Less" : `View All Awards (${awards.length})`}
-                            </Button>
-                        </div>
+                                            <div className="flex-1 min-w-0 pr-16 md:pr-0">
+                                                <h3 className="font-semibold text-lg">
+                                                    {award.nature_of_award || "Award"}
+                                                </h3>
+                                                {award.offered_by && (
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {award.offered_by}
+                                                    </p>
+                                                )}
+                                                {award.description && (
+                                                    <div className="mt-2">
+                                                        <p
+                                                            className={`text-sm text-muted-foreground leading-relaxed ${!expandedDescriptions[award.id] ? 'line-clamp-2' : ''
+                                                                }`}
+                                                        >
+                                                            {award.description}
+                                                        </p>
+                                                        <Button
+                                                            variant="link"
+                                                            size="sm"
+                                                            onClick={() => toggleDescription(award.id)}
+                                                            className="px-0 h-auto mt-1 text-xs"
+                                                        >
+                                                            {expandedDescriptions[award.id] ? "Read Less" : "Read More"}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* View All Button */}
+                            {hasMore && (
+                                <div className="mt-6 text-center">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowAll(!showAll)}
+                                        className="w-full md:w-auto"
+                                    >
+                                        {showAll ? "Show Less" : `View All Awards (${awards.length})`}
+                                    </Button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>

@@ -77,9 +77,20 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     async function onSubmit(data: ProjectFormData) {
         setIsSubmitting(true);
         try {
+            // Clean up optional fields - convert empty strings to undefined
+            const formattedData = {
+                ...data,
+                description: data.description && data.description.trim() !== ""
+                    ? data.description
+                    : undefined,
+                demo_url: data.demo_url && data.demo_url.trim() !== ""
+                    ? data.demo_url
+                    : undefined,
+            };
+
             const result = isEditing
-                ? await updateProject(project.id, data)
-                : await addProject(data);
+                ? await updateProject(project.id, formattedData)
+                : await addProject(formattedData);
 
             if (result.success) {
                 toast({
