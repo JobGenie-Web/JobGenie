@@ -63,7 +63,7 @@ model Candidate {
   nicPassport             String   @db.VarChar(20)
   dob                     DateTime @db.Date
   contact_no              String   @db.VarChar(20)
-  email                   String   @db.VarChar(255)
+  email                   String   @unique @db.VarChar(255)
   gender                  Gender
   current_position        String   @db.VarChar(200)
   industry                String   @db.VarChar(100)
