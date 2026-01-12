@@ -8,11 +8,15 @@ import {
     certificationSchema,
     awardSchema,
     educationSchema,
+    basicInfoSchema,
+    aboutSectionSchema,
     type ExperienceFormData,
     type ProjectFormData,
     type CertificationFormData,
     type AwardFormData,
     type EducationFormData,
+    type BasicInfoFormData,
+    type AboutSectionFormData,
 } from "@/lib/validations/profile";
 
 type ActionResponse = {
@@ -643,5 +647,118 @@ export async function deleteEducation(id: string): Promise<ActionResponse> {
     } catch (error) {
         console.error("Error in deleteEducation:", error);
         return { success: false, error: "Failed to delete education" };
+    }
+}
+
+// ==================== BASIC INFO MUTATIONS ====================
+
+export async function updateBasicInfo(data: BasicInfoFormData): Promise<ActionResponse> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Get candidate_id
+        const { data: candidate } = await supabase
+            .from("candidates")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!candidate) {
+            return { success: false, error: "Candidate profile not found" };
+        }
+
+        // Validate data
+        const validated = basicInfoSchema.parse(data);
+
+        // Convert undefined to null for database update
+        const updateData = {
+            first_name: validated.first_name,
+            last_name: validated.last_name,
+            nicPassport: validated.nicPassport,
+            phone: validated.phone,
+            alternative_phone: validated.alternative_phone ?? null,
+            country: validated.country ?? null,
+            current_position: validated.current_position,
+            profile_image_url: validated.profile_image_url ?? null,
+            updated_at: new Date().toISOString(),
+        };
+
+        // Update candidate
+        const { error } = await supabase
+            .from("candidates")
+            .update(updateData)
+            .eq("id", candidate.id);
+
+        if (error) {
+            console.error("Error updating basic info:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/candidate/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Error in updateBasicInfo:", error);
+        return { success: false, error: "Failed to update basic information" };
+    }
+}
+
+// ==================== ABOUT SECTION MUTATIONS ====================
+
+export async function updateAboutSection(data: AboutSectionFormData): Promise<ActionResponse> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Get candidate_id
+        const { data: candidate } = await supabase
+            .from("candidates")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!candidate) {
+            return { success: false, error: "Candidate profile not found" };
+        }
+
+        // Validate data
+        const validated = aboutSectionSchema.parse(data);
+
+        // Convert undefined to null for database update
+        const updateData = {
+            professional_summary: validated.professional_summary ?? null,
+            years_of_experience: validated.years_of_experience ?? null,
+            experience_level: validated.experience_level ?? null,
+            expected_monthly_salary: validated.expected_monthly_salary ?? null,
+            notice_period: validated.notice_period ?? null,
+            employment_type: validated.employment_type ?? null,
+            availability_status: validated.availability_status ?? null,
+            updated_at: new Date().toISOString(),
+        };
+
+        // Update candidate
+        const { error } = await supabase
+            .from("candidates")
+            .update(updateData)
+            .eq("id", candidate.id);
+
+        if (error) {
+            console.error("Error updating about section:", error);
+            return { success: false, error: error.message };
+        }
+
+        revalidatePath("/candidate/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Error in updateAboutSection:", error);
+        return { success: false, error: "Failed to update about section" };
     }
 }

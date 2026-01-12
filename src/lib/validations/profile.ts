@@ -94,6 +94,29 @@ export const awardSchema = z.object({
     description: z.string().optional(),
 });
 
+// Basic Info Schema
+export const basicInfoSchema = z.object({
+    first_name: z.string().min(1, "First name is required").max(100),
+    last_name: z.string().min(1, "Last name is required").max(100),
+    nicPassport: z.string().min(1, "NIC/Passport is required").max(20),
+    phone: z.string().min(1, "Phone is required").max(20),
+    alternative_phone: z.string().max(20).optional(),
+    country: z.string().max(100).optional(),
+    current_position: z.string().min(1, "Current position is required").max(200),
+    profile_image_url: z.string().optional(),
+});
+
+// About Section Schema
+export const aboutSectionSchema = z.object({
+    professional_summary: z.string().max(1000).optional(),
+    years_of_experience: z.number().int().min(0).max(100).nullable().optional(),
+    experience_level: z.enum(["entry", "junior", "mid", "senior"]).optional(),
+    expected_monthly_salary: z.number().min(0).nullable().optional(),
+    notice_period: z.string().max(50).optional(),
+    employment_type: z.enum(["full_time", "part_time", "contract", "internship", "freelance", "volunteer"]).optional(),
+    availability_status: z.enum(["available", "open_to_opportunities", "not_looking"]).optional(),
+});
+
 // Type exports
 export type ExperienceFormData = z.infer<typeof experienceSchema>;
 export type EducationFormData = z.infer<typeof educationSchema>;
@@ -105,3 +128,5 @@ export type BankingTrainingFormData = z.infer<typeof bankingTrainingSchema>;
 export type ProjectFormData = z.infer<typeof projectSchema>;
 export type CertificationFormData = z.infer<typeof certificationSchema>;
 export type AwardFormData = z.infer<typeof awardSchema>;
+export type BasicInfoFormData = z.infer<typeof basicInfoSchema>;
+export type AboutSectionFormData = z.infer<typeof aboutSectionSchema>;
