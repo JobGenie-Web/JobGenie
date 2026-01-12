@@ -236,6 +236,15 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                 formData.append("profileImageFile", profileImageFile);
             }
 
+            // Show progress toast
+            if (cvFile) {
+                toast.info("Uploading your CV and generating standardized format...", {
+                    duration: 5000,
+                });
+            } else {
+                toast.info("Creating your profile...");
+            }
+
             // Use the new action that handles CV upload and transaction
             const result = await completeFullProfileWithCV(formData);
 

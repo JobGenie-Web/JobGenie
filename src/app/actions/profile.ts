@@ -494,6 +494,17 @@ export async function completeFullProfileWithCV(
                 uploadedCvPath = filePath;
             } catch (error) {
                 console.error("CV Upload failed:", error);
+
+                // Rollback profile image if it was uploaded
+                if (uploadedProfileImageUrl) {
+                    try {
+                        const { StorageService } = await import("@/lib/storage");
+                        await StorageService.deleteProfileImage(uploadedProfileImageUrl);
+                    } catch (deleteError) {
+                        console.error("Failed to rollback profile image:", deleteError);
+                    }
+                }
+
                 return {
                     success: false,
                     message: "Failed to upload CV. Please try again.",
@@ -501,7 +512,72 @@ export async function completeFullProfileWithCV(
             }
         }
 
-        // 3. Update Database (Transaction-like)
+        // 4. Generate and upload Common CV
+        let uploadedCommonCvPath: string | null = null;
+        let uploadedCommonCvUrl: string | null = null;
+
+        try {
+            // Import PDF generator
+            const { generateCommonCV } = await import("@/lib/pdf-generator");
+
+            // Prepare candidate info for CV generation
+            const candidateBasicInfo = {
+                firstName: data.basicInfo.firstName,
+                lastName: data.basicInfo.lastName,
+                email: data.basicInfo.email,
+                phone: data.basicInfo.phone,
+                address: data.basicInfo.address,
+                currentPosition: data.basicInfo.currentPosition,
+                industry: data.industry,
+                yearsOfExperience: data.basicInfo.yearsOfExperience,
+                professionalSummary: data.professionalSummary,
+            };
+
+            // Generate common CV PDF
+            const commonCvBuffer = await generateCommonCV(data, candidateBasicInfo);
+
+            // Upload common CV with watermark
+            const { StorageService } = await import("@/lib/storage");
+            const { url, filePath } = await StorageService.uploadCommonCV(
+                candidateId,
+                commonCvBuffer
+            );
+
+            uploadedCommonCvUrl = url;
+            uploadedCommonCvPath = filePath;
+
+        } catch (error) {
+            console.error("Common CV generation/upload failed:", error);
+
+            // Rollback original CV if it was uploaded
+            if (uploadedCvPath) {
+                try {
+                    const { StorageService } = await import("@/lib/storage");
+                    await StorageService.deleteResume(uploadedCvPath);
+                    console.log("Rollback: Deleted original CV");
+                } catch (deleteError) {
+                    console.error("Failed to rollback original CV:", deleteError);
+                }
+            }
+
+            // Rollback profile image if it was uploaded
+            if (uploadedProfileImageUrl) {
+                try {
+                    const { StorageService } = await import("@/lib/storage");
+                    await StorageService.deleteProfileImage(uploadedProfileImageUrl);
+                    console.log("Rollback: Deleted profile image");
+                } catch (deleteError) {
+                    console.error("Failed to rollback profile image:", deleteError);
+                }
+            }
+
+            return {
+                success: false,
+                message: "Failed to generate common CV. Please try again.",
+            };
+        }
+
+        // 5. Update Database (Transaction-like)
         try {
             // Update basic candidate info with resume_url
             const { error: updateError } = await supabase
@@ -529,7 +605,8 @@ export async function completeFullProfileWithCV(
                     rejected_at: null,
                     rejection_reason: null,
                     updated_at: new Date().toISOString(),
-                    resume_url: uploadedCvUrl, // Save the URL/Path
+                    resume_url: uploadedCvUrl,
+                    resume_copy_url: uploadedCommonCvUrl,
                     profile_image_url: uploadedProfileImageUrl,
                 })
                 .eq("id", candidateId);
@@ -723,14 +800,38 @@ export async function completeFullProfileWithCV(
         } catch (dbError) {
             console.error("Database Transaction Failed. Rolling back storage...", dbError);
 
-            // ROLLBACK: Delete the uploaded CV if it exists
+            // ROLLBACK: Delete all uploaded files
+
+            // Rollback original CV
             if (uploadedCvPath) {
                 try {
                     const { StorageService } = await import("@/lib/storage");
                     await StorageService.deleteResume(uploadedCvPath);
-                    console.log("Storage rollback successful: deleted", uploadedCvPath);
+                    console.log("Storage rollback successful: deleted original CV", uploadedCvPath);
                 } catch (deleteError) {
-                    console.error("CRITICAL: Failed to rollback storage file:", uploadedCvPath, deleteError);
+                    console.error("CRITICAL: Failed to rollback original CV:", uploadedCvPath, deleteError);
+                }
+            }
+
+            // Rollback common CV
+            if (uploadedCommonCvPath) {
+                try {
+                    const { StorageService } = await import("@/lib/storage");
+                    await StorageService.deleteCommonCV(uploadedCommonCvPath);
+                    console.log("Storage rollback successful: deleted common CV", uploadedCommonCvPath);
+                } catch (deleteError) {
+                    console.error("CRITICAL: Failed to rollback common CV:", uploadedCommonCvPath, deleteError);
+                }
+            }
+
+            // Rollback profile image
+            if (uploadedProfileImageUrl) {
+                try {
+                    const { StorageService } = await import("@/lib/storage");
+                    await StorageService.deleteProfileImage(uploadedProfileImageUrl);
+                    console.log("Storage rollback successful: deleted profile image", uploadedProfileImageUrl);
+                } catch (deleteError) {
+                    console.error("CRITICAL: Failed to rollback profile image:", uploadedProfileImageUrl, deleteError);
                 }
             }
 

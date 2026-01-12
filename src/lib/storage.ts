@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 
 const RESUME_BUCKET = "resume";
+const RESUME_COPY_BUCKET = "resume_copy";
 const PROFILE_IMAGE_BUCKET = "profile-images";
 
 /**
@@ -140,6 +141,33 @@ export const StorageService = {
     deleteResume: async (filePath: string) => {
         await deleteFile(RESUME_BUCKET, filePath);
     },
+    uploadCommonCV: async (candidateId: string, pdfBuffer: Uint8Array) => {
+        // Watermark the generated common CV PDF
+        let fileData: Uint8Array;
+        try {
+            // Create a new ArrayBuffer from the Uint8Array for watermarkPDF
+            const arrayBuffer = new Uint8Array(pdfBuffer).buffer as ArrayBuffer;
+            fileData = await watermarkPDF(arrayBuffer);
+        } catch (e) {
+            console.warn("Watermarking common CV failed, uploading without watermark.", e);
+            fileData = pdfBuffer;
+        }
+
+        const fileName = `common_cv_${Date.now()}.pdf`;
+        const filePath = `${candidateId}/${fileName}`;
+
+        const url = await uploadFile(
+            RESUME_COPY_BUCKET,
+            filePath,
+            fileData,
+            "application/pdf",
+            ["application/pdf"]
+        );
+        return { url, filePath };
+    },
+    deleteCommonCV: async (filePath: string) => {
+        await deleteFile(RESUME_COPY_BUCKET, filePath);
+    },
     uploadProfileImage: async (candidateId: string, file: File) => {
         const buffer = await file.arrayBuffer();
         const fileExt = file.name.split('.').pop();
@@ -159,5 +187,8 @@ export const StorageService = {
             "image/webp"
         ]);
         return { url, filePath };
+    },
+    deleteProfileImage: async (filePath: string) => {
+        await deleteFile(PROFILE_IMAGE_BUCKET, filePath);
     }
 };
