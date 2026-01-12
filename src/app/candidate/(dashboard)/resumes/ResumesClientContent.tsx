@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, ExternalLink, AlertCircle } from "lucide-react";
+import { FileText, Download, ExternalLink, AlertCircle, Upload } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResumeData {
     resume_url: string | null;
@@ -15,6 +16,9 @@ export function ResumesClientContent() {
     const [resumeData, setResumeData] = useState<ResumeData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         async function fetchResume() {
@@ -39,6 +43,80 @@ export function ResumesClientContent() {
 
         fetchResume();
     }, []);
+
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (file.type !== "application/pdf") {
+            toast({
+                title: "Invalid File Type",
+                description: "Please upload a PDF file only.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Validate file size (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            toast({
+                title: "File Too Large",
+                description: "File size must not exceed 5MB.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Upload the file
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/api/candidate/upload-resume", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || "Upload failed");
+            }
+
+            toast({
+                title: "Success",
+                description: "Your resume has been updated successfully.",
+            });
+
+            // Refresh resume data
+            const profileResponse = await fetch("/api/candidate/profile", { cache: "no-store" });
+            if (profileResponse.ok) {
+                const profileResult = await profileResponse.json();
+                if (profileResult.success && profileResult.data) {
+                    setResumeData({
+                        resume_url: profileResult.data.resume_url,
+                        updated_at: profileResult.data.updated_at
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            toast({
+                title: "Upload Failed",
+                description: err instanceof Error ? err.message : "Failed to upload resume. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsUploading(false);
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -78,11 +156,21 @@ export function ResumesClientContent() {
                             <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                             <h3 className="text-lg font-medium">No Resume Uploaded</h3>
                             <p className="text-muted-foreground mb-4">
-                                You haven&apos;t uploaded a resume yet.
-                                <br />Please go to your profile to upload one.
+                                Upload your resume to get started.
                             </p>
-                            <Button asChild>
-                                <a href="/candidate/profile">Go to Profile</a>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
+                            <Button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                <Upload className="h-4 w-4 mr-2" />
+                                {isUploading ? "Uploading..." : "Upload Resume"}
                             </Button>
                         </div>
                     ) : (
@@ -94,7 +182,7 @@ export function ResumesClientContent() {
                                 <div className="flex-1">
                                     <h4 className="font-medium">Candidate Resume</h4>
                                     <p className="text-sm text-muted-foreground">
-                                        Last Updated: {new Date(resumeData.updated_at).toLocaleDateString()}
+                                        PDF Document
                                     </p>
                                 </div>
                                 <div className="flex gap-2">
@@ -109,6 +197,22 @@ export function ResumesClientContent() {
                                             <Download className="h-4 w-4 mr-2" />
                                             Download
                                         </a>
+                                    </Button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading}
+                                    >
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        {isUploading ? "Uploading..." : "Update Resume"}
                                     </Button>
                                 </div>
                             </div>
