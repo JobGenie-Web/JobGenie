@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
 
 export type CandidateActionState = {
     success: boolean;
@@ -107,6 +108,22 @@ export async function approveCandidateProfile(
             };
         }
 
+        // Send approval email to candidate
+        try {
+            const { data: candidateData } = await supabase
+                .from("candidates")
+                .select("email, first_name")
+                .eq("id", candidateId)
+                .single();
+
+            if (candidateData) {
+                await sendApprovalEmail(candidateData.email, candidateData.first_name);
+            }
+        } catch (emailError) {
+            // Log email error but don't fail the approval
+            console.error("Failed to send approval email:", emailError);
+        }
+
         revalidatePath("/mis/candidates");
 
         return {
@@ -155,6 +172,7 @@ export async function rejectCandidateProfile(
         }
 
         // Update candidate approval status
+        const rejectionReasonText = reason || "Profile needs improvement. Please update and resubmit.";
         const { error } = await supabase
             .from("candidates")
             .update({
@@ -162,7 +180,7 @@ export async function rejectCandidateProfile(
                 rejected_at: new Date().toISOString(),
                 approved_at: null,
                 reviewed_by: user.id,
-                rejection_reason: reason || "Profile needs improvement. Please update and resubmit.",
+                rejection_reason: rejectionReasonText,
                 approval_status_message_seen: false, // Show message on next login
                 updated_at: new Date().toISOString(),
             })
@@ -174,6 +192,26 @@ export async function rejectCandidateProfile(
                 success: false,
                 message: "Failed to reject candidate.",
             };
+        }
+
+        // Send rejection email to candidate
+        try {
+            const { data: candidateData } = await supabase
+                .from("candidates")
+                .select("email, first_name")
+                .eq("id", candidateId)
+                .single();
+
+            if (candidateData) {
+                await sendRejectionEmail(
+                    candidateData.email,
+                    candidateData.first_name,
+                    rejectionReasonText
+                );
+            }
+        } catch (emailError) {
+            // Log email error but don't fail the rejection
+            console.error("Failed to send rejection email:", emailError);
         }
 
         revalidatePath("/mis/candidates");
