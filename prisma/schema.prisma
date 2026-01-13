@@ -385,15 +385,17 @@ model Company {
   company_name                String   @db.VarChar(200)
   business_registration_no    String   @unique @db.VarChar(50)
   industry                    String   @db.VarChar(100)
-  business_registered_address String   @db.Text
-  br_certificate_url          String  @db.Text // BR Certificate URL
-  logo_url                    String?  @db.Text
-  description                 String?  @db.Text
-  phone                       String  @db.VarChar(20)
+  business_registered_address String   @db.VarChar(255)
+  br_certificate_url          String   @db.VarChar(255)// BR Certificate URL
+  logo_url                    String?  @db.VarChar(255)
+  description                 String?  @db.VarChar(255)
+  phone                       String   @db.VarChar(20)
   website                     String?  @db.VarChar(255)
   headoffice_location         String?  @db.VarChar(200)
+  company_size                String?  @db.VarChar(50)
   
   approval_status             ApprovalStatus @default(pending)
+  profile_completed           Boolean @default(false)
   
   created_at                  DateTime @default(now())
   updated_at                  DateTime @updatedAt
@@ -413,11 +415,18 @@ model Employer {
   user_id     String   @unique @db.Uuid
   company_id  String   @db.Uuid
   
-  // HR Representative Information (Section 2)
+
   first_name  String   @db.VarChar(100)
   last_name   String   @db.VarChar(100)
   designation String?  @db.VarChar(200)
   phone       String?  @db.VarChar(20)
+  email       String   @db.VarChar(255)
+  address     String   @db.VarChar(255)
+  job_title   String?  @db.VarChar(200)
+  department  String?  @db.VarChar(100)
+  is_super_admin Boolean @default(false)
+  profile_completed Boolean @default(false)
+  profile_image_url String? @db.VarChar(255)
   
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt

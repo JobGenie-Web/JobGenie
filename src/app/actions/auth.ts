@@ -476,11 +476,11 @@ export async function loginCandidate(
         }
 
         // Debug: Log session details (remove in production)
-        console.log("=== LOGIN DEBUG ===");
+        /*console.log("=== LOGIN DEBUG ===");
         console.log("Session exists:", !!authData.session);
         console.log("Access token (first 50 chars):", authData.session.access_token?.substring(0, 50));
         console.log("User ID:", authData.user?.id);
-        console.log("===================");
+        console.log("===================");*/
 
         // Check if profile is completed
         const { data: candidateData } = await supabase
@@ -1116,6 +1116,7 @@ export async function setupMISPassword(
             };
         }
 
+
         return {
             success: true,
             message: "Password created successfully! You can now log in with your credentials.",
@@ -1123,6 +1124,344 @@ export async function setupMISPassword(
         };
     } catch (error) {
         console.error("Setup password error:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
+    }
+}
+
+// ============================================
+// EMPLOYER REGISTRATION & AUTHENTICATION
+// ============================================
+
+export async function registerEmployer(
+    _prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    try {
+        // Extract company data (Step 1)
+        const companyData = {
+            companyName: formData.get("companyName") as string,
+            businessRegistrationNo: formData.get("businessRegistrationNo") as string,
+            industry: formData.get("industry") as string,
+            businessRegisteredAddress: formData.get("businessRegisteredAddress") as string,
+            brCertificateUrl: formData.get("brCertificateUrl") as string,
+        };
+
+        // Extract employer data (Step 2)
+        const employerData = {
+            firstName: formData.get("firstName") as string,
+            lastName: formData.get("lastName") as string,
+            phone: formData.get("phone") as string,
+            email: formData.get("email") as string,
+            password: formData.get("password") as string,
+            confirmPassword: formData.get("confirmPassword") as string,
+            jobTitle: formData.get("jobTitle") as string,
+        };
+
+        // Import validation schemas
+        const { employerRegistrationSchema } = await import("@/lib/validations/employer-schema");
+
+        // Validate with Zod
+        const validationResult = employerRegistrationSchema.safeParse({
+            company: companyData,
+            employer: employerData,
+        });
+
+        if (!validationResult.success) {
+            const errors: Record<string, string[]> = {};
+            validationResult.error.issues.forEach((issue) => {
+                const path = issue.path.join(".");
+                if (!errors[path]) {
+                    errors[path] = [];
+                }
+                errors[path].push(issue.message);
+            });
+
+            return {
+                success: false,
+                message: "Validation failed. Please check your inputs.",
+                errors,
+            };
+        }
+
+        const validatedData = validationResult.data;
+
+        // Create Supabase clients
+        const supabase = await createClient();
+        const adminClient = createAdminClient();
+
+        // Check if email already exists
+        const { data: existingUser } = await adminClient
+            .from("users")
+            .select("id")
+            .eq("email", validatedData.employer.email)
+            .single();
+
+        if (existingUser) {
+            return {
+                success: false,
+                message: "An account with this email already exists.",
+            };
+        }
+
+        // Check if business registration number already exists
+        const { data: existingCompany } = await adminClient
+            .from("companies")
+            .select("id")
+            .eq("business_registration_no", validatedData.company.businessRegistrationNo)
+            .single();
+
+        if (existingCompany) {
+            return {
+                success: false,
+                message: "A company with this business registration number is already registered.",
+            };
+        }
+
+        // Sign up the user with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: validatedData.employer.email,
+            password: validatedData.employer.password,
+            options: {
+                data: {
+                    first_name: validatedData.employer.firstName,
+                    last_name: validatedData.employer.lastName,
+                    user_type: "employer",
+                },
+            },
+        });
+
+        if (authError) {
+            return {
+                success: false,
+                message: authError.message,
+            };
+        }
+
+        if (!authData.user) {
+            return {
+                success: false,
+                message: "Failed to create user account.",
+            };
+        }
+
+        const now = new Date().toISOString();
+
+        // Generate verification code
+        const verificationCode = generateVerificationCode();
+        const verificationExpiry = getVerificationExpiry();
+
+        // Hash the password before storing
+        const hashedPassword = await bcrypt.hash(validatedData.employer.password, 12);
+
+        // Create user entry
+        const { error: userError } = await adminClient.from("users").insert({
+            id: authData.user.id,
+            email: validatedData.employer.email,
+            password: hashedPassword,
+            role: "employer",
+            status: "pending_verification",
+            email_verified: false,
+            email_verification_token: verificationCode,
+            verification_token_expires_at: verificationExpiry.isoString,
+            created_at: now,
+            updated_at: now,
+        });
+
+        if (userError) {
+            console.error("User table insert error:", userError);
+            return {
+                success: false,
+                message: "Account created but user setup failed. Please contact support.",
+            };
+        }
+
+        // Create company entry
+        const { data: companyRecord, error: companyError } = await adminClient
+            .from("companies")
+            .insert({
+                company_name: validatedData.company.companyName,
+                business_registration_no: validatedData.company.businessRegistrationNo,
+                industry: validatedData.company.industry,
+                business_registered_address: validatedData.company.businessRegisteredAddress,
+                br_certificate_url: validatedData.company.brCertificateUrl || "",
+                phone: validatedData.employer.phone, // Use employer phone for company
+                approval_status: "pending",
+                created_at: now,
+                updated_at: now,
+            })
+            .select("id")
+            .single();
+
+        if (companyError || !companyRecord) {
+            console.error("Company creation error:", companyError);
+            return {
+                success: false,
+                message: "Account created but company setup failed. Please contact support.",
+            };
+        }
+
+        // Create employer profile with super admin flag
+        const { error: employerError } = await adminClient.from("employers").insert({
+            user_id: authData.user.id,
+            company_id: companyRecord.id,
+            first_name: validatedData.employer.firstName,
+            last_name: validatedData.employer.lastName,
+            email: validatedData.employer.email,
+            phone: validatedData.employer.phone,
+            job_title: validatedData.employer.jobTitle,
+            address: validatedData.company.businessRegisteredAddress, // Use company address initially
+            is_super_admin: true, // Mark as super admin (company creator)
+            created_at: now,
+            updated_at: now,
+        });
+
+        if (employerError) {
+            console.error("Employer profile creation error:", employerError);
+            return {
+                success: false,
+                message: "Account created but profile setup failed. Please contact support.",
+            };
+        }
+
+        // Send verification email
+        const emailResult = await sendVerificationEmail(
+            validatedData.employer.email,
+            verificationCode,
+            validatedData.employer.firstName
+        );
+
+        if (!emailResult.success) {
+            console.error("Failed to send verification email");
+            // Don't fail registration, just log the error
+        }
+
+        return {
+            success: true,
+            message: "Account created successfully! Please check your email for the verification code.",
+            redirectTo: `/employer/verify-email?email=${encodeURIComponent(validatedData.employer.email)}`,
+        };
+    } catch (error) {
+        console.error("Employer registration error:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
+    }
+}
+
+export async function loginEmployer(
+    _prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Basic validation
+    if (!email || !password) {
+        return {
+            success: false,
+            message: "Email and password are required.",
+        };
+    }
+
+    try {
+        // Use admin client to check user status (bypasses RLS)
+        const adminClient = createAdminClient();
+        const supabase = await createClient();
+
+        // First check if user exists and is an employer with verified email
+        const { data: userData, error: userError } = await adminClient
+            .from("users")
+            .select("role, status, email_verified")
+            .eq("email", email)
+            .single();
+
+        if (userError || !userData) {
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        // Check if user is an employer
+        if (userData.role !== "employer") {
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        // Check email verification status
+        if (!userData.email_verified) {
+            return {
+                success: false,
+                message: "Please verify your email before logging in.",
+                redirectTo: `/employer/verify-email?email=${encodeURIComponent(email)}`,
+            };
+        }
+
+        // Check account status
+        if (userData.status !== "active") {
+            return {
+                success: false,
+                message: "Your account is not active. Please contact support.",
+            };
+        }
+
+        // Use Supabase Auth for login - this handles session automatically
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (authError) {
+            console.error("Supabase auth error:", authError);
+            return {
+                success: false,
+                message: "Invalid email or password.",
+            };
+        }
+
+        if (!authData.session) {
+            return {
+                success: false,
+                message: "Failed to create session. Please try again.",
+            };
+        }
+
+        // Check profile completion status - fetch only needed fields
+        const { data: employerData, error: employerError } = await adminClient
+            .from("employers")
+            .select("profile_completed, companies!inner(profile_completed)")
+            .eq("user_id", authData.user.id)
+            .single();
+
+        if (employerError || !employerData) {
+            console.error("Failed to fetch employer data:", employerError);
+            // Still allow login, but redirect to complete profile
+            return {
+                success: true,
+                message: "Login successful!",
+                redirectTo: "/employer/complete-profile",
+            };
+        }
+
+        // Check if either profile is incomplete
+        const companyData = (employerData as any).companies;
+        const isProfileIncomplete =
+            !employerData.profile_completed || !companyData?.profile_completed;
+
+        // Success - redirect based on profile completion
+        return {
+            success: true,
+            message: "Login successful!",
+            redirectTo: isProfileIncomplete ? "/employer/complete-profile" : "/employer/dashboard",
+        };
+    } catch (error) {
+        console.error("Employer login error:", error);
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

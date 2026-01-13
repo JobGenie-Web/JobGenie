@@ -48,3 +48,6 @@ Also create profile and store original cv and store common cv tasks must do in s
 deeply gothrough the codebase and supabase.  use Shadcn components and keep consistancy with the other pages and functionalities. I need the fastest application. there fore use optimized queries here. follow a clean and clear file and folder structure.
 
 common cv should not be boring.
+
+
+act as a senior software engineer. I want to create employer signup and company registration. in here company is the priority thing and creating person is the super admin of the company.  registration form should be like a wizard. first step should be company name, business registration no, industry, business registered address, business registration certificate. After choose the certificate analyze the document and compare the given company name amd Business registration no is match with the document. if yes enable the nect button to go to next step. there I want to 
