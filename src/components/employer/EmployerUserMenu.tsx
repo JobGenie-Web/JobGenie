@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, Moon, Settings, Sun, Building2 } from "lucide-react";
+import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -107,9 +107,9 @@ export function EmployerUserMenu({ user }: EmployerUserMenuProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
-                        <Link href="/employer/company" className="cursor-pointer">
-                            <Building2 className="mr-2 h-4 w-4" />
-                            <span>Company Profile</span>
+                        <Link href="/employer/profile" className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Employer Profile</span>
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
