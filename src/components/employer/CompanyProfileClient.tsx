@@ -14,9 +14,10 @@ import { CompanyInfoDialog } from "@/components/employer/dialogs/CompanyInfoDial
 interface CompanyProfileClientProps {
     company: CompanyProfile;
     userId: string;
+    isSuperAdmin: boolean;
 }
 
-export function CompanyProfileClient({ company, userId }: CompanyProfileClientProps) {
+export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyProfileClientProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
 
     const companyInitials = company.company_name
@@ -51,17 +52,19 @@ export function CompanyProfileClient({ company, userId }: CompanyProfileClientPr
                                 </AvatarFallback>
                             </Avatar>
 
-                            {/* Edit Button - Top Right */}
-                            <div className="ml-auto">
-                                <Button
-                                    variant="outline"
-                                    size="default"
-                                    onClick={() => setEditDialogOpen(true)}
-                                >
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    Edit
-                                </Button>
-                            </div>
+                            {/* Edit Button - Top Right (Only for Super Admin) */}
+                            {isSuperAdmin && (
+                                <div className="ml-auto">
+                                    <Button
+                                        variant="outline"
+                                        size="default"
+                                        onClick={() => setEditDialogOpen(true)}
+                                    >
+                                        <Pencil className="h-4 w-4 mr-2" />
+                                        Edit
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Company Name & Bio */}

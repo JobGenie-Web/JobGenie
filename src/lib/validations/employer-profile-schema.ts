@@ -62,6 +62,13 @@ export const employerProfileCompletionSchema = z.object({
             message: "Address must be at least 10 characters",
         })
         .optional(),
+
+    phone: z
+        .string()
+        .max(20, "Phone number must be less than 20 characters")
+        .regex(/^$|^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number")
+        .optional()
+        .or(z.literal("")),
 });
 
 // Combined profile completion schema

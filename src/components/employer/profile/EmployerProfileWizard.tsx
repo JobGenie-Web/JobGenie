@@ -12,9 +12,10 @@ import { createClient } from "@/lib/supabase/client";
 
 interface EmployerProfileWizardProps {
     initialData: ProfileData;
+    isSuperAdmin: boolean;
 }
 
-export function EmployerProfileWizard({ initialData }: EmployerProfileWizardProps) {
+export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerProfileWizardProps) {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -33,16 +34,22 @@ export function EmployerProfileWizard({ initialData }: EmployerProfileWizardProp
         department: initialData.employer.department || "",
         profile_image_url: initialData.employer.profile_image_url || "",
         address: initialData.employer.address || "",
+        phone: initialData.employer.phone || "",
     });
 
     // File states (will be uploaded during submission)
     const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
-    const steps = [
-        { id: "company", title: "Company Details" },
-        { id: "employer", title: "Your Details" },
-    ];
+    // Only super admins see company details step
+    const steps = isSuperAdmin
+        ? [
+            { id: "company", title: "Company Details" },
+            { id: "employer", title: "Your Details" },
+        ]
+        : [
+            { id: "employer", title: "Your Details" },
+        ];
 
     const totalSteps = steps.length;
     const progress = Math.round(((currentStep + 1) / totalSteps) * 100);
@@ -131,18 +138,20 @@ export function EmployerProfileWizard({ initialData }: EmployerProfileWizardProp
             }
 
             // Step 3: Update profiles with uploaded URLs
-            const updatedCompanyData = {
+            // Only update company data if user is super admin
+            const updatedCompanyData = isSuperAdmin ? {
                 description: companyData.description,
                 company_size: companyData.company_size as "1-10" | "11-50" | "51-200" | "201-500" | "501-1000" | "1000+",
                 website: companyData.website || "",
                 headoffice_location: companyData.headoffice_location,
                 logo_url: uploadedLogoUrl || companyData.logo_url || "",
-            };
+            } : null;
 
             const updatedEmployerData = {
                 department: employerData.department || "",
                 profile_image_url: uploadedProfileImageUrl || employerData.profile_image_url || "",
                 address: employerData.address || "",
+                phone: employerData.phone || "",
             };
 
             const result = await completeEmployerProfile(user.id, updatedCompanyData, updatedEmployerData);

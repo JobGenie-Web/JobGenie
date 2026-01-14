@@ -130,30 +130,12 @@ export async function getEmployerProfileData(userId: string): Promise<ProfileDat
  */
 export async function completeEmployerProfile(
     userId: string,
-    companyData: CompanyProfileCompletion,
+    companyData: CompanyProfileCompletion | null,
     employerData: EmployerProfileCompletion
 ): Promise<ActionState> {
     try {
-        // Validate input data
-        const companyValidation = companyProfileCompletionSchema.safeParse(companyData);
+        // Validate employer data (always required)
         const employerValidation = employerProfileCompletionSchema.safeParse(employerData);
-
-        if (!companyValidation.success) {
-            const errors: Record<string, string[]> = {};
-            companyValidation.error.issues.forEach((issue) => {
-                const path = `company.${issue.path.join(".")}`;
-                if (!errors[path]) {
-                    errors[path] = [];
-                }
-                errors[path].push(issue.message);
-            });
-
-            return {
-                success: false,
-                message: "Company validation failed. Please check your inputs.",
-                errors,
-            };
-        }
 
         if (!employerValidation.success) {
             const errors: Record<string, string[]> = {};
@@ -170,6 +152,29 @@ export async function completeEmployerProfile(
                 message: "Employer validation failed. Please check your inputs.",
                 errors,
             };
+        }
+
+        // Validate company data only if provided (super admins only)
+        let companyValidation = null;
+        if (companyData) {
+            companyValidation = companyProfileCompletionSchema.safeParse(companyData);
+
+            if (!companyValidation.success) {
+                const errors: Record<string, string[]> = {};
+                companyValidation.error.issues.forEach((issue) => {
+                    const path = `company.${issue.path.join(".")}`;
+                    if (!errors[path]) {
+                        errors[path] = [];
+                    }
+                    errors[path].push(issue.message);
+                });
+
+                return {
+                    success: false,
+                    message: "Company validation failed. Please check your inputs.",
+                    errors,
+                };
+            }
         }
 
         const adminClient = createAdminClient();
@@ -190,26 +195,28 @@ export async function completeEmployerProfile(
 
         const now = new Date().toISOString();
 
-        // Update company profile
-        const { error: companyError } = await adminClient
-            .from("companies")
-            .update({
-                description: companyValidation.data.description,
-                company_size: companyValidation.data.company_size,
-                website: companyValidation.data.website || null,
-                headoffice_location: companyValidation.data.headoffice_location,
-                logo_url: companyValidation.data.logo_url || null,
-                profile_completed: true,
-                updated_at: now,
-            })
-            .eq("id", employerRecord.company_id);
+        // Update company profile only if data is provided (super admin only)
+        if (companyData && companyValidation) {
+            const { error: companyError } = await adminClient
+                .from("companies")
+                .update({
+                    description: companyValidation.data.description,
+                    company_size: companyValidation.data.company_size,
+                    website: companyValidation.data.website || null,
+                    headoffice_location: companyValidation.data.headoffice_location,
+                    logo_url: companyValidation.data.logo_url || null,
+                    profile_completed: true,
+                    updated_at: now,
+                })
+                .eq("id", employerRecord.company_id);
 
-        if (companyError) {
-            console.error("Company update error:", companyError);
-            return {
-                success: false,
-                message: "Failed to update company profile. Please try again.",
-            };
+            if (companyError) {
+                console.error("Company update error:", companyError);
+                return {
+                    success: false,
+                    message: "Failed to update company profile. Please try again.",
+                };
+            }
         }
 
         // Update employer profile
@@ -219,6 +226,7 @@ export async function completeEmployerProfile(
                 department: employerValidation.data.department || null,
                 profile_image_url: employerValidation.data.profile_image_url || null,
                 address: employerValidation.data.address || employerRecord.address, // Keep existing if not provided
+                phone: employerValidation.data.phone || null,
                 profile_completed: true,
                 updated_at: now,
             })
@@ -226,14 +234,17 @@ export async function completeEmployerProfile(
 
         if (employerError) {
             console.error("Employer update error:", employerError);
-            // Rollback company update
-            await adminClient
-                .from("companies")
-                .update({
-                    profile_completed: false,
-                    updated_at: now,
-                })
-                .eq("id", employerRecord.company_id);
+
+            // Rollback company update only if it was updated
+            if (companyData) {
+                await adminClient
+                    .from("companies")
+                    .update({
+                        profile_completed: false,
+                        updated_at: now,
+                    })
+                    .eq("id", employerRecord.company_id);
+            }
 
             return {
                 success: false,

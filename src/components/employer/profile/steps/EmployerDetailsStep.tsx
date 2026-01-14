@@ -14,6 +14,7 @@ interface EmployerDetailsStepProps {
         department: string;
         profile_image_url: string;
         address: string;
+        phone: string;
     };
     onChange: (data: EmployerDetailsStepProps["data"]) => void;
     onFileSelect: (file: File | null) => void; // Separate file handler
@@ -53,6 +54,11 @@ export function EmployerDetailsStep({
         // Address is optional, but if provided, check length
         if (data.address && data.address.trim().length < 10) {
             newErrors.address = "Address must be at least 10 characters";
+        }
+
+        // Phone is optional, but if provided, check format
+        if (data.phone && data.phone.trim() && !/^[\d\s\-\+\(\)]+$/.test(data.phone)) {
+            newErrors.phone = "Please enter a valid phone number";
         }
 
         setErrors(newErrors);
@@ -104,6 +110,25 @@ export function EmployerDetailsStep({
                         )}
                         <p className="text-xs text-muted-foreground">
                             The department or division you work in (optional)
+                        </p>
+                    </div>
+
+                    {/* Phone Number */}
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="+94 11 234 5678"
+                            value={data.phone}
+                            onChange={(e) => handleChange("phone", e.target.value)}
+                            className={errors.phone ? "border-destructive" : ""}
+                        />
+                        {errors.phone && (
+                            <p className="text-sm text-destructive">{errors.phone}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                            Your contact phone number (optional)
                         </p>
                     </div>
 

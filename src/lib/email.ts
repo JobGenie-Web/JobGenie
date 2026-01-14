@@ -333,6 +333,99 @@ export async function sendMISInvitationEmail(
 }
 
 // ============================================
+// EMPLOYER INVITATION SYSTEM
+// ============================================
+
+/**
+ * Send Employer sub-admin invitation email with temporary password
+ */
+export async function sendEmployerInvitationEmail(
+    email: string,
+    firstName: string,
+    token: string,
+    tempPassword: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const baseUrl = getBaseUrl();
+        const setupUrl = `${baseUrl}/employer/setup-password?token=${token}`;
+        const expiryDays = parseInt(process.env.MIS_INVITATION_EXPIRY_DAYS || "7");
+
+        // Check if SMTP is configured
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.log(`\n====================================`);
+            console.log(`[DEV] Employer Invitation Email`);
+            console.log(`====================================`);
+            console.log(`To: ${email}`);
+            console.log(`Name: ${firstName}`);
+            console.log(`Setup URL: ${setupUrl}`);
+            console.log(`Token: ${token}`);
+            console.log(`Temporary Password: ${tempPassword}`);
+            console.log(`Expires in: ${expiryDays} days`);
+            console.log(`====================================\n`);
+            console.log("[DEV] SMTP not configured. Set SMTP_USER and SMTP_PASS in .env to send actual emails.");
+            return { success: true };
+        }
+
+        const transporter = createTransporter();
+
+        const html = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
+<table role="presentation" style="width:100%;border-collapse:collapse;">
+<tr><td align="center" style="padding:40px 0;">
+<table role="presentation" style="width:100%;max-width:600px;border-collapse:collapse;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<tr><td style="padding:40px 40px 20px;text-align:center;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);border-radius:16px 16px 0 0;">
+<h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">JobGenie</h1>
+<p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">Find Your Perfect Career Match</p>
+</td></tr>
+<tr><td style="padding:40px;">
+<h2 style="margin:0 0 16px;font-size:24px;font-weight:600;color:#1f2937;">You've Been Invited!</h2>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Hi <strong>${firstName}</strong>,</p>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">You have been invited to join your company's JobGenie employer account as an administrator.</p>
+<div style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:2px solid #f59e0b;border-radius:12px;padding:20px;margin:24px 0;">
+<p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#92400e;">🔑 YOUR TEMPORARY PASSWORD</p>
+<p style="margin:0;font-size:28px;font-weight:700;color:#78350f;letter-spacing:2px;font-family:'Courier New',monospace;">${tempPassword}</p>
+<p style="margin:12px 0 0;font-size:12px;color:#92400e;"><strong>Important:</strong> You will need this password to set up your new password.</p>
+</div>
+<div style="text-align:center;margin:32px 0;">
+<a href="${setupUrl}" style="display:inline-block;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:600;">Set Up Your Account</a>
+</div>
+<p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#6b7280;text-align:center;">Or copy this link: <a href="${setupUrl}" style="color:#22c55e;">${setupUrl}</a></p>
+<div style="background-color:#fee2e2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
+<p style="margin:0;font-size:14px;color:#991b1b;"><strong>⏰ Important:</strong> This invitation expires in <strong>${expiryDays} days</strong>.</p>
+</div>
+</td></tr>
+<tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"JobGenie Employer" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "You've been invited to JobGenie Employer Account",
+            html: html,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Employer invitation sent to ${email}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Employer invitation email error:", error);
+        return {
+            success: false,
+            error: "Failed to send invitation email",
+        };
+    }
+}
+
+// ============================================
 // CANDIDATE APPROVAL/REJECTION EMAILS
 // ============================================
 

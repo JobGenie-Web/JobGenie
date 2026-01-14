@@ -27,8 +27,22 @@ export default async function CompleteProfilePage() {
         redirect("/employer/login");
     }
 
+    // Check if user is super admin (needed to determine which steps to show)
+    const { data: employerInfo } = await supabase
+        .from("employers")
+        .select("is_super_admin")
+        .eq("user_id", session.user.id)
+        .single();
+
+    const isSuperAdmin = employerInfo?.is_super_admin || false;
+
     // If both profiles are complete, redirect to dashboard
-    if (profileData.employer.profile_completed && profileData.company.profile_completed) {
+    // For sub-admins, only check employer profile completion
+    const isProfileComplete = isSuperAdmin
+        ? profileData.employer.profile_completed && profileData.company.profile_completed
+        : profileData.employer.profile_completed;
+
+    if (isProfileComplete) {
         redirect("/employer/dashboard");
     }
 
@@ -39,12 +53,15 @@ export default async function CompleteProfilePage() {
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold tracking-tight mb-2">Complete Your Profile</h1>
                     <p className="text-muted-foreground">
-                        Let's finish setting up your profile to start posting jobs and finding top talent
+                        {isSuperAdmin
+                            ? "Let's finish setting up your profile to start posting jobs and finding top talent"
+                            : "Complete your personal profile to start working with your team"
+                        }
                     </p>
                 </div>
 
                 {/* Wizard */}
-                <EmployerProfileWizard initialData={profileData} />
+                <EmployerProfileWizard initialData={profileData} isSuperAdmin={isSuperAdmin} />
             </div>
         </div>
     );

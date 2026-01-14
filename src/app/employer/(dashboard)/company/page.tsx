@@ -20,6 +20,15 @@ export default async function CompanyProfilePage() {
         redirect("/login");
     }
 
+    // Check if user is super admin
+    const { data: employerInfo } = await supabase
+        .from("employers")
+        .select("is_super_admin")
+        .eq("user_id", user.id)
+        .single();
+
+    const isSuperAdmin = employerInfo?.is_super_admin || false;
+
     const companyProfile = await getCompanyProfile(user.id);
 
     if (!companyProfile) {
@@ -31,7 +40,11 @@ export default async function CompanyProfilePage() {
             pageTitle="Company Profile"
             pageDescription="View and manage your company information"
         >
-            <CompanyProfileClient company={companyProfile} userId={user.id} />
+            <CompanyProfileClient
+                company={companyProfile}
+                userId={user.id}
+                isSuperAdmin={isSuperAdmin}
+            />
         </EmployerLayout>
     );
 }
