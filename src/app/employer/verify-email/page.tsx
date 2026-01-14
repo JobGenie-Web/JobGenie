@@ -1,156 +1,55 @@
-"use client";
+import Link from 'next/link';
+import { ArrowLeft, MailCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { VerifyEmailForm } from '@/components/auth/VerifyEmailForm';
+import { redirect } from 'next/navigation';
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { verifyEmail, resendVerificationCode } from "@/app/actions/auth";
-import { Loader2, Mail } from "lucide-react";
-import Link from "next/link";
+interface PageProps {
+    searchParams: Promise<{ email?: string }>;
+}
 
-export default function EmployerVerifyEmailPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const email = searchParams.get("email") || "";
+export default async function EmployerVerifyEmailPage({ searchParams }: PageProps) {
+    const params = await searchParams;
+    const email = params.email;
 
-    const [code, setCode] = useState("");
-    const [isVerifying, setIsVerifying] = useState(false);
-    const [isResending, setIsResending] = useState(false);
-
-    useEffect(() => {
-        if (!email) {
-            toast.error("Email parameter is missing");
-            router.push("/employer/signup");
-        }
-    }, [email, router]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!code || code.length !== 6) {
-            toast.error("Please enter a valid 6-digit verification code");
-            return;
-        }
-
-        setIsVerifying(true);
-
-        try {
-            const formData = new FormData();
-            formData.append("email", email);
-            formData.append("code", code);
-
-            const result = await verifyEmail(null, formData);
-
-            if (result.success) {
-                toast.success(result.message);
-                if (result.redirectTo) {
-                    setTimeout(() => {
-                        router.push(result.redirectTo!);
-                    }, 1000);
-                }
-            } else {
-                toast.error(result.message);
-            }
-        } catch (error) {
-            console.error("Verification error:", error);
-            toast.error("An unexpected error occurred. Please try again.");
-        } finally {
-            setIsVerifying(false);
-        }
-    };
-
-    const handleResend = async () => {
-        setIsResending(true);
-
-        try {
-            const result = await resendVerificationCode(email);
-
-            if (result.success) {
-                toast.success(result.message);
-            } else {
-                toast.error(result.message);
-            }
-        } catch (error) {
-            console.error("Resend error:", error);
-            toast.error("Failed to resend code. Please try again.");
-        } finally {
-            setIsResending(false);
-        }
-    };
+    // Redirect to signup if no email provided
+    if (!email) {
+        redirect('/employer/signup');
+    }
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <Mail className="h-6 w-6 text-primary" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-8">
+            <div className="w-full max-w-md">
+                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                    {/* Icon */}
+                    <div className="mb-6 flex justify-center">
+                        <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-4 text-primary">
+                            <MailCheck className="h-10 w-10" />
+                        </div>
                     </div>
-                    <CardTitle>Verify Your Email</CardTitle>
-                    <CardDescription>
-                        We've sent a 6-digit verification code to
-                        <br />
-                        <strong className="text-foreground">{email}</strong>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="code">Verification Code</Label>
-                            <Input
-                                id="code"
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]{6}"
-                                maxLength={6}
-                                placeholder="Enter 6-digit code"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                                className="text-center text-2xl tracking-widest"
-                                disabled={isVerifying}
-                            />
-                        </div>
 
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={isVerifying || code.length !== 6}
-                        >
-                            {isVerifying ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Verifying...
-                                </>
-                            ) : (
-                                "Verify Email"
-                            )}
-                        </Button>
+                    {/* Header */}
+                    <h1 className="mb-2 text-center text-2xl font-bold">
+                        Verify Your Email
+                    </h1>
+                    <p className="mb-8 text-center text-muted-foreground">
+                        We&apos;ve sent a 6-digit verification code to your email address.
+                    </p>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            Didn't receive the code?{" "}
-                            <button
-                                type="button"
-                                onClick={handleResend}
-                                disabled={isResending}
-                                className="text-primary hover:underline font-medium disabled:opacity-50"
-                            >
-                                {isResending ? "Sending..." : "Resend"}
-                            </button>
-                        </div>
-                    </form>
+                    {/* Verification Form */}
+                    <VerifyEmailForm email={email} />
+                </div>
 
-                    <div className="mt-6 text-center text-sm">
-                        <Link
-                            href="/employer/signup"
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            Back to signup
+                {/* Back link */}
+                <div className="mt-6 text-center">
+                    <Button variant="ghost" asChild>
+                        <Link href="/employer/signup" className="gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Sign Up
                         </Link>
-                    </div>
-                </CardContent>
-            </Card>
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 }
