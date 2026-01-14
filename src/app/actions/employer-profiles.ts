@@ -22,6 +22,7 @@ export interface CompanyProfile {
     company_name: string;
     business_registration_no: string;
     industry: string;
+    bio: string | null;
     description: string | null;
     company_size: string | null;
     website: string | null;
@@ -31,6 +32,8 @@ export interface CompanyProfile {
     logo_url: string | null;
     approval_status: string;
     profile_completed: boolean;
+    specialities: string[];
+    map_link: string | null;
 }
 
 /**
@@ -99,6 +102,7 @@ export async function getCompanyProfile(userId: string): Promise<CompanyProfile 
                 company_name,
                 business_registration_no,
                 industry,
+                bio,
                 description,
                 company_size,
                 website,
@@ -107,7 +111,9 @@ export async function getCompanyProfile(userId: string): Promise<CompanyProfile 
                 phone,
                 logo_url,
                 approval_status,
-                profile_completed
+                profile_completed,
+                specialities,
+                map_link
             `)
             .eq("id", employerData.company_id)
             .single();
@@ -154,6 +160,7 @@ export async function getEmployerAndCompanyProfiles(userId: string): Promise<{
                     company_name,
                     business_registration_no,
                     industry,
+                    bio,
                     description,
                     company_size,
                     website,
@@ -162,7 +169,9 @@ export async function getEmployerAndCompanyProfiles(userId: string): Promise<{
                     phone,
                     logo_url,
                     approval_status,
-                    profile_completed
+                    profile_completed,
+                    specialities,
+                    map_link
                 )
             `)
             .eq("user_id", userId)

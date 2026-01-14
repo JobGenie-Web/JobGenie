@@ -385,14 +385,17 @@ model Company {
   company_name                String   @db.VarChar(200)
   business_registration_no    String   @unique @db.VarChar(50)
   industry                    String   @db.VarChar(100)
+  bio                         String?  @db.VarChar(255)
   business_registered_address String   @db.VarChar(255)
   br_certificate_url          String   @db.VarChar(255)// BR Certificate URL
   logo_url                    String?  @db.VarChar(255)
-  description                 String?  @db.VarChar(255)
+  description                 String?  @db.VarChar(3000)
   phone                       String   @db.VarChar(20)
   website                     String?  @db.VarChar(255)
   headoffice_location         String?  @db.VarChar(200)
   company_size                String?  @db.VarChar(50)
+  specialities                String[] @default([])  // Array of specialities
+  map_link                    String?  @db.VarChar(1000)
   
   approval_status             ApprovalStatus @default(pending)
   profile_completed           Boolean @default(false)

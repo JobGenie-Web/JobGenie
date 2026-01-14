@@ -253,3 +253,97 @@ export async function completeEmployerProfile(
         };
     }
 }
+
+/**
+ * Update company information
+ * Optimized: Only updates provided fields with validation
+ */
+export async function updateCompanyInfo(
+    userId: string,
+    updateData: {
+        bio?: string | null;
+        description?: string;
+        company_size?: string;
+        website?: string | null;
+        headoffice_location?: string;
+        logo_url?: string | null;
+        specialities?: string[];
+        map_link?: string | null;
+    }
+): Promise<ActionState> {
+    try {
+        const adminClient = createAdminClient();
+
+        // Get employer's company_id
+        const { data: employerRecord, error: fetchError } = await adminClient
+            .from("employers")
+            .select("company_id")
+            .eq("user_id", userId)
+            .single();
+
+        if (fetchError || !employerRecord) {
+            return {
+                success: false,
+                message: "Employer record not found.",
+            };
+        }
+
+        const now = new Date().toISOString();
+
+        // Build update object with only provided fields
+        const companyUpdate: any = {
+            updated_at: now,
+        };
+
+        if (updateData.bio !== undefined) {
+            companyUpdate.bio = updateData.bio || null;
+        }
+        if (updateData.description !== undefined) {
+            companyUpdate.description = updateData.description;
+        }
+        if (updateData.company_size !== undefined) {
+            companyUpdate.company_size = updateData.company_size;
+        }
+        if (updateData.website !== undefined) {
+            companyUpdate.website = updateData.website || null;
+        }
+        if (updateData.headoffice_location !== undefined) {
+            companyUpdate.headoffice_location = updateData.headoffice_location;
+        }
+        if (updateData.logo_url !== undefined) {
+            companyUpdate.logo_url = updateData.logo_url || null;
+        }
+        if (updateData.specialities !== undefined) {
+            companyUpdate.specialities = updateData.specialities;
+        }
+        if (updateData.map_link !== undefined) {
+            companyUpdate.map_link = updateData.map_link || null;
+        }
+
+        // Update company profile
+        const { error: companyError } = await adminClient
+            .from("companies")
+            .update(companyUpdate)
+            .eq("id", employerRecord.company_id);
+
+        if (companyError) {
+            console.error("Company update error:", companyError);
+            return {
+                success: false,
+                message: "Failed to update company information. Please try again.",
+            };
+        }
+
+        return {
+            success: true,
+            message: "Company information updated successfully!",
+        };
+    } catch (error) {
+        console.error("Error in updateCompanyInfo:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
+    }
+}
+
