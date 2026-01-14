@@ -77,7 +77,7 @@ export const companyRegistrationSchema = z.object({
         .string()
         .min(3, "Business registration number must be at least 3 characters")
         .max(50, "Business registration number must be less than 50 characters")
-        .regex(/^[a-zA-Z0-9-/]+$/, "Business registration number can only contain letters, numbers, hyphens, and slashes")
+        .regex(/^[a-zA-Z0-9\s-/]+$/, "Business registration number can only contain letters, numbers, spaces, hyphens, and slashes")
         .trim(),
 
     industry: z
