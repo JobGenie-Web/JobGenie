@@ -21,7 +21,7 @@ export function RestrictionToastListener() {
             toast({
                 className: "bg-red-500 border-red-700 text-white",
                 title: "Access Restricted",
-                description: "Your profile is pending approval. You cannot access this page until an administrator approves your account.",
+                description: "Your company profile is pending MIS approval. You cannot access this page until an administrator approves your company.",
                 action: <AlertCircle className="h-5 w-5 text-white" />,
             });
 
@@ -31,7 +31,6 @@ export function RestrictionToastListener() {
             router.replace(`${pathname}?${params.toString()}`);
 
             // Reset the ref after a delay to allow showing it again if they navigate away and come back
-            // though the component might remount then anyway.
             setTimeout(() => {
                 hasShownToast.current = false;
             }, 1000);

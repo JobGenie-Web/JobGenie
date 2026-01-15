@@ -16,7 +16,10 @@ const roleRoutes: Record<string, string[]> = {
         '/employer/dashboard',
         '/employer/jobs',
         '/employer/applications',
+        '/employer/candidates',
         '/employer/company',
+        '/employer/profile',
+        '/employer/admins',
         '/employer/settings',
     ],
     mis: [
@@ -167,6 +170,38 @@ export async function middleware(request: NextRequest) {
                 }
             }
         }
+
+        // Additional check for employers: verify company approval status
+        if (userData.role === 'employer' && requiredRole === 'employer') {
+            const { data: employerData } = await supabase
+                .from('employers')
+                .select(`
+                    id,
+                    companies!inner (
+                        approval_status,
+                        profile_completed
+                    )
+                `)
+                .eq('user_id', user.id)
+                .single();
+
+            // Type assertion for nested company data
+            const company = (employerData as any)?.companies;
+
+            // Only restrict if company profile is completed but not approved
+            if (company?.profile_completed && company.approval_status !== 'approved') {
+                // Allow access to dashboard, company profile, and personal profile routes
+                const allowedRoutes = ['/employer/dashboard', '/employer/company', '/employer/profile'];
+                const isAllowedRoute = allowedRoutes.some(route => pathname.startsWith(route));
+
+                if (!isAllowedRoute) {
+                    // Redirect to dashboard with info message
+                    const dashboardUrl = new URL('/employer/dashboard', request.url);
+                    dashboardUrl.searchParams.set('info', 'approval_pending');
+                    return NextResponse.redirect(dashboardUrl);
+                }
+            }
+        }
     }
 
     // Redirect authenticated users away from auth routes
@@ -198,7 +233,10 @@ export const config = {
         '/employer/dashboard/:path*',
         '/employer/jobs/:path*',
         '/employer/applications/:path*',
+        '/employer/candidates/:path*',
         '/employer/company/:path*',
+        '/employer/profile/:path*',
+        '/employer/admins/:path*',
         '/employer/settings/:path*',
         // MIS routes
         '/mis/dashboard/:path*',
