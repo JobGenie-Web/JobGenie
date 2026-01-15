@@ -23,6 +23,7 @@ export function RestrictionToastListener() {
                 title: "Access Restricted",
                 description: "Your profile is pending approval. You cannot access this page until an administrator approves your account.",
                 action: <AlertCircle className="h-5 w-5 text-white" />,
+                duration: 2000,
             });
 
             // Clean up the URL
