@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,11 @@ interface CompanyProfileClientProps {
 
 export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyProfileClientProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const companyInitials = company.company_name
         .split(" ")
@@ -54,7 +59,7 @@ export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyP
 
                             {/* Edit Button - Top Right (Only for Super Admin) */}
                             {isSuperAdmin && (
-                                <div className="ml-auto">
+                                <div className="ml-auto relative z-10">
                                     <Button
                                         variant="outline"
                                         size="default"
@@ -107,100 +112,111 @@ export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyP
                     {/* Main Content - Left Side (2/3) */}
                     <div className="lg:col-span-2 space-y-4">
                         {/* Tabs */}
-                        <Tabs defaultValue="about" className="w-full" suppressHydrationWarning>
+                        {!isMounted ? (
+                            // Loading skeleton to prevent layout shift
                             <Card>
-                                <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-12 px-2">
-                                    <TabsTrigger
-                                        value="about"
-                                        className="rounded-full border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4"
-                                    >
-                                        About
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="jobs"
-                                        className="rounded-full border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4"
-                                    >
-                                        Jobs
-                                    </TabsTrigger>
-                                </TabsList>
+                                <div className="h-12 border-b" />
+                                <div className="p-6 space-y-4">
+                                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                                    <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+                                </div>
+                            </Card>
+                        ) : (
+                            <Tabs defaultValue="about" className="w-full">
+                                <Card>
+                                    <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-12 px-2">
+                                        <TabsTrigger
+                                            value="about"
+                                            className="rounded-full border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4"
+                                        >
+                                            About
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="jobs"
+                                            className="rounded-full border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4"
+                                        >
+                                            Jobs
+                                        </TabsTrigger>
+                                    </TabsList>
 
-                                {/* About Tab */}
-                                <TabsContent value="about" className="p-6 space-y-6 mt-0">
-                                    {/* About Section */}
-                                    {company.description && (
-                                        <div>
-                                            <h2 className="text-lg font-semibold mb-3">Overview</h2>
-                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                                {company.description}
+                                    {/* About Tab */}
+                                    <TabsContent value="about" className="p-6 space-y-6 mt-0">
+                                        {/* About Section */}
+                                        {company.description && (
+                                            <div>
+                                                <h2 className="text-lg font-semibold mb-3">Overview</h2>
+                                                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                                    {company.description}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <Separator />
+
+                                        {/* Specialities */}
+                                        {company.specialities && company.specialities.length > 0 && (
+                                            <div>
+                                                <h2 className="text-lg font-semibold mb-3">Specialities</h2>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {company.specialities.map((speciality, index) => (
+                                                        <Badge
+                                                            key={index}
+                                                            variant="secondary"
+                                                            className="font-normal px-3 py-1"
+                                                        >
+                                                            {speciality}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Map */}
+                                        {company.map_link && (
+                                            <>
+                                                <Separator />
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h2 className="text-lg font-semibold">Location</h2>
+                                                        <a
+                                                            href={company.map_link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:underline text-sm font-medium"
+                                                        >
+                                                            View larger map
+                                                        </a>
+                                                    </div>
+                                                    <div className="w-full h-[350px] rounded-lg overflow-hidden border">
+                                                        <iframe
+                                                            src={company.map_link}
+                                                            width="100%"
+                                                            height="100%"
+                                                            style={{ border: 0 }}
+                                                            allowFullScreen
+                                                            loading="lazy"
+                                                            referrerPolicy="no-referrer-when-downgrade"
+                                                            title="Company Location Map"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </TabsContent>
+
+                                    {/* Jobs Tab */}
+                                    <TabsContent value="jobs" className="p-6 mt-0">
+                                        <div className="text-center py-12">
+                                            <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                                            <h3 className="text-lg font-semibold mb-2">No jobs posted yet</h3>
+                                            <p className="text-muted-foreground">
+                                                Check back later for new opportunities
                                             </p>
                                         </div>
-                                    )}
-
-                                    <Separator />
-
-                                    {/* Specialities */}
-                                    {company.specialities && company.specialities.length > 0 && (
-                                        <div>
-                                            <h2 className="text-lg font-semibold mb-3">Specialities</h2>
-                                            <div className="flex flex-wrap gap-2">
-                                                {company.specialities.map((speciality, index) => (
-                                                    <Badge
-                                                        key={index}
-                                                        variant="secondary"
-                                                        className="font-normal px-3 py-1"
-                                                    >
-                                                        {speciality}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Map */}
-                                    {company.map_link && (
-                                        <>
-                                            <Separator />
-                                            <div>
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <h2 className="text-lg font-semibold">Location</h2>
-                                                    <a
-                                                        href={company.map_link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-primary hover:underline text-sm font-medium"
-                                                    >
-                                                        View larger map
-                                                    </a>
-                                                </div>
-                                                <div className="w-full h-[350px] rounded-lg overflow-hidden border">
-                                                    <iframe
-                                                        src={company.map_link}
-                                                        width="100%"
-                                                        height="100%"
-                                                        style={{ border: 0 }}
-                                                        allowFullScreen
-                                                        loading="lazy"
-                                                        referrerPolicy="no-referrer-when-downgrade"
-                                                        title="Company Location Map"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </TabsContent>
-
-                                {/* Jobs Tab */}
-                                <TabsContent value="jobs" className="p-6 mt-0">
-                                    <div className="text-center py-12">
-                                        <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                                        <h3 className="text-lg font-semibold mb-2">No jobs posted yet</h3>
-                                        <p className="text-muted-foreground">
-                                            Check back later for new opportunities
-                                        </p>
-                                    </div>
-                                </TabsContent>
-                            </Card>
-                        </Tabs>
+                                    </TabsContent>
+                                </Card>
+                            </Tabs>
+                        )}
                     </div>
 
                     {/* Sidebar - Right Side (1/3) */}

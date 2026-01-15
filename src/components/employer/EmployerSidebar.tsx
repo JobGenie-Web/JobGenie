@@ -9,6 +9,7 @@ import {
     FileText,
     Building2,
     Users,
+    UserCog,
     Settings,
 } from "lucide-react";
 import {
@@ -53,6 +54,11 @@ const navigationItems = [
         title: "Company Profile",
         href: "/employer/company",
         icon: Building2,
+    },
+    {
+        title: "Company Admins",
+        href: "/employer/admins",
+        icon: UserCog,
     },
     {
         title: "Settings",

@@ -106,12 +106,12 @@ export function EmployerUserMenu({ user }: EmployerUserMenuProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
+                    {/* <DropdownMenuItem asChild>
                         <Link href="/employer/admins" className="cursor-pointer">
                             <Shield className="mr-2 h-4 w-4" />
                             <span>Company Admins</span>
                         </Link>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     <DropdownMenuItem asChild>
                         <Link href="/employer/settings" className="cursor-pointer">
                             <Settings className="mr-2 h-4 w-4" />
