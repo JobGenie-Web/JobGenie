@@ -1,4 +1,4 @@
-import { Company } from "@prisma/client";
+// Utility functions for checking company approval status
 
 /**
  * Check if a company is approved
