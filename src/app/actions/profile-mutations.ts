@@ -684,6 +684,7 @@ export async function updateBasicInfo(data: BasicInfoFormData): Promise<ActionRe
             alternative_phone: validated.alternative_phone ?? null,
             country: validated.country ?? null,
             current_position: validated.current_position,
+            highest_qualification: validated.highest_qualification ?? null,
             profile_image_url: validated.profile_image_url ?? null,
             updated_at: new Date().toISOString(),
         };

@@ -34,6 +34,7 @@ export async function GET() {
                 years_of_experience,
                 experience_level,
                 qualifications,
+                highest_qualification,
                 expected_monthly_salary,
                 availability_status,
                 notice_period,

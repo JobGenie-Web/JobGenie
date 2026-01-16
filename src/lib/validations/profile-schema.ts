@@ -36,6 +36,19 @@ export const availabilityStatusSchema = z.enum(["available", "open_to_opportunit
 
 export const industryTypeSchema = z.enum(["it_software", "banking", "finance_investment", "insurance", "fintech", "accounting", "other"]);
 
+export const professionalQualificationSchema = z.enum([
+    "bachelors_degree",
+    "masters_degree",
+    "doctorate_phd",
+    "undergraduate",
+    "post_graduate",
+    "diploma",
+    "certificate",
+    "professional_certification",
+    "vocational_training",
+    "no_formal_education"
+]);
+
 // ============================================
 // FINANCE & BANKING EDUCATION STATUS ENUMS
 // ============================================
@@ -197,6 +210,7 @@ export const basicInfoSchema = z.object({
     availabilityStatus: availabilityStatusSchema.default("available"),
     noticePeriod: z.string().max(50).optional(),
     employmentType: employmentTypeSchema.default("full_time"),
+    highestQualification: professionalQualificationSchema.optional(),
     profileImageUrl: z.string().optional(),
 });
 

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { basicInfoSchema, type BasicInfoFormData } from "@/lib/validations/profile";
 import { updateBasicInfo } from "@/app/actions/profile-mutations";
@@ -54,6 +55,7 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
             alternative_phone: "",
             country: "",
             current_position: "",
+            highest_qualification: undefined,
             profile_image_url: "",
         },
     });
@@ -69,6 +71,7 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                 alternative_phone: profile.alternative_phone || "",
                 country: profile.country || "",
                 current_position: profile.current_position || "",
+                highest_qualification: profile.highest_qualification || undefined,
                 profile_image_url: profile.profile_image_url || "",
             });
             setPreviewImage(profile.profile_image_url);
@@ -327,6 +330,36 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                                     <FormControl>
                                         <Input placeholder="e.g. Senior Software Engineer" {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="highest_qualification"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Highest Qualification</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select highest qualification" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="bachelors_degree">Bachelor's Degree</SelectItem>
+                                            <SelectItem value="masters_degree">Master's Degree</SelectItem>
+                                            <SelectItem value="doctorate_phd">Doctorate/PhD</SelectItem>
+                                            <SelectItem value="undergraduate">Undergraduate</SelectItem>
+                                            <SelectItem value="post_graduate">Post Graduate</SelectItem>
+                                            <SelectItem value="diploma">Diploma</SelectItem>
+                                            <SelectItem value="certificate">Certificate</SelectItem>
+                                            <SelectItem value="professional_certification">Professional Certification</SelectItem>
+                                            <SelectItem value="vocational_training">Vocational Training</SelectItem>
+                                            <SelectItem value="no_formal_education">No Formal Education</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

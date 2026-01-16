@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Briefcase, Calendar, FileText, Pencil } from "lucide-react";
+import { Mail, Phone, MapPin, Briefcase, Calendar, FileText, Pencil, GraduationCap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -129,6 +129,12 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                             <Calendar className="h-4 w-4 flex-shrink-0" />
                             <span>{profile.industry}</span>
                         </div>
+                        {profile.highest_qualification && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                                <span className="capitalize">{profile.highest_qualification.replace(/_/g, ' ')}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>

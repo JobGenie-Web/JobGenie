@@ -80,6 +80,7 @@ model Candidate {
   
   // Qualifications stored as array for multiple selection
   qualifications          ProfessionalQualification[]
+  highest_qualification   ProfessionalQualification?
   
   expected_monthly_salary Decimal? @db.Decimal(12, 2)
   availability_status     AvailabilityStatus? @default(available)

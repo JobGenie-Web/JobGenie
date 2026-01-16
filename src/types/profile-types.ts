@@ -110,6 +110,7 @@ export interface CandidateProfile {
     years_of_experience: number | null;
     experience_level: string | null;
     qualifications: string[];
+    highest_qualification: string | null;
     expected_monthly_salary: number | null;
     availability_status: string | null;
     notice_period: string | null;

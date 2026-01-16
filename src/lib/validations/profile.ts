@@ -95,6 +95,19 @@ export const awardSchema = z.object({
 });
 
 // Basic Info Schema
+export const professionalQualificationEnum = z.enum([
+    "bachelors_degree",
+    "masters_degree",
+    "doctorate_phd",
+    "undergraduate",
+    "post_graduate",
+    "diploma",
+    "certificate",
+    "professional_certification",
+    "vocational_training",
+    "no_formal_education"
+]);
+
 export const basicInfoSchema = z.object({
     first_name: z.string().min(1, "First name is required").max(100),
     last_name: z.string().min(1, "Last name is required").max(100),
@@ -103,6 +116,7 @@ export const basicInfoSchema = z.object({
     alternative_phone: z.string().max(20).optional(),
     country: z.string().max(100).optional(),
     current_position: z.string().min(1, "Current position is required").max(200),
+    highest_qualification: professionalQualificationEnum.optional(),
     profile_image_url: z.string().optional(),
 });
 

@@ -54,6 +54,19 @@ const COUNTRIES = [
     "Australia", "India", "Singapore", "United Arab Emirates", "Germany", "Other",
 ];
 
+const QUALIFICATION_OPTIONS = [
+    { value: "bachelors_degree", label: "Bachelor's Degree" },
+    { value: "masters_degree", label: "Master's Degree" },
+    { value: "doctorate_phd", label: "Doctorate/PhD" },
+    { value: "undergraduate", label: "Undergraduate" },
+    { value: "post_graduate", label: "Post Graduate" },
+    { value: "diploma", label: "Diploma" },
+    { value: "certificate", label: "Certificate" },
+    { value: "professional_certification", label: "Professional Certification" },
+    { value: "vocational_training", label: "Vocational Training" },
+    { value: "no_formal_education", label: "No Formal Education" },
+];
+
 function FormField({
     label, id, required, children, error,
 }: {
@@ -262,6 +275,24 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                             </Select>
                         </FormField>
                     </div>
+
+                    <FormField label="Highest Qualification" id="highestQualification">
+                        <Select
+                            value={data.highestQualification}
+                            onValueChange={(value) => updateField("highestQualification", value as BasicInfoData["highestQualification"])}
+                        >
+                            <SelectTrigger id="highestQualification">
+                                <SelectValue placeholder="Select highest qualification" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {QUALIFICATION_OPTIONS.map((qualification) => (
+                                    <SelectItem key={qualification.value} value={qualification.value}>
+                                        {qualification.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </FormField>
                 </div>
             </FormSection>
 
