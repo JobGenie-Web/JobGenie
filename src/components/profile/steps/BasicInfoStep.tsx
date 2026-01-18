@@ -1,13 +1,15 @@
 "use client";
 
-import { User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FormSection } from "../shared/FormSection";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { BasicInfoData } from "@/lib/validations/profile-schema";
+import { useJobDesignations } from "@/hooks/useJobDesignations";
 
 interface BasicInfoStepProps {
     data: BasicInfoData;
@@ -15,15 +17,13 @@ interface BasicInfoStepProps {
     onNext: () => void;
     onPrevious: () => void;
     onImageSelect: (file: File | null) => void;
+    industry?: string; // Selected industry from previous step
 }
 
 const EXPERIENCE_LEVELS = [
-    { value: "entry", label: "Entry Level (0-2 years)" },
-    { value: "junior", label: "Junior (2-4 years)" },
-    { value: "mid", label: "Mid Level (4-7 years)" },
-    { value: "senior", label: "Senior (7-10 years)" },
-    { value: "lead", label: "Lead/Manager (10+ years)" },
-    { value: "principal", label: "Principal/Director" },
+    { value: "junior", label: "Junior" },
+    { value: "mid", label: "Mid Level" },
+    { value: "senior", label: "Senior" },
 ];
 
 const AVAILABILITY_STATUSES = [
@@ -83,7 +83,24 @@ function FormField({
     );
 }
 
-export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelect }: BasicInfoStepProps) {
+export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelect, industry }: BasicInfoStepProps) {
+    // Map industry string to industry ID for filtering
+    // Industry IDs: 1=Banking, 2=Finance & Investment, 3=Information Technology
+    const getIndustryId = (industryName?: string): number | null => {
+        if (!industryName) return null;
+        const industryMap: Record<string, number> = {
+            "banking": 1,
+            "finance_investment": 2,
+            "it_software": 3,
+        };
+        return industryMap[industryName] || null;
+    };
+
+    const industryId = getIndustryId(industry);
+
+    // Fetch job designations from the database, filtered by industry if available
+    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industryId);
+
     const updateField = <K extends keyof BasicInfoData>(key: K, value: BasicInfoData[K]) => {
         onChange({ ...data, [key]: value });
     };
@@ -230,12 +247,39 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
             >
                 <div className="space-y-4">
                     <FormField label="Current Position" id="currentPosition" required>
-                        <Input
-                            id="currentPosition"
-                            value={data.currentPosition}
-                            onChange={(e) => updateField("currentPosition", e.target.value)}
-                            placeholder="e.g., Software Engineer"
-                        />
+                        {loadingDesignations ? (
+                            <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Loading job designations...
+                            </div>
+                        ) : designationsError ? (
+                            <div className="space-y-2">
+                                <p className="text-sm text-destructive">
+                                    Failed to load job designations. You can enter manually.
+                                </p>
+                                <Input
+                                    id="currentPosition"
+                                    value={data.currentPosition}
+                                    onChange={(e) => updateField("currentPosition", e.target.value)}
+                                    placeholder="e.g., Software Engineer"
+                                />
+                            </div>
+                        ) : (
+                            <Combobox
+                                options={jobDesignations.map((designation) => {
+                                    const fullLabel = `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`;
+                                    return {
+                                        value: designation.designation_name,
+                                        label: fullLabel
+                                    };
+                                })}
+                                value={data.currentPosition}
+                                onValueChange={(value) => updateField("currentPosition", value)}
+                                placeholder="Select your current position"
+                                searchPlaceholder="Search job designations..."
+                                emptyMessage="No job designation found."
+                            />
+                        )}
                     </FormField>
 
                     <div className="grid gap-4 md:grid-cols-2">

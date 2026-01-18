@@ -499,6 +499,43 @@ model Job {
 }
 
 // ============================================
+// JOB DESIGNATIONS SYSTEM
+// ============================================
+
+model Industry {
+  industry_id   Int              @id
+  industry_name String           @db.VarChar(100)
+  
+  designations  JobDesignation[]
+  
+  @@map("industries")
+}
+
+model SeniorityLevel {
+  level_id     Int              @id
+  level_name   String           @db.VarChar(50)
+  level_order  Int
+  
+  designations JobDesignation[]
+  
+  @@map("seniority_levels")
+}
+
+model JobDesignation {
+  designation_id   Int            @id @default(autoincrement())
+  designation_name String         @db.VarChar(150)
+  industry_id      Int
+  level_id         Int
+  
+  industry         Industry       @relation(fields: [industry_id], references: [industry_id])
+  seniority_level  SeniorityLevel @relation(fields: [level_id], references: [level_id])
+  
+  @@index([industry_id])
+  @@index([level_id])
+  @@map("job_designations")
+}
+
+// ============================================
 // ENUMS
 // ============================================
 
@@ -516,7 +553,6 @@ enum UserStatus {
 }
 
 enum ExperienceLevel {
-  entry
   junior
   mid
   senior

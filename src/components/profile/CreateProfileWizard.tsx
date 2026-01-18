@@ -304,6 +304,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                         onImageSelect={setProfileImageFile}
                         onNext={handleNext}
                         onPrevious={handlePrevious}
+                        industry={industry}
                     />
                 );
             case "experience":

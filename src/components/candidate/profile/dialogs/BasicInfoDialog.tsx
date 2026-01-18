@@ -30,6 +30,8 @@ import { updateBasicInfo } from "@/app/actions/profile-mutations";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateProfile } from "@/types/profile-types";
 import { Upload, Loader2 } from "lucide-react";
+import { useJobDesignations } from "@/hooks/useJobDesignations";
+import { Combobox } from "@/components/ui/combobox";
 
 interface BasicInfoDialogProps {
     open: boolean;
@@ -44,6 +46,23 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Map industry string to industry ID for filtering
+    // Industry IDs: 1=Banking, 2=Finance & Investment, 3=Information Technology
+    const getIndustryId = (industryName?: string): number | null => {
+        if (!industryName) return null;
+        const industryMap: Record<string, number> = {
+            "banking": 1,
+            "finance_investment": 2,
+            "it_software": 3,
+        };
+        return industryMap[industryName] || null;
+    };
+
+    const industryId = getIndustryId(profile?.industry);
+
+    // Fetch job designations from the database, filtered by industry if available
+    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industryId);
 
     const form = useForm<BasicInfoFormData>({
         resolver: zodResolver(basicInfoSchema),
@@ -327,9 +346,38 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Current Position *</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Senior Software Engineer" {...field} />
-                                    </FormControl>
+                                    {loadingDesignations ? (
+                                        <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground border rounded-md">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Loading job designations...
+                                        </div>
+                                    ) : designationsError ? (
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-destructive">
+                                                Failed to load job designations. You can enter manually.
+                                            </p>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Senior Software Engineer" {...field} />
+                                            </FormControl>
+                                        </div>
+                                    ) : (
+                                        <FormControl>
+                                            <Combobox
+                                                options={jobDesignations.map((designation) => {
+                                                    const fullLabel = `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`;
+                                                    return {
+                                                        value: designation.designation_name,
+                                                        label: fullLabel
+                                                    };
+                                                })}
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                                placeholder="Select your current position"
+                                                searchPlaceholder="Search job designations..."
+                                                emptyMessage="No job designation found."
+                                            />
+                                        </FormControl>
+                                    )}
                                     <FormMessage />
                                 </FormItem>
                             )}

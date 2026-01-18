@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -72,7 +70,7 @@ export async function POST(request: NextRequest) {
 
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("candidate-files")
+            .from("profile-images")
             .upload(filePath, buffer, {
                 contentType: file.type,
                 upsert: true,
@@ -88,7 +86,7 @@ export async function POST(request: NextRequest) {
 
         // Get public URL
         const { data: urlData } = supabase.storage
-            .from("candidate-files")
+            .from("profile-images")
             .getPublicUrl(filePath);
 
         if (!urlData?.publicUrl) {
