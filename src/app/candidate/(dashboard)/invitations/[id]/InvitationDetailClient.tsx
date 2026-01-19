@@ -327,7 +327,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                             <div>
                                 <CardTitle className="text-xl text-green-900 dark:text-green-100">Interview Scheduled</CardTitle>
                                 <CardDescription className="text-green-700 dark:text-green-300">
-                                    You accepted this invitation on {format(new Date(invitation.responded_at!), "MMMM d, yyyy 'at' h:mm a")}
+                                    {invitation.responded_at && (
+                                        <>You accepted this invitation on {format(new Date(invitation.responded_at + (invitation.responded_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}</>
+                                    )}
                                 </CardDescription>
                             </div>
                         </div>
