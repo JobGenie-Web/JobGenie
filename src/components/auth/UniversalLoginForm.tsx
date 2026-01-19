@@ -9,7 +9,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { universalLogin } from "@/app/actions/universal-auth";
 
-export function UniversalLoginForm() {
+export function UniversalLoginForm({ returnUrl }: { returnUrl?: string }) {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [state, formAction, isPending] = useActionState(universalLogin, null);
@@ -37,6 +37,11 @@ export function UniversalLoginForm() {
 
     return (
         <form action={formAction} className="space-y-4">
+            {/* Hidden field for returnUrl */}
+            {returnUrl && (
+                <input type="hidden" name="returnUrl" value={returnUrl} />
+            )}
+
             <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input

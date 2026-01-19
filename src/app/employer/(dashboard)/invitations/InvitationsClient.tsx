@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,6 +62,8 @@ interface Invitation {
 }
 
 export default function InvitationsClient() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>("all");
@@ -78,13 +81,28 @@ export default function InvitationsClient() {
         fetchInvitations();
     }, []);
 
+    // Restore selected invitation from URL or auto-select
     useEffect(() => {
-        // Auto-select first invitation when list changes
+        if (invitations.length === 0) return;
+
+        const invitationId = searchParams.get('id');
+
+        if (invitationId) {
+            // Try to find invitation by ID from URL
+            const invitation = invitations.find(inv => inv.id === invitationId);
+            if (invitation) {
+                setSelectedInvitation(invitation);
+                return;
+            }
+        }
+
+        // If no URL param or invitation not found, select first from filtered list
         const filtered = filteredInvitations;
         if (filtered.length > 0 && !selectedInvitation) {
             setSelectedInvitation(filtered[0]);
+            updateURLWithInvitation(filtered[0].id);
         }
-    }, [invitations, filter]);
+    }, [invitations, searchParams]);
 
     const fetchInvitations = async () => {
         try {
@@ -93,9 +111,7 @@ export default function InvitationsClient() {
 
             if (data.success) {
                 setInvitations(data.data);
-                if (data.data.length > 0) {
-                    setSelectedInvitation(data.data[0]);
-                }
+                // Don't auto-select here, let the useEffect handle it
             } else {
                 toast.error("Failed to load invitations");
             }
@@ -105,6 +121,19 @@ export default function InvitationsClient() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Helper function to update URL with invitation ID
+    const updateURLWithInvitation = (invitationId: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('id', invitationId);
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
+
+    // Helper function to handle invitation selection
+    const handleSelectInvitation = (invitation: Invitation) => {
+        setSelectedInvitation(invitation);
+        updateURLWithInvitation(invitation.id);
     };
 
     const filteredInvitations = invitations.filter(inv => {
@@ -283,7 +312,7 @@ export default function InvitationsClient() {
                                     "cursor-pointer transition-all hover:shadow-md",
                                     selectedInvitation?.id === invitation.id && "ring-2 ring-primary"
                                 )}
-                                onClick={() => setSelectedInvitation(invitation)}
+                                onClick={() => handleSelectInvitation(invitation)}
                             >
                                 <CardContent className="p-3">
                                     <div className="flex items-start gap-2.5">

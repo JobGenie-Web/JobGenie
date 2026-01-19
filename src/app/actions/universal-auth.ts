@@ -22,6 +22,7 @@ export async function universalLogin(
 ): Promise<ActionState> {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const returnUrl = formData.get("returnUrl") as string | null;
 
     // Basic validation
     if (!email || !password) {
@@ -109,12 +110,15 @@ export async function universalLogin(
                 .eq("user_id", authData.user.id)
                 .single();
 
+            // Use returnUrl if provided, otherwise use default redirect
+            const defaultRedirect = candidateData?.checkprofile_completed
+                ? "/candidate/dashboard"
+                : "/candidate/create-profile";
+
             return {
                 success: true,
                 message: "Login successful!",
-                redirectTo: candidateData?.checkprofile_completed
-                    ? "/candidate/dashboard"
-                    : "/candidate/create-profile",
+                redirectTo: returnUrl || defaultRedirect,
             };
         }
 
@@ -138,10 +142,13 @@ export async function universalLogin(
             const isProfileIncomplete =
                 !employerData.profile_completed || !companyData?.profile_completed;
 
+            // Use returnUrl if provided, otherwise use default redirect
+            const defaultRedirect = isProfileIncomplete ? "/employer/complete-profile" : "/employer/dashboard";
+
             return {
                 success: true,
                 message: "Login successful!",
-                redirectTo: isProfileIncomplete ? "/employer/complete-profile" : "/employer/dashboard",
+                redirectTo: returnUrl || defaultRedirect,
             };
         }
 

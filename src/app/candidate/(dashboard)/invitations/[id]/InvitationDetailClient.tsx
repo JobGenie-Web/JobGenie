@@ -691,6 +691,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        disabled={invitation.invitation_canceled}
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(invitation.meeting_link!);
                                                             toast.success("Link copied!");
@@ -698,8 +699,8 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                                     >
                                                         <Copy className="h-4 w-4" />
                                                     </Button>
-                                                    <Link href={invitation.meeting_link} target="_blank">
-                                                        <Button size="sm" variant="default">
+                                                    <Link href={invitation.meeting_link} target="_blank" className={invitation.invitation_canceled ? 'pointer-events-none' : ''}>
+                                                        <Button size="sm" variant="default" disabled={invitation.invitation_canceled}>
                                                             <ExternalLink className="h-4 w-4 mr-2" />
                                                             Join
                                                         </Button>

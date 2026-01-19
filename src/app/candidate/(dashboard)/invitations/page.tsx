@@ -14,7 +14,7 @@ export default async function CandidateInvitationsPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/candidate/login");
+        redirect("/login");
     }
 
     return (

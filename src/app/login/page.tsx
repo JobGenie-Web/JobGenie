@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import { UniversalLoginForm } from '@/components/auth/UniversalLoginForm';
 import { Separator } from '@/components/ui/separator';
 
-export default function LoginPage() {
+export default async function LoginPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ returnUrl?: string }>;
+}) {
+    const params = await searchParams;
+    const returnUrl = params.returnUrl;
+
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-8">
             <div className="w-full max-w-md">
@@ -25,7 +32,7 @@ export default function LoginPage() {
                     </p>
 
                     {/* Login Form */}
-                    <UniversalLoginForm />
+                    <UniversalLoginForm returnUrl={returnUrl} />
 
                     {/* Separator */}
                     <div className="my-6">

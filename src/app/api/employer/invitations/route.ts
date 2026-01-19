@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
 
 // Helper to calculate alternative dates (3 working days)
 function calculateAlternativeDates(date: Date): Date[] {
@@ -217,8 +218,29 @@ export async function POST(request: Request) {
             );
         }
 
-        // TODO: Send email notification to candidate (async)
-        // This can be implemented later using your email service
+        // Send email notification to candidate (async - non-blocking)
+        const { data: candidateData } = await supabase
+            .from('candidates')
+            .select('first_name, email')
+            .eq('id', candidateId)
+            .single();
+
+        const { data: companyData } = await supabase
+            .from('companies')
+            .select('company_name')
+            .eq('id', employer.company_id)
+            .single();
+
+        if (candidateData && companyData) {
+            sendInterviewInvitationEmail(
+                candidateData.email,
+                candidateData.first_name,
+                companyData.company_name,
+                jobDesignation,
+                timeSlots,
+                invitation.id
+            ).catch(err => console.error('Email send error:', err));
+        }
 
         return NextResponse.json({
             success: true,

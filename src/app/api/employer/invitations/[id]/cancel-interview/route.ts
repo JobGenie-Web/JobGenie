@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { sendEmployerCancellationEmail } from '@/lib/interview-emails';
 
 // POST /api/employer/invitations/:id/cancel-interview
 export async function POST(
@@ -91,6 +92,39 @@ export async function POST(
                 { success: false, error: 'Failed to cancel interview' },
                 { status: 500 }
             );
+        }
+
+        // Send cancellation email to candidate (async - non-blocking)
+        const { data: fullInvitation } = await supabase
+            .from('job_invitations')
+            .select(`
+                job_designation,
+                selected_time_slot,
+                confirmed_time,
+                candidate:candidates(first_name, email),
+                company:companies(company_name)
+            `)
+            .eq('id', id)
+            .single();
+
+        if (fullInvitation) {
+            const candidate = fullInvitation.candidate as any;
+            const company = fullInvitation.company as any;
+            const timeSlot = fullInvitation.selected_time_slot as any;
+
+            const finalTime = timeSlot?.is_alternative && fullInvitation.confirmed_time
+                ? fullInvitation.confirmed_time
+                : timeSlot?.time || '';
+
+            sendEmployerCancellationEmail(
+                candidate.email,
+                candidate.first_name,
+                company.company_name,
+                fullInvitation.job_designation,
+                timeSlot?.date || '',
+                finalTime,
+                cancellation_reason
+            ).catch(err => console.error('Email send error:', err));
         }
 
         return NextResponse.json({

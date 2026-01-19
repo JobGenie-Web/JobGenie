@@ -39,7 +39,6 @@ const allProtectedRoutes = Object.values(roleRoutes).flat();
 // Routes that should redirect to dashboard if authenticated
 const authRoutes = [
     '/login',
-    '/candidate/login',
     '/candidate/signup',
     '/employer/login',
     '/employer/signup',
@@ -247,7 +246,6 @@ export const config = {
         '/mis/settings/:path*',
         // Auth routes
         '/login',
-        '/candidate/login',
         '/candidate/signup',
         '/employer/login',
         '/employer/signup',
