@@ -9,6 +9,7 @@ import {
     FileText,
     User,
     Settings,
+    Mail,
 } from "lucide-react";
 import {
     Sidebar,
@@ -42,6 +43,11 @@ const navigationItems = [
         title: "Applications",
         href: "/candidate/applications",
         icon: FileText,
+    },
+    {
+        title: "Invitations",
+        href: "/candidate/invitations",
+        icon: Mail,
     },
     {
         title: "My Profile",

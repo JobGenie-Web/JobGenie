@@ -14,6 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { InviteCandidateButton } from "@/components/employer/InviteCandidateButton";
 
 interface CandidateData {
     id: string;
@@ -67,6 +68,9 @@ interface CandidateData {
 
 interface CandidateDetailModalProps {
     candidateId: string;
+    selectedIndustry?: string;
+    selectedDesignation?: string;
+    isInvited?: boolean;
     onClose: () => void;
 }
 
@@ -74,7 +78,7 @@ function formatQualification(qual: string): string {
     return qual.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-export function CandidateDetailModal({ candidateId, onClose }: CandidateDetailModalProps) {
+export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, onClose }: CandidateDetailModalProps) {
     const [candidate, setCandidate] = useState<CandidateData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -310,6 +314,17 @@ export function CandidateDetailModal({ candidateId, onClose }: CandidateDetailMo
                                     </section>
                                 </>
                             )}
+
+                            {/* Invitation Section */}
+                            <Separator />
+                            <section className="pb-4">
+                                <InviteCandidateButton
+                                    candidateId={candidateId}
+                                    suggestedIndustry={selectedIndustry}
+                                    suggestedDesignation={selectedDesignation}
+                                    isInvited={isInvited}
+                                />
+                            </section>
                         </div>
                     </ScrollArea>
                 )}

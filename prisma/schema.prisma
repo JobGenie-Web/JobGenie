@@ -123,6 +123,9 @@ model Candidate {
   // Universal - works across all industries
   industry_specializations IndustrySpecialization[]
   
+  // Job invitations received
+  job_invitations         JobInvitation[]
+  
   @@index([user_id])
   @@index([industry])
   @@index([experience_level])
@@ -407,6 +410,7 @@ model Company {
   // Relations
   employers                   Employer[]
   jobs                        Job[]
+  job_invitations             JobInvitation[]
   
   @@index([business_registration_no])
   @@index([industry])
@@ -438,6 +442,7 @@ model Employer {
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   company     Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
   jobs        Job[]
+  job_invitations JobInvitation[]
   
   @@index([user_id])
   @@index([company_id])
@@ -487,6 +492,7 @@ model Job {
   
   employer                Employer @relation(fields: [employer_id], references: [id], onDelete: Cascade)
   company                 Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  job_invitations         JobInvitation[]
   
   @@index([employer_id])
   @@index([company_id])
@@ -496,6 +502,54 @@ model Job {
   @@index([published_at])
   @@index([deadline])
   @@map("jobs")
+}
+
+// ============================================
+// JOB INVITATIONS
+// ============================================
+
+model JobInvitation {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_id          String?  @db.Uuid  // Optional - invitations can be sent without a job posting
+  candidate_id    String   @db.Uuid
+  employer_id     String   @db.Uuid
+  company_id      String   @db.Uuid
+  
+  status          InvitationStatus @default(pending)
+  message         String?  @db.Text  // Optional custom message from employer
+  
+  // Interview scheduling context
+  industry        String   @db.VarChar(100)      // From filter context
+  job_designation String   @db.VarChar(200)      // From filter context
+  
+  // Time slots stored as JSON arrays
+  given_time_slots   Json?    // Array of {date, time, order} objects
+  alternative_dates  Json?    // Array of {date, time, order} objects
+  selected_time_slot Json?    // Candidate's chosen time slot {date, time, is_alternative}
+  
+  // Soft delete
+  invitation_canceled Boolean  @default(false)     // True if invitation was cancelled
+  canceled_at         DateTime?                   // When the invitation was cancelled
+  
+  // Tracking
+  sent_at         DateTime @default(now())
+  viewed_at       DateTime?
+  responded_at    DateTime?
+  
+  // Relations
+  job             Job?      @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  employer        Employer  @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+  company         Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  
+  // Ensure no duplicate invitations for same candidate from same employer
+  @@unique([candidate_id, employer_id])
+  @@index([candidate_id, status])
+  @@index([employer_id])
+  @@index([company_id])
+  @@index([sent_at])
+  @@index([job_id])
+  @@map("job_invitations")
 }
 
 // ============================================
@@ -657,4 +711,12 @@ enum IndustryType {
   it_software
   banking
   finance_investment
+}
+
+enum InvitationStatus {
+  pending
+  viewed
+  accepted
+  declined
+  expired
 }

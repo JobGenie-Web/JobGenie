@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,12 +30,24 @@ interface Candidate {
     employment_type: string | null;
     availability_status: string | null;
     qualifications: string[];
+    invited: boolean;  // Track if candidate has been invited
+}
+
+interface Industry {
+    industry_id: number;
+    industry_name: string;
+}
+
+interface JobDesignation {
+    designation_id: number;
+    designation_name: string;
+    industry_id: number;
+    level_id: number;
 }
 
 interface CandidateTableProps {
     candidates: Candidate[];
-    industries: string[];
-    designationsByIndustry: Record<string, string[]>;
+    industries: Industry[];
 }
 
 function formatExperienceLevel(level: string | null): string {
@@ -79,31 +91,71 @@ function getHighestQualification(qualifications: string[]): string {
     return qualifications[0].split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-export function CandidateTable({ candidates, industries, designationsByIndustry }: CandidateTableProps) {
-    const [selectedIndustry, setSelectedIndustry] = useState<string>("");
+export function CandidateTable({ candidates, industries }: CandidateTableProps) {
+    const [selectedIndustryId, setSelectedIndustryId] = useState<string>("");
     const [selectedDesignation, setSelectedDesignation] = useState<string>("");
     const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+    const [jobDesignations, setJobDesignations] = useState<JobDesignation[]>([]);
+    const [loadingDesignations, setLoadingDesignations] = useState(false);
 
-    // Get available job designations based on selected industry
-    const availableDesignations = selectedIndustry
-        ? (designationsByIndustry[selectedIndustry] || [])
-        : [];
+    // Fetch job designations when industry is selected
+    useEffect(() => {
+        if (selectedIndustryId) {
+            setLoadingDesignations(true);
+            fetch(`/api/job-designations?industryId=${selectedIndustryId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setJobDesignations(data.data || []);
+                    } else {
+                        console.error("Failed to fetch job designations:", data.error);
+                        setJobDesignations([]);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching job designations:", error);
+                    setJobDesignations([]);
+                })
+                .finally(() => {
+                    setLoadingDesignations(false);
+                });
+        } else {
+            setJobDesignations([]);
+        }
+    }, [selectedIndustryId]);
+
+    // Map industry enum values to industry table names
+    // Candidates store: "it_software", "banking", "finance_investment"
+    // Industries table has: "Information Technology", "Banking", "Finance"
+    const industryEnumToNameMap: Record<string, string> = {
+        "it_software": "Information Technology",
+        "banking": "Banking",
+        "finance_investment": "Finance"
+    };
+
+    // Get the selected industry name for filtering candidates
+    const selectedIndustryName = industries.find(
+        ind => ind.industry_id.toString() === selectedIndustryId
+    )?.industry_name || "";
 
     // Reset job designation when industry changes
-    const handleIndustryChange = (industry: string) => {
-        setSelectedIndustry(industry);
+    const handleIndustryChange = (industryId: string) => {
+        setSelectedIndustryId(industryId);
         setSelectedDesignation(""); // Reset designation when industry changes
     };
 
     // Only filter and show candidates if both industry and designation are selected
-    const filteredCandidates = (selectedIndustry && selectedDesignation)
-        ? candidates.filter(candidate =>
-            candidate.industry === selectedIndustry &&
-            candidate.current_position === selectedDesignation
-        )
+    // Map the candidate's industry enum value to the display name for comparison
+    const filteredCandidates = (selectedIndustryName && selectedDesignation)
+        ? candidates.filter(candidate => {
+            // Map candidate's enum industry value to display name
+            const candidateIndustryName = industryEnumToNameMap[candidate.industry] || candidate.industry;
+            return candidateIndustryName === selectedIndustryName &&
+                candidate.current_position === selectedDesignation;
+        })
         : [];
 
-    const hasSearched = selectedIndustry !== "" && selectedDesignation !== "";
+    const hasSearched = selectedIndustryId !== "" && selectedDesignation !== "";
 
     return (
         <div className="space-y-6">
@@ -125,14 +177,14 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
                             </label>
                             <div className="flex items-center gap-2">
                                 <Briefcase className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <Select value={selectedIndustry} onValueChange={handleIndustryChange}>
+                                <Select value={selectedIndustryId} onValueChange={handleIndustryChange}>
                                     <SelectTrigger id="industry-filter" className="w-full" suppressHydrationWarning>
                                         <SelectValue placeholder="Choose an industry..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {industries.map((industry) => (
-                                            <SelectItem key={industry} value={industry}>
-                                                {industry}
+                                            <SelectItem key={industry.industry_id} value={industry.industry_id.toString()}>
+                                                {industry.industry_name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -150,19 +202,21 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
                                 <Select
                                     value={selectedDesignation}
                                     onValueChange={setSelectedDesignation}
-                                    disabled={!selectedIndustry}
+                                    disabled={!selectedIndustryId || loadingDesignations}
                                 >
                                     <SelectTrigger id="designation-filter" className="w-full" suppressHydrationWarning>
                                         <SelectValue placeholder={
-                                            selectedIndustry
-                                                ? "Choose a job designation..."
-                                                : "Select industry first..."
+                                            loadingDesignations
+                                                ? "Loading designations..."
+                                                : selectedIndustryId
+                                                    ? "Choose a job designation..."
+                                                    : "Select industry first..."
                                         } />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {availableDesignations.map((designation) => (
-                                            <SelectItem key={designation} value={designation}>
-                                                {designation}
+                                        {jobDesignations.map((designation) => (
+                                            <SelectItem key={designation.designation_id} value={designation.designation_name}>
+                                                {designation.designation_name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -172,11 +226,11 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
                     </div>
 
                     {/* Clear Search Button */}
-                    {(selectedIndustry || selectedDesignation) && (
+                    {(selectedIndustryId || selectedDesignation) && (
                         <div className="flex justify-end">
                             <button
                                 onClick={() => {
-                                    setSelectedIndustry("");
+                                    setSelectedIndustryId("");
                                     setSelectedDesignation("");
                                 }}
                                 className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -220,6 +274,7 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
                                             <TableHead>Highest Qualification</TableHead>
                                             <TableHead>Employment Type</TableHead>
                                             <TableHead>Availability</TableHead>
+                                            <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -262,6 +317,15 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
                                                         {formatAvailabilityStatus(candidate.availability_status)}
                                                     </Badge>
                                                 </TableCell>
+                                                <TableCell>
+                                                    {candidate.invited ? (
+                                                        <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
+                                                            Invited
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-sm text-muted-foreground">Not Invited</span>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <button
                                                         onClick={(e) => {
@@ -287,6 +351,9 @@ export function CandidateTable({ candidates, industries, designationsByIndustry 
             {selectedCandidateId && (
                 <CandidateDetailModal
                     candidateId={selectedCandidateId}
+                    selectedIndustry={selectedIndustryName}
+                    selectedDesignation={selectedDesignation}
+                    isInvited={filteredCandidates.find(c => c.id === selectedCandidateId)?.invited || false}
                     onClose={() => setSelectedCandidateId(null)}
                 />
             )}

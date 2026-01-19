@@ -1,0 +1,90 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+// GET /api/candidate/invitations/:id
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const supabase = await createClient();
+
+        // Get the current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Get candidate record
+        const { data: candidate, error: candidateError } = await supabase
+            .from('candidates')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (candidateError || !candidate) {
+            return NextResponse.json(
+                { success: false, error: "Candidate profile not found" },
+                { status: 404 }
+            );
+        }
+
+        const { id } = await params;
+
+        // Fetch single invitation
+        const { data: invitation, error: invitationError } = await supabase
+            .from('job_invitations')
+            .select(`
+                id,
+                industry,
+                job_designation,
+                message,
+                given_time_slots,
+                alternative_dates,
+                selected_time_slot,
+                status,
+                invitation_canceled,
+                sent_at,
+                viewed_at,
+                responded_at,
+                employer:employers(id, user_id, first_name, last_name, designation, email, phone, job_title, department, profile_image_url),
+                company:companies(company_name, logo_url, industry, headoffice_location, bio, website, phone)
+            `)
+            .eq('id', id)
+            .eq('candidate_id', candidate.id)
+            .eq('invitation_canceled', false)
+            .single();
+
+        if (invitationError) {
+            console.error('Error fetching invitation:', invitationError);
+            return NextResponse.json(
+                { success: false, error: "Invitation not found" },
+                { status: 404 }
+            );
+        }
+
+        // Mark as viewed if not already
+        if (!invitation.viewed_at) {
+            await supabase
+                .from('job_invitations')
+                .update({ viewed_at: new Date().toISOString() })
+                .eq('id', id);
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: invitation
+        });
+
+    } catch (error) {
+        console.error('API error:', error);
+        return NextResponse.json(
+            { success: false, error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}

@@ -18,6 +18,7 @@ interface CandidateForTable {
     employment_type: string | null;
     availability_status: string | null;
     qualifications: string[];
+    invited: boolean;  // NEW: Track if candidate has been invited
 }
 
 async function getApprovedCandidates() {
@@ -47,31 +48,41 @@ export default async function EmployerCandidatesPage() {
         redirect("/employer/login");
     }
 
+    // Get employer ID
+    const { data: employer } = await supabase
+        .from('employers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
     // Fetch approved candidates
     const candidates = await getApprovedCandidates();
 
-    // Extract unique industries
-    const industries = Array.from(
-        new Set(candidates.map(c => c.industry).filter(Boolean))
-    ).sort();
+    // Fetch invitation statuses for this employer (exclude canceled invitations)
+    const { data: invitations } = await supabase
+        .from('job_invitations')
+        .select('candidate_id')
+        .eq('employer_id', employer?.id || '')
+        .eq('invitation_canceled', false);  // Only active invitations
 
-    // Create a map of industries to job designations
-    const designationsByIndustry: Record<string, string[]> = {};
-    candidates.forEach(candidate => {
-        if (candidate.industry && candidate.current_position) {
-            if (!designationsByIndustry[candidate.industry]) {
-                designationsByIndustry[candidate.industry] = [];
-            }
-            if (!designationsByIndustry[candidate.industry].includes(candidate.current_position)) {
-                designationsByIndustry[candidate.industry].push(candidate.current_position);
-            }
-        }
-    });
+    // Add invitation status to candidates
+    const invitedCandidateIds = new Set(invitations?.map(inv => inv.candidate_id) || []);
+    const candidatesWithStatus = candidates.map(candidate => ({
+        ...candidate,
+        invited: invitedCandidateIds.has(candidate.id)
+    }));
 
-    // Sort designations within each industry
-    Object.keys(designationsByIndustry).forEach(industry => {
-        designationsByIndustry[industry].sort();
-    });
+    // Fetch industries from the database table
+    const { data: industriesData, error: industriesError } = await supabase
+        .from('industries')
+        .select('industry_id, industry_name')
+        .order('industry_name', { ascending: true });
+
+    if (industriesError) {
+        console.error('Error fetching industries:', industriesError);
+    }
+
+    const industries = industriesData || [];
 
     return (
         <EmployerLayout
@@ -79,9 +90,8 @@ export default async function EmployerCandidatesPage() {
             pageDescription="Filter and view approved candidate profiles"
         >
             <CandidateTable
-                candidates={candidates}
+                candidates={candidatesWithStatus}
                 industries={industries}
-                designationsByIndustry={designationsByIndustry}
             />
         </EmployerLayout>
     );
