@@ -526,10 +526,21 @@ model JobInvitation {
   given_time_slots   Json?    // Array of {date, time, order} objects
   alternative_dates  Json?    // Array of {date, time, order} objects
   selected_time_slot Json?    // Candidate's chosen time slot {date, time, is_alternative}
+  interview_mode     InterviewMode?  // Candidate's preference: online or physical
   
-  // Soft delete
-  invitation_canceled Boolean  @default(false)     // True if invitation was cancelled
-  canceled_at         DateTime?                   // When the invitation was cancelled
+  // Interview confirmation by employer
+  interview_confirmed Boolean   @default(false)  // True when employer confirms the interview
+  confirmed_time      String?   @db.VarChar(10)  // Time slot for alternative dates (e.g., "09:00")
+  meeting_link        String?   @db.Text         // For online interviews
+  interview_address   String?   @db.Text         // For physical interviews
+  map_link            String?   @db.Text         // Map link for physical location
+  confirmed_at        DateTime?                  // When employer confirmed
+  
+  // Interview cancellation tracking
+  invitation_canceled Boolean  @default(false)     // True if interview was cancelled
+  canceled_by         CanceledBy?                  // Who canceled: candidate or employer
+  cancellation_reason String?  @db.Text            // Reason for cancellation
+  canceled_at         DateTime?                    // When the interview was cancelled
   
   // Tracking
   sent_at         DateTime @default(now())
@@ -719,4 +730,14 @@ enum InvitationStatus {
   accepted
   declined
   expired
+}
+
+enum InterviewMode {
+  online
+  physical
+}
+
+enum CanceledBy {
+  candidate
+  employer
 }

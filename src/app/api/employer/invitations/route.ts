@@ -22,6 +22,89 @@ function calculateAlternativeDates(date: Date): Date[] {
     return alternatives;
 }
 
+// GET /api/employer/invitations - Fetch all invitations for the company
+export async function GET(request: Request) {
+    try {
+        const supabase = await createClient();
+
+        // Get the current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Get employer record
+        const { data: employer, error: employerError } = await supabase
+            .from('employers')
+            .select('id, company_id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (employerError || !employer) {
+            return NextResponse.json(
+                { success: false, error: "Employer profile not found" },
+                { status: 404 }
+            );
+        }
+
+        // Fetch all invitations for this company
+        const { data: invitations, error: invitationsError } = await supabase
+            .from('job_invitations')
+            .select(`
+                id,
+                industry,
+                job_designation,
+                message,
+                given_time_slots,
+                alternative_dates,
+                selected_time_slot,
+                interview_mode,
+                status,
+                invitation_canceled,
+                sent_at,
+                viewed_at,
+                responded_at,
+                interview_confirmed,
+                confirmed_time,
+                meeting_link,
+                interview_address,
+                map_link,
+                confirmed_at,
+                canceled_by,
+                cancellation_reason,
+                canceled_at,
+                candidate:candidates(id, first_name, last_name, email, phone, current_position, profile_image_url),
+                employer:employers(id, first_name, last_name)
+            `)
+            .eq('company_id', employer.company_id)
+            .order('sent_at', { ascending: false });
+
+        if (invitationsError) {
+            console.error('Error fetching invitations:', invitationsError);
+            return NextResponse.json(
+                { success: false, error: "Failed to fetch invitations" },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: invitations || []
+        });
+
+    } catch (error) {
+        console.error('API error:', error);
+        return NextResponse.json(
+            { success: false, error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const supabase = await createClient();

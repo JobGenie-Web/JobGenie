@@ -42,13 +42,15 @@ export async function GET() {
                 alternative_dates,
                 status,
                 invitation_canceled,
+                canceled_by,
+                cancellation_reason,
+                canceled_at,
                 sent_at,
                 viewed_at,
                 employer:employers(id, user_id),
                 company:companies(company_name, logo_url, industry, headoffice_location)
             `)
             .eq('candidate_id', candidate.id)
-            .eq('invitation_canceled', false)
             .order('sent_at', { ascending: false });
 
         if (invitationsError) {

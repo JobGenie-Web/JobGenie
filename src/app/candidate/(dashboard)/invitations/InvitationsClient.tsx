@@ -24,6 +24,10 @@ interface Invitation {
     status: string;
     sent_at: string;
     viewed_at: string | null;
+    invitation_canceled: boolean;
+    canceled_by: string | null;
+    cancellation_reason: string | null;
+    canceled_at: string | null;
     company: {
         company_name: string;
         logo_url: string | null;
@@ -51,6 +55,7 @@ export default function InvitationsClient() {
     const router = useRouter();
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<string>("all");
 
     useEffect(() => {
         fetchInvitations();
@@ -76,6 +81,20 @@ export default function InvitationsClient() {
 
     const handleCardClick = (invitationId: string) => {
         router.push(`/candidate/invitations/${invitationId}`);
+    };
+
+    const filteredInvitations = invitations.filter(inv => {
+        if (filter === "all") return true;
+        if (filter === "cancelled") return inv.invitation_canceled;
+        return inv.status === filter;
+    });
+
+    const statusCounts = {
+        all: invitations.length,
+        pending: invitations.filter(i => i.status === 'pending').length,
+        accepted: invitations.filter(i => i.status === 'accepted').length,
+        declined: invitations.filter(i => i.status === 'declined').length,
+        cancelled: invitations.filter(i => i.invitation_canceled).length,
     };
 
     if (loading) {
@@ -111,8 +130,30 @@ export default function InvitationsClient() {
                 </div>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap gap-2">
+                {[
+                    { key: 'all', label: 'All' },
+                    { key: 'pending', label: 'Pending' },
+                    { key: 'accepted', label: 'Accepted' },
+                    { key: 'declined', label: 'Declined' },
+                    { key: 'cancelled', label: 'Cancelled' },
+                ].map(status => (
+                    <button
+                        key={status.key}
+                        onClick={() => setFilter(status.key)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filter === status.key
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted hover:bg-muted/80'
+                            }`}
+                    >
+                        {status.label} ({statusCounts[status.key as keyof typeof statusCounts]})
+                    </button>
+                ))}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {invitations.map((invitation) => (
+                {filteredInvitations.map((invitation) => (
                     <Card
                         key={invitation.id}
                         className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all"

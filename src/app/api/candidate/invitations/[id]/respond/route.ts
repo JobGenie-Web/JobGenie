@@ -8,7 +8,7 @@ export async function POST(
 ) {
     try {
         const supabase = await createClient();
-        const { action, selected_time_slot } = await request.json();
+        const { action, selected_time_slot, interview_mode } = await request.json();
 
         // Get the current user
         const { data: { user } } = await supabase.auth.getUser();
@@ -37,9 +37,9 @@ export async function POST(
         const { id } = await params;
 
         // Validate action
-        if (!['accept', 'decline'].includes(action)) {
+        if (!['accept', 'decline', 'cancel'].includes(action)) {
             return NextResponse.json(
-                { success: false, error: "Invalid action. Must be 'accept' or 'decline'" },
+                { success: false, error: "Invalid action. Must be 'accept', 'decline', or 'cancel'" },
                 { status: 400 }
             );
         }
@@ -48,6 +48,22 @@ export async function POST(
         if (action === 'accept' && !selected_time_slot) {
             return NextResponse.json(
                 { success: false, error: "Selected time slot is required when accepting" },
+                { status: 400 }
+            );
+        }
+
+        // For accept action, interview_mode is required
+        if (action === 'accept' && !interview_mode) {
+            return NextResponse.json(
+                { success: false, error: "Interview mode is required when accepting" },
+                { status: 400 }
+            );
+        }
+
+        // Validate interview_mode if provided
+        if (interview_mode && !['online', 'physical'].includes(interview_mode)) {
+            return NextResponse.json(
+                { success: false, error: "Interview mode must be either 'online' or 'physical'" },
                 { status: 400 }
             );
         }
@@ -68,23 +84,45 @@ export async function POST(
             );
         }
 
-        // Check if invitation has already been responded to
-        if (invitation.status !== 'pending' && invitation.status !== 'viewed') {
+        // Check if invitation has already been responded to (unless canceling)
+        if (action !== 'cancel' && invitation.status !== 'pending' && invitation.status !== 'viewed') {
             return NextResponse.json(
                 { success: false, error: "Invitation has already been responded to" },
                 { status: 400 }
             );
         }
 
-        // Update invitation based on action
-        const updateData: any = {
-            status: action === 'accept' ? 'accepted' : 'declined',
-            responded_at: new Date().toISOString()
-        };
+        // For cancel action, verify invitation is currently accepted or declined
+        if (action === 'cancel' && invitation.status !== 'accepted' && invitation.status !== 'declined') {
+            return NextResponse.json(
+                { success: false, error: "Can only cancel accepted or declined invitations" },
+                { status: 400 }
+            );
+        }
 
-        // Add selected_time_slot if accepting
-        if (action === 'accept' && selected_time_slot) {
-            updateData.selected_time_slot = selected_time_slot;
+        // Update invitation based on action
+        let updateData: any = {};
+
+        if (action === 'cancel') {
+            // Reset to pending and clear selected time slot and interview mode
+            updateData = {
+                status: 'pending',
+                selected_time_slot: null,
+                interview_mode: null,
+                responded_at: null
+            };
+        } else {
+            // Handle accept or decline
+            updateData = {
+                status: action === 'accept' ? 'accepted' : 'declined',
+                responded_at: new Date().toISOString()
+            };
+
+            // Add selected_time_slot and interview_mode if accepting
+            if (action === 'accept' && selected_time_slot) {
+                updateData.selected_time_slot = selected_time_slot;
+                updateData.interview_mode = interview_mode;
+            }
         }
 
         const { error: updateError } = await supabase
@@ -100,11 +138,15 @@ export async function POST(
             );
         }
 
+        const messages = {
+            accept: 'Invitation accepted successfully',
+            decline: 'Invitation declined successfully',
+            cancel: 'Acceptance cancelled successfully'
+        };
+
         return NextResponse.json({
             success: true,
-            message: action === 'accept'
-                ? 'Invitation accepted successfully'
-                : 'Invitation declined successfully'
+            message: messages[action as keyof typeof messages]
         });
 
     } catch (error) {

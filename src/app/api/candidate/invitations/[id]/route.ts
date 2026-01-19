@@ -46,17 +46,26 @@ export async function GET(
                 given_time_slots,
                 alternative_dates,
                 selected_time_slot,
+                interview_mode,
                 status,
                 invitation_canceled,
                 sent_at,
                 viewed_at,
                 responded_at,
+                interview_confirmed,
+                confirmed_time,
+                meeting_link,
+                interview_address,
+                map_link,
+                confirmed_at,
+                canceled_by,
+                cancellation_reason,
+                canceled_at,
                 employer:employers(id, user_id, first_name, last_name, designation, email, phone, job_title, department, profile_image_url),
                 company:companies(company_name, logo_url, industry, headoffice_location, bio, website, phone)
             `)
             .eq('id', id)
             .eq('candidate_id', candidate.id)
-            .eq('invitation_canceled', false)
             .single();
 
         if (invitationError) {

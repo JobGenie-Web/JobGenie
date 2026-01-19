@@ -11,6 +11,7 @@ import {
     Users,
     UserCog,
     Settings,
+    Mail,
 } from "lucide-react";
 import {
     Sidebar,
@@ -49,6 +50,11 @@ const navigationItems = [
         title: "Candidates",
         href: "/employer/candidates",
         icon: Users,
+    },
+    {
+        title: "Invitations",
+        href: "/employer/invitations",
+        icon: Mail,
     },
     {
         title: "Company Profile",

@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Building2, MapPin, Loader2, ArrowLeft, User, Phone, Globe, Briefcase, Check, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Clock, Building2, MapPin, Loader2, ArrowLeft, User, Phone, Globe, Briefcase, Check, Mail, Video, MapPinned, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -25,10 +28,21 @@ interface InvitationDetail {
     given_time_slots: TimeSlot[];
     alternative_dates: TimeSlot[];
     selected_time_slot: TimeSlot | null;
+    interview_mode: string | null;
     status: string;
     sent_at: string;
     viewed_at: string | null;
     responded_at: string | null;
+    interview_confirmed: boolean;
+    confirmed_time: string | null;
+    meeting_link: string | null;
+    interview_address: string | null;
+    map_link: string | null;
+    confirmed_at: string | null;
+    invitation_canceled: boolean;
+    canceled_by: string | null;
+    cancellation_reason: string | null;
+    canceled_at: string | null;
     company: {
         company_name: string;
         logo_url: string | null;
@@ -55,7 +69,10 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     const [invitation, setInvitation] = useState<InvitationDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+    const [selectedMode, setSelectedMode] = useState<'online' | 'physical' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
 
     useEffect(() => {
         fetchInvitation();
@@ -87,6 +104,11 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
             return;
         }
 
+        if (!selectedMode) {
+            toast.error("Please select an interview mode before accepting");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const response = await fetch(`/api/candidate/invitations/${invitationId}/respond`, {
@@ -94,7 +116,8 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'accept',
-                    selected_time_slot: selectedSlot
+                    selected_time_slot: selectedSlot,
+                    interview_mode: selectedMode
                 })
             });
 
@@ -141,6 +164,69 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
         }
     };
 
+    const handleCancelAcceptance = async () => {
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/candidate/invitations/${invitationId}/respond`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'cancel'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success("Acceptance cancelled. You can select a new time slot.");
+                // Refresh the invitation data
+                fetchInvitation();
+            } else {
+                toast.error(data.error || "Failed to cancel acceptance");
+            }
+        } catch (error) {
+            console.error("Error cancelling acceptance:", error);
+            toast.error("An error occurred while cancelling acceptance");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCancelInterview = async () => {
+        if (!cancellationReason.trim()) {
+            toast.error('Please provide a reason for cancellation');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/candidate/invitations/${invitationId}/cancel-interview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cancellation_reason: cancellationReason
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Interview canceled successfully');
+                setShowCancelDialog(false);
+                setCancellationReason('');
+                // Refresh the invitation data
+                fetchInvitation();
+            } else {
+                toast.error(data.error || 'Failed to cancel interview');
+            }
+        } catch (error) {
+            console.error('Error canceling interview:', error);
+            toast.error('An error occurred while canceling interview');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -158,12 +244,12 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     return (
         <div className="space-y-6">
             {/* Back Button */}
-            <Link href="/candidate/invitations">
+            {/* <Link href="/candidate/invitations">
                 <Button variant="ghost" size="sm" className="gap-2">
                     <ArrowLeft className="h-4 w-4" />
                     Back to Invitations
                 </Button>
-            </Link>
+            </Link> */}
 
             {/* Company & Contact Information */}
             <div className="grid gap-6 md:grid-cols-2">
@@ -316,46 +402,46 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 )}
             </Card>
 
-            {/* Selected Time Slot - Shown when accepted */}
-            {invitation.status === 'accepted' && invitation.selected_time_slot && (
-                <Card className="border-green-500 bg-green-50 dark:bg-green-900/10">
+
+
+            {/* Declined Status - Shown when declined */}
+            {invitation.status === 'declined' && (
+                <Card className="border-red-500 bg-red-50 dark:bg-red-900/10">
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
-                                <Check className="h-6 w-6 text-white" />
+                            <div className="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center">
+                                <span className="text-white text-2xl">✕</span>
                             </div>
                             <div>
-                                <CardTitle className="text-xl text-green-900 dark:text-green-100">Interview Scheduled</CardTitle>
-                                <CardDescription className="text-green-700 dark:text-green-300">
+                                <CardTitle className="text-xl text-red-900 dark:text-red-100">Invitation Declined</CardTitle>
+                                <CardDescription className="text-red-700 dark:text-red-300">
                                     {invitation.responded_at && (
-                                        <>You accepted this invitation on {format(new Date(invitation.responded_at + (invitation.responded_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}</>
+                                        <>You declined this invitation on {format(new Date(invitation.responded_at + (invitation.responded_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}</>
                                     )}
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-green-500">
-                            <div className="flex items-start gap-4">
-                                <Calendar className="h-8 w-8 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-muted-foreground mb-1">
-                                        {invitation.selected_time_slot.is_alternative ? 'Selected Alternative Date' : 'Selected Interview Time'}
-                                    </p>
-                                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
-                                        {format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}
-                                    </p>
-                                    <p className="text-lg font-semibold text-green-700 dark:text-green-300 flex items-center gap-2">
-                                        <Clock className="h-5 w-5" />
-                                        {invitation.selected_time_slot.time}
-                                    </p>
-                                </div>
-                                {invitation.selected_time_slot.is_alternative && (
-                                    <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-300">
-                                        Alternative
-                                    </Badge>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-red-500">
+                            <p className="text-sm text-muted-foreground mb-4">
+                                You have declined this interview invitation. If you've changed your mind, you can cancel this decline and reconsider the invitation.
+                            </p>
+                            <Button
+                                variant="outline"
+                                className="w-full border-orange-500 text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                                onClick={handleCancelAcceptance}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    "Cancel Decline & Reconsider"
                                 )}
-                            </div>
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -364,6 +450,77 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
             {/* Time Slots Selection */}
             {isPending && (
                 <>
+                    {/* Interview Mode Selection */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Interview Mode Preference</CardTitle>
+                            <CardDescription>How would you prefer to attend this interview?</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {/* Online Option */}
+                                <div
+                                    onClick={() => setSelectedMode('online')}
+                                    className={`relative flex flex-col items-center p-6 rounded-lg border-2 cursor-pointer transition-all hover:border-blue-500/50 ${selectedMode === 'online'
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
+                                        : 'border-border bg-card'
+                                        }`}
+                                >
+                                    {selectedMode === 'online' && (
+                                        <div className="absolute top-3 right-3">
+                                            <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-3 ${selectedMode === 'online'
+                                        ? 'bg-blue-100 dark:bg-blue-800'
+                                        : 'bg-muted'
+                                        }`}>
+                                        <Video className={`h-8 w-8 ${selectedMode === 'online'
+                                            ? 'text-blue-600 dark:text-blue-400'
+                                            : 'text-muted-foreground'
+                                            }`} />
+                                    </div>
+                                    <h3 className="font-semibold text-lg mb-1">Online Interview</h3>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Video call using Zoom, Google Meet, or similar platform
+                                    </p>
+                                </div>
+
+                                {/* Physical Option */}
+                                <div
+                                    onClick={() => setSelectedMode('physical')}
+                                    className={`relative flex flex-col items-center p-6 rounded-lg border-2 cursor-pointer transition-all hover:border-green-500/50 ${selectedMode === 'physical'
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 shadow-sm'
+                                        : 'border-border bg-card'
+                                        }`}
+                                >
+                                    {selectedMode === 'physical' && (
+                                        <div className="absolute top-3 right-3">
+                                            <div className="h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-3 ${selectedMode === 'physical'
+                                        ? 'bg-green-100 dark:bg-green-800'
+                                        : 'bg-muted'
+                                        }`}>
+                                        <MapPinned className={`h-8 w-8 ${selectedMode === 'physical'
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-muted-foreground'
+                                            }`} />
+                                    </div>
+                                    <h3 className="font-semibold text-lg mb-1">Physical Interview</h3>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        In-person interview at company location
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Proposed Time Slots */}
                     {invitation.given_time_slots && invitation.given_time_slots.length > 0 && (
                         <Card>
@@ -455,6 +612,217 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 </>
             )}
 
+            {/* Confirmed Status - Shown when accepted and confirmed */}
+            {invitation.status === 'accepted' && invitation.interview_confirmed && invitation.selected_time_slot && (
+                <Card className={invitation.invitation_canceled ? "border-red-500 bg-red-50 dark:bg-red-900/10" : "border-green-500 bg-green-50 dark:bg-green-900/10"}>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <div className={`h-10 w-10 rounded-full ${invitation.invitation_canceled ? 'bg-red-500' : 'bg-green-500'} flex items-center justify-center`}>
+                                <span className="text-white text-2xl">{invitation.invitation_canceled ? '✕' : '✓'}</span>
+                            </div>
+                            <div>
+                                <CardTitle className={`text-xl ${invitation.invitation_canceled ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'}`}>
+                                    {invitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed!'}
+                                </CardTitle>
+                                <CardDescription className={invitation.invitation_canceled ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}>
+                                    {invitation.invitation_canceled
+                                        ? 'This interview has been canceled.'
+                                        : 'Your interview has been confirmed by the employer.'}
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${invitation.invitation_canceled ? 'border-red-500' : 'border-green-500'}`}>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                Your interview is scheduled for:
+                            </p>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className={`h-5 w-5 ${invitation.invitation_canceled ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`} />
+                                    <p className="font-semibold">
+                                        {format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Clock className={`h-5 w-5 ${invitation.invitation_canceled ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`} />
+                                    <p className="font-semibold">
+                                        {invitation.selected_time_slot.time}
+                                    </p>
+                                </div>
+                                {invitation.interview_mode && (
+                                    <div className="flex items-center gap-2">
+                                        {invitation.interview_mode === 'online' ? (
+                                            <Video className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                        ) : (
+                                            <MapPinned className={`h-5 w-5 ${invitation.invitation_canceled ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`} />
+                                        )}
+                                        <p className="font-semibold">
+                                            {invitation.interview_mode === 'online' ? 'Online Interview' : 'Physical Interview'}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Confirmed Interview Details from Employer */}
+                                {invitation.interview_confirmed && (
+                                    <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">Interview Details</p>
+
+                                        {/* Alternative Date - Show Confirmed Time */}
+                                        {invitation.selected_time_slot.is_alternative && invitation.confirmed_time && (
+                                            <div className="mb-2">
+                                                <p className="text-xs text-muted-foreground">Confirmed Time</p>
+                                                <p className="text-base font-semibold text-green-700 dark:text-green-300">
+                                                    {invitation.confirmed_time}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Online - Meeting Link */}
+                                        {invitation.interview_mode === 'online' && invitation.meeting_link && (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-muted-foreground">Meeting Link</p>
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        value={invitation.meeting_link}
+                                                        readOnly
+                                                        className="flex-1 text-sm"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(invitation.meeting_link!);
+                                                            toast.success("Link copied!");
+                                                        }}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                    <Link href={invitation.meeting_link} target="_blank">
+                                                        <Button size="sm" variant="default">
+                                                            <ExternalLink className="h-4 w-4 mr-2" />
+                                                            Join
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Physical - Address & Map */}
+                                        {invitation.interview_mode === 'physical' && invitation.interview_address && (
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground">Interview Address</p>
+                                                    <p className="text-sm font-semibold">{invitation.interview_address}</p>
+                                                </div>
+                                                {invitation.map_link && (
+                                                    <Link href={invitation.map_link} target="_blank">
+                                                        <Button size="sm" variant="outline">
+                                                            <MapPinned className="h-4 w-4 mr-2" />
+                                                            Open in Maps
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {invitation.confirmed_at && (
+                                            <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-green-100 dark:border-green-900">
+                                                Confirmed on {format(new Date(invitation.confirmed_at), "MMM d, yyyy 'at' h:mm a")}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Cancel Interview Button */}
+                            {!invitation.invitation_canceled && (
+                                <div className="mt-4 pt-4 border-t">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full h-8 border-red-500 text-red-700 hover:bg-red-500 hover:text-white dark:bg-red-500 dark:text-red-100 dark:hover:bg-red-300 dark:hover:text-red-500"
+                                        onClick={() => setShowCancelDialog(true)}
+                                    >
+                                        Cancel Interview
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Pending Status - Shown when accepted but not confirmed */}
+            {invitation.status === 'accepted' && !invitation.interview_confirmed && invitation.selected_time_slot && (
+                <Card className="border-orange-500 bg-orange-50 dark:bg-orange-900/10">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <div className="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center">
+                                <span className="text-white text-2xl">!</span>
+                            </div>
+                            <div>
+                                <CardTitle className="text-xl text-orange-900 dark:text-orange-100">Acceptance Pending Confirmation</CardTitle>
+                                <CardDescription className="text-orange-700 dark:text-orange-300">
+                                    {invitation.responded_at && (
+                                        <>You accepted this invitation on {format(new Date(invitation.responded_at + (invitation.responded_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}.</>
+                                    )}
+                                    The employer will confirm the final interview details shortly.
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-orange-500">
+                            <p className="text-sm text-muted-foreground mb-4">
+                                Your selected interview time is:
+                            </p>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                    <p className="font-semibold">
+                                        {format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                    <p className="font-semibold">
+                                        {invitation.selected_time_slot.time}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {invitation.interview_mode === 'online' ? (
+                                        <Video className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                    ) : (
+                                        <MapPinned className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                    )}
+                                    <p className="font-semibold capitalize">
+                                        {invitation.interview_mode} Interview
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t">
+                                <Button
+                                    variant="outline"
+                                    className="w-full border-red-500 text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    onClick={handleCancelAcceptance}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        "Cancel Acceptance"
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Received Date */}
             <div className="text-center text-sm text-muted-foreground">
                 Invitation received on {format(new Date(invitation.sent_at), "MMMM d, yyyy 'at' h:mm a")}
@@ -469,7 +837,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 className="flex-1"
                                 size="lg"
                                 onClick={handleAccept}
-                                disabled={!selectedSlot || isSubmitting}
+                                disabled={!selectedSlot || !selectedMode || isSubmitting}
                             >
                                 {isSubmitting ? (
                                     <>
@@ -493,14 +861,91 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 Decline
                             </Button>
                         </div>
-                        {!selectedSlot && (
+                        {(!selectedSlot || !selectedMode) && (
                             <p className="text-sm text-muted-foreground text-center mt-3">
-                                Please select a time slot before accepting the invitation
+                                Please select both interview mode and time slot before accepting
                             </p>
                         )}
                     </CardContent>
                 </Card>
             )}
+
+            {/* Canceled Status - Shown when interview is canceled */}
+            {invitation.invitation_canceled && (
+                <Card className="border-red-500 bg-red-50 dark:bg-gray-900/10">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center">
+                                <span className="text-white text-2xl">✕</span>
+                            </div>
+                            <div>
+                                <CardTitle className="text-xl text-gray-900 dark:text-gray-100">Interview Canceled</CardTitle>
+                                <CardDescription className="text-gray-700 dark:text-gray-300">
+                                    {invitation.canceled_by === 'candidate' && 'You canceled this interview'}
+                                    {invitation.canceled_by === 'employer' && 'The employer canceled this interview'}
+                                    {invitation.canceled_at && ` on ${format(new Date(invitation.canceled_at + (invitation.canceled_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}`}
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-gray-500">
+                            <p className="text-sm font-medium mb-2">Cancellation Reason:</p>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {invitation.cancellation_reason}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Cancellation Dialog */}
+            <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancel Interview</DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for canceling this interview. This will be shared with the employer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <Textarea
+                            placeholder="Enter your reason for cancellation..."
+                            value={cancellationReason}
+                            onChange={(e) => setCancellationReason(e.target.value)}
+                            rows={4}
+                            className="resize-none"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowCancelDialog(false);
+                                setCancellationReason('');
+                            }}
+                            disabled={isSubmitting}
+                        >
+                            Keep Interview
+                        </Button>
+                        <Button
+                            // variant="destructive"
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                            onClick={handleCancelInterview}
+                            disabled={isSubmitting || !cancellationReason.trim()}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Canceling...
+                                </>
+                            ) : (
+                                'Confirm Cancellation'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
