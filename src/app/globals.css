@@ -155,3 +155,8 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Hide scrollbar but allow scrolling */
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}

@@ -1,7 +1,33 @@
 import Link from "next/link";
 import { MISLayout } from "@/components/mis";
+import { MISUserTable } from "@/components/mis/MISUserTable";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+async function fetchMISUsers() {
+    try {
+        const adminClient = createAdminClient();
+
+        // Fetch all MIS users directly from database
+        const { data: misUsers, error: fetchError } = await adminClient
+            .from("mis_user")
+            .select("user_id, first_name, last_name, email, created_at")
+            .order("created_at", { ascending: false });
+
+        if (fetchError) {
+            console.error("Error fetching MIS users:", fetchError);
+            return [];
+        }
+
+        return misUsers || [];
+    } catch (error) {
+        console.error("Error fetching MIS users:", error);
+        return [];
+    }
+}
 
 export default async function MISUsersPage() {
+    const users = await fetchMISUsers();
+
     return (
         <MISLayout
             pageTitle="MIS Users"
@@ -18,12 +44,8 @@ export default async function MISUsersPage() {
                     </Link>
                 </div>
 
-                {/* Placeholder for user list */}
-                <div className="bg-card border rounded-lg p-6">
-                    <p className="text-muted-foreground text-center">
-                        User list will be implemented here
-                    </p>
-                </div>
+                {/* User List Table */}
+                <MISUserTable users={users} />
             </div>
         </MISLayout>
     );

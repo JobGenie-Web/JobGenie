@@ -11,6 +11,7 @@ import {
     Briefcase,
     Settings,
     BarChart3,
+    Calendar,
 } from "lucide-react";
 import {
     Sidebar,
@@ -49,6 +50,11 @@ const navigationItems = [
         title: "Employers",
         href: "/mis/employers",
         icon: Building2,
+    },
+    {
+        title: "Interviews",
+        href: "/mis/interviews",
+        icon: Calendar,
     },
     {
         title: "Jobs",
