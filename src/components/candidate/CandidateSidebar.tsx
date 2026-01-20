@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Briefcase,
@@ -26,6 +27,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -70,6 +72,28 @@ export function CandidateSidebar() {
     const pathname = usePathname();
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
+    const [unopenedCount, setUnopenedCount] = useState<number>(0);
+
+    useEffect(() => {
+        // Fetch unopened invitations count
+        const fetchUnopenedCount = async () => {
+            try {
+                const response = await fetch("/api/candidate/invitations/unopened-count");
+                const data = await response.json();
+                if (data.success) {
+                    setUnopenedCount(data.count);
+                }
+            } catch (error) {
+                console.error("Error fetching unopened count:", error);
+            }
+        };
+
+        fetchUnopenedCount();
+
+        // Refresh count every 30 seconds
+        const interval = setInterval(fetchUnopenedCount, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <Sidebar collapsible="icon" className="shadow-sm">
@@ -117,15 +141,34 @@ export function CandidateSidebar() {
                                                     isActive && "bg-sidebar-accent text-sidebar-accent-foreground border-r-3 border-green-500"
                                                 )}
                                             >
-                                                <Link href={item.href} className="gap-3">
-                                                    <Icon className="h-6 w-6 shrink-0" />
-                                                    {!isCollapsed && <span>{item.title}</span>}
+                                                <Link href={item.href} className="gap-3 flex items-center justify-between w-full">
+                                                    <div className="flex items-center gap-3">
+                                                        <Icon className="h-6 w-6 shrink-0" />
+                                                        {!isCollapsed && <span>{item.title}</span>}
+                                                    </div>
+                                                    {/* Show badge for unopened invitations */}
+                                                    {item.title === "Invitations" && unopenedCount > 0 && !isCollapsed && (
+                                                        <Badge
+                                                            // variant="destructive"
+                                                            className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
+                                                        >
+                                                            {unopenedCount}
+                                                        </Badge>
+                                                    )}
                                                 </Link>
                                             </SidebarMenuButton>
                                         </TooltipTrigger>
                                         {isCollapsed && (
                                             <TooltipContent side="right" className="font-medium">
                                                 {item.title}
+                                                {item.title === "Invitations" && unopenedCount > 0 && (
+                                                    <Badge
+                                                        // variant="destructive"
+                                                        className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold"
+                                                    >
+                                                        {unopenedCount}
+                                                    </Badge>
+                                                )}
                                             </TooltipContent>
                                         )}
                                     </Tooltip>

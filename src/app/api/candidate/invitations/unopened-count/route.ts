@@ -1,0 +1,61 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+// GET /api/candidate/invitations/unopened-count
+export async function GET() {
+    try {
+        const supabase = await createClient();
+
+        // Get the current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Get candidate record
+        const { data: candidate, error: candidateError } = await supabase
+            .from('candidates')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (candidateError || !candidate) {
+            return NextResponse.json(
+                { success: false, error: "Candidate profile not found" },
+                { status: 404 }
+            );
+        }
+
+        // Count unopened invitations (where viewed_at is null)
+        const { count, error: countError } = await supabase
+            .from('job_invitations')
+            .select('id', { count: 'exact', head: true })
+            .eq('candidate_id', candidate.id)
+            .is('viewed_at', null)
+            .eq('invitation_canceled', false);
+
+        if (countError) {
+            console.error('Error counting unopened invitations:', countError);
+            return NextResponse.json(
+                { success: false, error: "Failed to count unopened invitations" },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            count: count || 0
+        });
+
+    } catch (error) {
+        console.error('API error:', error);
+        return NextResponse.json(
+            { success: false, error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
