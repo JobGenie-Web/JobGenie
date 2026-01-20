@@ -78,6 +78,9 @@ export async function GET(request: Request) {
                 canceled_by,
                 cancellation_reason,
                 canceled_at,
+                mis_rescheduled,
+                mis_rescheduled_at,
+                mis_reschedule_data,
                 candidate:candidates(id, first_name, last_name, email, phone, current_position, profile_image_url),
                 employer:employers(id, first_name, last_name)
             `)

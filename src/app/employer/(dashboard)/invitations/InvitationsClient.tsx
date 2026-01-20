@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X } from "lucide-react";
+import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -45,6 +47,17 @@ interface Invitation {
     canceled_by: string | null;
     cancellation_reason: string | null;
     canceled_at: string | null;
+    mis_rescheduled?: boolean;
+    mis_rescheduled_at?: string;
+    mis_reschedule_data?: {
+        date: string;
+        time: string;
+        interview_mode: 'online' | 'physical';
+        meeting_link?: string;
+        interview_address?: string;
+        map_link?: string;
+        notes?: string;
+    };
     candidate: {
         id: string;
         first_name: string;
@@ -76,6 +89,9 @@ export default function InvitationsClient() {
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState("");
     const [isCanceling, setIsCanceling] = useState(false);
+    const [showOriginalDetails, setShowOriginalDetails] = useState(false);
+    const [showConfirmedDetails, setShowConfirmedDetails] = useState(true);
+    const [showCanceledDetails, setShowCanceledDetails] = useState(true);
 
     useEffect(() => {
         fetchInvitations();
@@ -142,7 +158,12 @@ export default function InvitationsClient() {
         return inv.status === filter;
     });
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string, invitation?: Invitation) => {
+        // Check for MIS reschedule first
+        if (invitation?.mis_rescheduled) {
+            return { variant: "default" as any, className: "bg-green-600 text-white" };
+        }
+
         const variants: Record<string, { variant: any; className: string }> = {
             pending: { variant: "secondary" as any, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
             viewed: { variant: "secondary" as any, className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
@@ -333,8 +354,8 @@ export default function InvitationsClient() {
                                                 <p className="text-xs text-muted-foreground">
                                                     {format(new Date(invitation.sent_at), "MMM d")}
                                                 </p>
-                                                <Badge {...getStatusBadge(invitation.status)} className="text-xs px-2 py-0">
-                                                    {invitation.status}
+                                                <Badge {...getStatusBadge(invitation.status, invitation)} className="text-xs px-2 py-0">
+                                                    {invitation.mis_rescheduled ? 'Rescheduled' : invitation.status}
                                                 </Badge>
                                             </div>
                                         </div>
@@ -378,8 +399,8 @@ export default function InvitationsClient() {
                                                     </CardDescription>
                                                 </div>
                                             </div>
-                                            <Badge {...getStatusBadge(selectedInvitation.status)} className="flex-shrink-0">
-                                                {selectedInvitation.status}
+                                            <Badge {...getStatusBadge(selectedInvitation.status, selectedInvitation)} className="flex-shrink-0">
+                                                {selectedInvitation.mis_rescheduled ? 'Rescheduled' : selectedInvitation.status}
                                             </Badge>
                                         </div>
                                     </CardHeader>
@@ -449,6 +470,161 @@ export default function InvitationsClient() {
                                                     )}
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {/* MIS Reschedule Section */}
+                                        {selectedInvitation.mis_rescheduled && selectedInvitation.mis_reschedule_data && (
+                                            <>
+                                                <Separator className="my-3" />
+                                                <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className="bg-green-600 text-white">
+                                                            <Calendar className="h-3 w-3 mr-1" />
+                                                            Rescheduled by MIS
+                                                        </Badge>
+                                                        {selectedInvitation.mis_rescheduled_at && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                on {format(new Date(selectedInvitation.mis_rescheduled_at), "MMM d, yyyy")}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h4 className="font-semibold text-sm text-green-900 dark:text-green-100">New Interview Schedule</h4>
+
+                                                    <div className="space-y-2 bg-white dark:bg-gray-900 rounded p-2.5 border text-sm">
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs text-green-700 dark:text-green-300">New Date</p>
+                                                                <p className="font-semibold text-sm">{format(new Date(selectedInvitation.mis_reschedule_data.date), "EEEE, MMMM d, yyyy")}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <Separator />
+
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs text-green-700 dark:text-green-300">New Time</p>
+                                                                <p className="font-semibold text-sm">{selectedInvitation.mis_reschedule_data.time}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <Separator />
+
+                                                        <div className="flex items-center gap-2">
+                                                            {selectedInvitation.mis_reschedule_data.interview_mode === 'online' ? (
+                                                                <Video className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                            ) : (
+                                                                <MapPinned className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                            )}
+                                                            <div>
+                                                                <p className="text-xs text-green-700 dark:text-green-300">Mode</p>
+                                                                <p className="font-semibold text-sm capitalize">{selectedInvitation.mis_reschedule_data.interview_mode} Interview</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {selectedInvitation.mis_reschedule_data.meeting_link && (
+                                                            <>
+                                                                <Separator />
+                                                                <div>
+                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1.5">Meeting Link</p>
+                                                                    <div className="flex gap-2">
+                                                                        <Input
+                                                                            value={selectedInvitation.mis_reschedule_data.meeting_link}
+                                                                            readOnly
+                                                                            className="flex-1 text-xs h-8"
+                                                                        />
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            className="h-8 px-2"
+                                                                            onClick={() => {
+                                                                                navigator.clipboard.writeText(selectedInvitation.mis_reschedule_data!.meeting_link!);
+                                                                                toast.success("Link copied!");
+                                                                            }}
+                                                                        >
+                                                                            <Copy className="h-3 w-3" />
+                                                                        </Button>
+                                                                        <Link href={selectedInvitation.mis_reschedule_data.meeting_link} target="_blank">
+                                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8 px-2">
+                                                                                <ExternalLink className="h-3 w-3" />
+                                                                            </Button>
+                                                                        </Link>
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {selectedInvitation.mis_reschedule_data.interview_address && (
+                                                            <>
+                                                                <Separator />
+                                                                <div>
+                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Interview Address</p>
+                                                                    <p className="text-sm font-medium mb-2">{selectedInvitation.mis_reschedule_data.interview_address}</p>
+                                                                    {selectedInvitation.mis_reschedule_data.map_link && (
+                                                                        <Link href={selectedInvitation.mis_reschedule_data.map_link} target="_blank">
+                                                                            <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 h-8 text-xs">
+                                                                                <MapPinned className="h-3 w-3 mr-1.5" />
+                                                                                Open in Maps
+                                                                            </Button>
+                                                                        </Link>
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {selectedInvitation.mis_reschedule_data.notes && (
+                                                            <>
+                                                                <Separator />
+                                                                <div>
+                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Notes</p>
+                                                                    <p className="text-xs">{selectedInvitation.mis_reschedule_data.notes}</p>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Toggle for Original Details */}
+                                                    <Collapsible open={showOriginalDetails} onOpenChange={setShowOriginalDetails}>
+                                                        <CollapsibleTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
+                                                            >
+                                                                <ChevronDown className={`h-3 w-3 mr-1.5 transition-transform ${showOriginalDetails ? 'rotate-180' : ''}`} />
+                                                                {showOriginalDetails ? 'Hide' : 'View'} Original Schedule
+                                                            </Button>
+                                                        </CollapsibleTrigger>
+                                                        <CollapsibleContent className="mt-2">
+                                                            <div className="bg-muted/50 rounded p-2.5 border text-sm space-y-1.5">
+                                                                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Original Interview Details:</p>
+                                                                <div className="flex items-center gap-2 text-xs">
+                                                                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                                                                    <span className="text-muted-foreground">Date:</span>
+                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot && format(new Date(selectedInvitation.selected_time_slot.date), "MMM d, yyyy")}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-xs">
+                                                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                                                    <span className="text-muted-foreground">Time:</span>
+                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot?.time || selectedInvitation.confirmed_time}</span>
+                                                                </div>
+                                                                {selectedInvitation.interview_mode && (
+                                                                    <div className="flex items-center gap-2 text-xs">
+                                                                        {selectedInvitation.interview_mode === 'online' ? (
+                                                                            <Video className="h-3 w-3 text-muted-foreground" />
+                                                                        ) : (
+                                                                            <MapPinned className="h-3 w-3 text-muted-foreground" />
+                                                                        )}
+                                                                        <span className="text-muted-foreground">Mode:</span>
+                                                                        <span className="font-medium capitalize">{selectedInvitation.interview_mode}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </CollapsibleContent>
+                                                    </Collapsible>
+                                                </div>
+                                            </>
                                         )}
 
                                         {/* Confirmation Section - Only for Accepted Invitations */}
@@ -556,79 +732,94 @@ export default function InvitationsClient() {
                                                 ) : (
                                                     /* Confirmed Details Display */
                                                     <div className={selectedInvitation.invitation_canceled ? "bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-md p-3" : "bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-md p-3"}>
-                                                        <h4 className={`font-semibold text-sm ${selectedInvitation.invitation_canceled ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'} mb-2 flex items-center gap-2`}>
-                                                            {selectedInvitation.invitation_canceled ? (
-                                                                <X className="h-4 w-4" />
-                                                            ) : (
-                                                                <CheckCircle2 className="h-4 w-4" />
-                                                            )}
-                                                            {selectedInvitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed'}
-                                                        </h4>
-                                                        <div className="space-y-2 text-sm">
-                                                            {/* Alternative Date - Show Confirmed Time */}
-                                                            {(selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time && (
-                                                                <div>
-                                                                    <p className="text-xs text-muted-foreground">Confirmed Time</p>
-                                                                    <p className="font-semibold">{selectedInvitation.confirmed_time}</p>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Online - Show Meeting Link */}
-                                                            {selectedInvitation.interview_mode === 'online' && selectedInvitation.meeting_link && (
-                                                                <div>
-                                                                    <p className="text-xs text-muted-foreground mb-1">Meeting Link</p>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Input
-                                                                            value={selectedInvitation.meeting_link}
-                                                                            readOnly
-                                                                            className="h-8 text-xs flex-1"
-                                                                        />
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="h-8 px-2"
-                                                                            onClick={() => {
-                                                                                navigator.clipboard.writeText(selectedInvitation.meeting_link!);
-                                                                                toast.success("Link copied!");
-                                                                            }}
-                                                                        >
-                                                                            <Copy className="h-3 w-3" />
-                                                                        </Button>
-                                                                        <Link href={selectedInvitation.meeting_link} target="_blank">
-                                                                            <Button size="sm" variant="outline" className="h-8 px-2">
-                                                                                <ExternalLink className="h-3 w-3" />
-                                                                            </Button>
-                                                                        </Link>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Physical - Show Address & Map Link */}
-                                                            {selectedInvitation.interview_mode === 'physical' && selectedInvitation.interview_address && (
-                                                                <>
-                                                                    <div>
-                                                                        <p className="text-xs text-muted-foreground">Interview Address</p>
-                                                                        <p className="font-semibold">{selectedInvitation.interview_address}</p>
-                                                                    </div>
-                                                                    {selectedInvitation.map_link && (
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h4 className={`font-semibold text-sm ${selectedInvitation.invitation_canceled ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'} flex items-center gap-2`}>
+                                                                {selectedInvitation.invitation_canceled ? (
+                                                                    <X className="h-4 w-4" />
+                                                                ) : (
+                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                )}
+                                                                {selectedInvitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed'}
+                                                            </h4>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-2"
+                                                                onClick={() => setShowConfirmedDetails(!showConfirmedDetails)}
+                                                            >
+                                                                <ChevronDown className={`h-3 w-3 transition-transform ${showConfirmedDetails ? '' : 'rotate-180'}`} />
+                                                            </Button>
+                                                        </div>
+                                                        <Collapsible open={showConfirmedDetails}>
+                                                            <CollapsibleContent>
+                                                                <div className="space-y-2 text-sm">
+                                                                    {/* Alternative Date - Show Confirmed Time */}
+                                                                    {(selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time && (
                                                                         <div>
-                                                                            <Link href={selectedInvitation.map_link} target="_blank">
-                                                                                <Button size="sm" variant="outline" className="h-8 text-xs">
-                                                                                    <MapPinned className="h-3 w-3 mr-1.5" />
-                                                                                    Open Map
-                                                                                </Button>
-                                                                            </Link>
+                                                                            <p className="text-xs text-muted-foreground">Confirmed Time</p>
+                                                                            <p className="font-semibold">{selectedInvitation.confirmed_time}</p>
                                                                         </div>
                                                                     )}
-                                                                </>
-                                                            )}
 
-                                                            {selectedInvitation.confirmed_at && (
-                                                                <p className="text-xs text-muted-foreground pt-2 border-t">
-                                                                    Confirmed on {format(new Date(selectedInvitation.confirmed_at), "MMM d, yyyy 'at' h:mm a")}
-                                                                </p>
-                                                            )}
-                                                        </div>
+                                                                    {/* Online - Show Meeting Link */}
+                                                                    {selectedInvitation.interview_mode === 'online' && selectedInvitation.meeting_link && (
+                                                                        <div>
+                                                                            <p className="text-xs text-muted-foreground mb-1">Meeting Link</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Input
+                                                                                    value={selectedInvitation.meeting_link}
+                                                                                    readOnly
+                                                                                    className="h-8 text-xs flex-1"
+                                                                                />
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    className="h-8 px-2"
+                                                                                    onClick={() => {
+                                                                                        navigator.clipboard.writeText(selectedInvitation.meeting_link!);
+                                                                                        toast.success("Link copied!");
+                                                                                    }}
+                                                                                >
+                                                                                    <Copy className="h-3 w-3" />
+                                                                                </Button>
+                                                                                <Link href={selectedInvitation.meeting_link} target="_blank">
+                                                                                    <Button size="sm" variant="outline" className="h-8 px-2">
+                                                                                        <ExternalLink className="h-3 w-3" />
+                                                                                    </Button>
+                                                                                </Link>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Physical - Show Address & Map Link */}
+                                                                    {selectedInvitation.interview_mode === 'physical' && selectedInvitation.interview_address && (
+                                                                        <>
+                                                                            <div>
+                                                                                <p className="text-xs text-muted-foreground">Interview Address</p>
+                                                                                <p className="font-semibold">{selectedInvitation.interview_address}</p>
+                                                                            </div>
+                                                                            {selectedInvitation.map_link && (
+                                                                                <div>
+                                                                                    <Link href={selectedInvitation.map_link} target="_blank">
+                                                                                        <Button size="sm" variant="outline" className="h-8 text-xs">
+                                                                                            <MapPinned className="h-3 w-3 mr-1.5" />
+                                                                                            Open Map
+                                                                                        </Button>
+                                                                                    </Link>
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+
+                                                                    {selectedInvitation.confirmed_at && (
+                                                                        <p className="text-xs text-muted-foreground pt-2 border-t">
+                                                                            Confirmed on {format(new Date(selectedInvitation.confirmed_at), "MMM d, yyyy 'at' h:mm a")}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </CollapsibleContent>
+                                                        </Collapsible>
+
 
                                                         {/* Cancel Interview Button */}
                                                         {!selectedInvitation.invitation_canceled && (
@@ -652,32 +843,46 @@ export default function InvitationsClient() {
                                         {/* Canceled Interview Status */}
                                         {selectedInvitation.invitation_canceled && (
                                             <div className="bg-gray-50 dark:bg-gray-900/10 border border-red-500 rounded-md p-3">
-                                                <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                                                    <X className="h-4 w-4 text-red-700 dark:text-red-300" />
-                                                    Interview Canceled
-                                                </h4>
-                                                <div className="space-y-2 text-sm">
-                                                    <div>
-                                                        <p className="text-xs text-muted-foreground">Canceled By</p>
-                                                        <p className="font-semibold">
-                                                            {selectedInvitation.canceled_by === 'employer' ? 'You' : 'Candidate'}
-                                                        </p>
-                                                    </div>
-                                                    {selectedInvitation.canceled_at && (
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Canceled On</p>
-                                                            <p className="font-semibold">
-                                                                {format(new Date(selectedInvitation.canceled_at + (selectedInvitation.canceled_at.endsWith('Z') ? '' : 'Z')), "MMM d, yyyy 'at' h:mm a")}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {selectedInvitation.cancellation_reason && (
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Reason</p>
-                                                            <p className="text-sm whitespace-pre-wrap">{selectedInvitation.cancellation_reason}</p>
-                                                        </div>
-                                                    )}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                                        <X className="h-4 w-4 text-red-700 dark:text-red-300" />
+                                                        Interview Canceled
+                                                    </h4>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2"
+                                                        onClick={() => setShowCanceledDetails(!showCanceledDetails)}
+                                                    >
+                                                        <ChevronDown className={`h-3 w-3 transition-transform ${showCanceledDetails ? '' : 'rotate-180'}`} />
+                                                    </Button>
                                                 </div>
+                                                <Collapsible open={showCanceledDetails}>
+                                                    <CollapsibleContent>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground">Canceled By</p>
+                                                                <p className="font-semibold">
+                                                                    {selectedInvitation.canceled_by === 'employer' ? 'You' : 'Candidate'}
+                                                                </p>
+                                                            </div>
+                                                            {selectedInvitation.canceled_at && (
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground">Canceled On</p>
+                                                                    <p className="font-semibold">
+                                                                        {format(new Date(selectedInvitation.canceled_at + (selectedInvitation.canceled_at.endsWith('Z') ? '' : 'Z')), "MMM d, yyyy 'at' h:mm a")}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {selectedInvitation.cancellation_reason && (
+                                                                <div>
+                                                                    <p className="text-xs text-muted-foreground">Reason</p>
+                                                                    <p className="text-sm whitespace-pre-wrap">{selectedInvitation.cancellation_reason}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </CollapsibleContent>
+                                                </Collapsible>
                                             </div>
                                         )}
 
@@ -720,7 +925,9 @@ export default function InvitationsClient() {
                         )}
                     </div>
                 </div>
-            )}
+            )
+            }
+
 
             {/* Cancellation Dialog */}
             <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -778,6 +985,6 @@ export default function InvitationsClient() {
                     display: none;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }

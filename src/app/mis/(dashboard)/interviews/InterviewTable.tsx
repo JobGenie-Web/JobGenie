@@ -139,16 +139,14 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
     }, [interviews]);
 
     const getStatusBadge = (interview: Interview) => {
-        // Show MIS reschedule badge if rescheduled
         if (interview.mis_rescheduled) {
             return (
-                <Badge className="bg-blue-600 text-white gap-1">
+                <Badge className="bg-green-600 text-white gap-1">
                     <Calendar className="h-3 w-3" />
-                    MIS Rescheduled
+                    Rescheduled
                 </Badge>
             );
         }
-
         if (interview.invitation_canceled) {
             return (
                 <Badge variant="destructive" className="gap-1">

@@ -44,6 +44,17 @@ interface InvitationDetail {
     canceled_by: string | null;
     cancellation_reason: string | null;
     canceled_at: string | null;
+    mis_rescheduled?: boolean;
+    mis_rescheduled_at?: string;
+    mis_reschedule_data?: {
+        date: string;
+        time: string;
+        interview_mode: 'online' | 'physical';
+        meeting_link?: string;
+        interview_address?: string;
+        map_link?: string;
+        notes?: string;
+    };
     company: {
         company_name: string;
         logo_url: string | null;
@@ -244,6 +255,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
     // Get status configuration
     const getStatusConfig = () => {
+        if (invitation.invitation_canceled && invitation.mis_rescheduled) {
+            return { color: 'bg-green-500', text: 'Rescheduled', icon: Calendar };
+        }
         if (invitation.invitation_canceled) {
             return { color: 'bg-gray-500', text: 'Canceled', icon: X };
         }
@@ -569,6 +583,121 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 </>
                             )}
                         </div>
+
+                        {/* MIS Reschedule Section */}
+                        {invitation.mis_rescheduled && invitation.mis_reschedule_data && (
+                            <>
+                                <Separator className="my-4" />
+                                <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="bg-green-600 text-white">
+                                            <Calendar className="h-3 w-3 mr-1" />
+                                            Rescheduled by MIS
+                                        </Badge>
+                                        {invitation.mis_rescheduled_at && (
+                                            <span className="text-xs text-muted-foreground">
+                                                on {format(new Date(invitation.mis_rescheduled_at), "MMM d, yyyy")}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h4 className="font-semibold text-green-900 dark:text-green-100">New Interview Schedule</h4>
+
+                                    <div className="space-y-2 bg-white dark:bg-gray-900 rounded p-3 border">
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs text-green-700 dark:text-green-300">New Date</p>
+                                                <p className="font-semibold">{format(new Date(invitation.mis_reschedule_data.date), "EEEE, MMMM d, yyyy")}</p>
+                                            </div>
+                                        </div>
+
+                                        <Separator />
+
+                                        <div className="flex items-center gap-3">
+                                            <Clock className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs text-green-700 dark:text-green-300">New Time</p>
+                                                <p className="font-semibold">{invitation.mis_reschedule_data.time}</p>
+                                            </div>
+                                        </div>
+
+                                        <Separator />
+
+                                        <div className="flex items-center gap-3">
+                                            {invitation.mis_reschedule_data.interview_mode === 'online' ? (
+                                                <Video className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            ) : (
+                                                <MapPinned className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            )}
+                                            <div>
+                                                <p className="text-xs text-green-700 dark:text-green-300">Mode</p>
+                                                <p className="font-semibold capitalize">{invitation.mis_reschedule_data.interview_mode} Interview</p>
+                                            </div>
+                                        </div>
+
+                                        {invitation.mis_reschedule_data.meeting_link && (
+                                            <>
+                                                <Separator />
+                                                <div>
+                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-2">Meeting Link</p>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            value={invitation.mis_reschedule_data.meeting_link}
+                                                            readOnly
+                                                            className="flex-1 text-sm"
+                                                        />
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(invitation.mis_reschedule_data!.meeting_link!);
+                                                                toast.success("Link copied!");
+                                                            }}
+                                                        >
+                                                            <Copy className="h-4 w-4" />
+                                                        </Button>
+                                                        <Link href={invitation.mis_reschedule_data.meeting_link} target="_blank">
+                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                                                <ExternalLink className="h-4 w-4 mr-1.5" />
+                                                                Join
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {invitation.mis_reschedule_data.interview_address && (
+                                            <>
+                                                <Separator />
+                                                <div>
+                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Interview Address</p>
+                                                    <p className="text-sm font-medium mb-2">{invitation.mis_reschedule_data.interview_address}</p>
+                                                    {invitation.mis_reschedule_data.map_link && (
+                                                        <Link href={invitation.mis_reschedule_data.map_link} target="_blank">
+                                                            <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+                                                                <MapPinned className="h-4 w-4 mr-2" />
+                                                                Open in Maps
+                                                            </Button>
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {invitation.mis_reschedule_data.notes && (
+                                            <>
+                                                <Separator />
+                                                <div>
+                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Notes</p>
+                                                    <p className="text-sm">{invitation.mis_reschedule_data.notes}</p>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         {!invitation.invitation_canceled && (
                             <Button

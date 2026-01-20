@@ -26,9 +26,10 @@ import { RescheduleModal } from "./RescheduleModal";
 interface InterviewDetailViewProps {
     interviewId: string | null;
     onClose: () => void;
+    onInterviewUpdate?: () => void;
 }
 
-export function InterviewDetailView({ interviewId, onClose }: InterviewDetailViewProps) {
+export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }: InterviewDetailViewProps) {
     const [interview, setInterview] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,10 +73,16 @@ export function InterviewDetailView({ interviewId, onClose }: InterviewDetailVie
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.success) {
-                        setInterview(data.interview);
+                        setInterview(data.data);
+                        // Notify parent to refresh the list
+                        onInterviewUpdate?.();
                     }
+                })
+                .catch((error) => {
+                    console.error("Error refetching interview:", error);
                 });
         }
+        setShowRescheduleModal(false);
     };
 
     const formatDateTime = (dateString: string, timeString?: string) => {

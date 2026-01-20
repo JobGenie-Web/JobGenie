@@ -61,6 +61,9 @@ export async function GET(
                 canceled_by,
                 cancellation_reason,
                 canceled_at,
+                mis_rescheduled,
+                mis_rescheduled_at,
+                mis_reschedule_data,
                 employer:employers(id, user_id, first_name, last_name, designation, email, phone, job_title, department, profile_image_url),
                 company:companies(company_name, logo_url, industry, headoffice_location, bio, website, phone)
             `)

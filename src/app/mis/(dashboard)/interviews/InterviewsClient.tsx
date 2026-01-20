@@ -15,6 +15,19 @@ interface InterviewsClientProps {
 
 export function InterviewsClient({ initialInterviews, initialStats, error }: InterviewsClientProps) {
     const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(null);
+    const [interviews, setInterviews] = useState(initialInterviews);
+
+    const refreshInterviews = async () => {
+        try {
+            const response = await fetch('/api/mis/interviews');
+            const data = await response.json();
+            if (data.success) {
+                setInterviews(data.data);
+            }
+        } catch (error) {
+            console.error('Error refreshing interviews:', error);
+        }
+    };
 
     const handleViewDetails = (id: string) => {
         setSelectedInterviewId(id);
@@ -40,7 +53,7 @@ export function InterviewsClient({ initialInterviews, initialStats, error }: Int
 
                     {/* Interviews Table */}
                     <InterviewTable
-                        interviews={initialInterviews}
+                        interviews={interviews}
                         onViewDetails={handleViewDetails}
                     />
 
@@ -48,6 +61,7 @@ export function InterviewsClient({ initialInterviews, initialStats, error }: Int
                     <InterviewDetailView
                         interviewId={selectedInterviewId}
                         onClose={handleCloseDetails}
+                        onInterviewUpdate={refreshInterviews}
                     />
                 </>
             )}
