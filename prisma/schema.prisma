@@ -12,16 +12,16 @@ datasource db {
 // ============================================
 
 model User {
-  id                            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                         String    @unique @db.VarChar(255)
-  password                      String   @db.VarChar(255)
-  role                          UserRole
-  status                        UserStatus @default(pending_verification)
-  
+  id       String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email    String     @unique @db.VarChar(255)
+  password String     @db.VarChar(255)
+  role     UserRole
+  status   UserStatus @default(pending_verification)
+
   // OAuth fields
-  provider                      String?   @db.VarChar(50)
-  provider_id                   String?   @db.VarChar(255)
-  
+  provider    String? @db.VarChar(50)
+  provider_id String? @db.VarChar(255)
+
   // Security & verification
   email_verified                Boolean   @default(false)
   email_verification_token      String?   @db.VarChar(255)
@@ -31,18 +31,18 @@ model User {
   invitation_token              String?   @unique
   invitation_token_expires_at   DateTime?
   invited_by                    String?
-  
+
   // Metadata
-  last_login_at                 DateTime?
-  created_at                    DateTime  @default(now())
-  updated_at                    DateTime  @updatedAt
-  deleted_at                    DateTime?
-  
+  last_login_at DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+
   // Relations
-  candidate                     Candidate?
-  employer                      Employer?
-  mis_user                      MisUser?
-  
+  candidate Candidate?
+  employer  Employer?
+  mis_user  MisUser?
+
   @@index([email])
   @@index([role, status])
   @@index([deleted_at])
@@ -54,78 +54,78 @@ model User {
 // ============================================
 
 model Candidate {
-  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id                 String   @unique @db.Uuid
-  
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @unique @db.Uuid
+
   // Basic Information (Section 1)
-  first_name              String   @db.VarChar(100)
-  last_name               String   @db.VarChar(100)
-  nicPassport             String   @db.VarChar(20)
-  dob                     DateTime @db.Date
-  contact_no              String   @db.VarChar(20)
-  email                   String   @unique @db.VarChar(255)
-  gender                  Gender
-  current_position        String   @db.VarChar(200)
-  industry                String   @db.VarChar(100)
-  address                 String   @db.Text
-  phone                   String   @db.VarChar(20)
-  alternative_phone       String?  @db.VarChar(20)
-  country                 String?  @db.VarChar(100)
-  membership_no           String?  @db.VarChar(20)
-  resume_url              String?  @db.VarChar(255)
-  resume_copy_url         String?  @db.VarChar(255)
-  
-  years_of_experience     Int?      @default(0)
-  experience_level        ExperienceLevel? @default(junior)
-  
+  first_name        String   @db.VarChar(100)
+  last_name         String   @db.VarChar(100)
+  nicPassport       String   @db.VarChar(20)
+  dob               DateTime @db.Date
+  contact_no        String   @db.VarChar(20)
+  email             String   @unique @db.VarChar(255)
+  gender            Gender
+  current_position  String   @db.VarChar(200)
+  industry          String   @db.VarChar(100)
+  address           String   @db.Text
+  phone             String   @db.VarChar(20)
+  alternative_phone String?  @db.VarChar(20)
+  country           String?  @db.VarChar(100)
+  membership_no     String?  @db.VarChar(20)
+  resume_url        String?  @db.VarChar(255)
+  resume_copy_url   String?  @db.VarChar(255)
+
+  years_of_experience Int?             @default(0)
+  experience_level    ExperienceLevel? @default(junior)
+
   // Qualifications stored as array for multiple selection
-  qualifications          ProfessionalQualification[]
-  highest_qualification   ProfessionalQualification?
-  
-  expected_monthly_salary Decimal? @db.Decimal(12, 2)
+  qualifications        ProfessionalQualification[]
+  highest_qualification ProfessionalQualification?
+
+  expected_monthly_salary Decimal?            @db.Decimal(12, 2)
   availability_status     AvailabilityStatus? @default(available)
-  notice_period           String?  @db.VarChar(50) // e.g., "immediate", "1 month", "2 months"
-  employment_type         EmploymentType? @default(full_time)
-  
-  professional_summary    String?  @db.VarChar(1000)
-  profile_image_url       String?  @db.VarChar(255)
-  
-  approval_status         ApprovalStatus @default(pending)
-  profile_completed       Boolean @default(false)
-  
+  notice_period           String?             @db.VarChar(50) // e.g., "immediate", "1 month", "2 months"
+  employment_type         EmploymentType?     @default(full_time)
+
+  professional_summary String? @db.VarChar(1000)
+  profile_image_url    String? @db.VarChar(255)
+
+  approval_status   ApprovalStatus @default(pending)
+  profile_completed Boolean        @default(false)
+
   // Approval workflow tracking
-  approval_status_message_seen Boolean @default(false)
-  approved_at             DateTime?
-  rejected_at             DateTime?
-  reviewed_by             String?  @db.Uuid
-  rejection_reason        String?  @db.Text
-  
+  approval_status_message_seen Boolean   @default(false)
+  approved_at                  DateTime?
+  rejected_at                  DateTime?
+  reviewed_by                  String?   @db.Uuid
+  rejection_reason             String?   @db.Text
+
   // Metadata
-  created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
-  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Relations
-  user                    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  reviewer                MisUser? @relation(fields: [reviewed_by], references: [user_id], onDelete: SetNull)
-  work_experiences        WorkExperience[]
-  educations              Education[]
-  awards                  Award[]
-  projects                Project[] // IT industry
-  certificates            Certificate[] // IT industry
-  
+  user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer         MisUser?         @relation(fields: [reviewed_by], references: [user_id], onDelete: SetNull)
+  work_experiences WorkExperience[]
+  educations       Education[]
+  awards           Award[]
+  projects         Project[] // IT industry
+  certificates     Certificate[] // IT industry
+
   // Industry-specific education
-  finance_academic_education      FinanceAcademicEducation[]
-  finance_professional_education  FinanceProfessionalEducation[]
-  banking_academic_education      BankingAcademicEducation[]
-  banking_professional_education  BankingProfessionalEducation[]
-  banking_specialized_training    BankingSpecializedTraining[]
-  
+  finance_academic_education     FinanceAcademicEducation[]
+  finance_professional_education FinanceProfessionalEducation[]
+  banking_academic_education     BankingAcademicEducation[]
+  banking_professional_education BankingProfessionalEducation[]
+  banking_specialized_training   BankingSpecializedTraining[]
+
   // Universal - works across all industries
   industry_specializations IndustrySpecialization[]
-  
+
   // Job invitations received
-  job_invitations         JobInvitation[]
-  
+  job_invitations JobInvitation[]
+
   @@index([user_id])
   @@index([industry])
   @@index([experience_level])
@@ -140,25 +140,25 @@ model Candidate {
 // ============================================
 
 model WorkExperience {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  job_title       String?   @db.VarChar(200)
-  company         String?   @db.VarChar(200)
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  job_title       String?         @db.VarChar(200)
+  company         String?         @db.VarChar(200)
   employment_type EmploymentType? @default(full_time)
-  location        String?  @db.VarChar(200)
-  location_type   LocationType? @default(onsite)
-  
-  start_date      DateTime? @db.Date
-  end_date        DateTime? @db.Date
-  description     String?  @db.Text
-  is_current      Boolean?  @default(false)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  location        String?         @db.VarChar(200)
+  location_type   LocationType?   @default(onsite)
+
+  start_date  DateTime? @db.Date
+  end_date    DateTime? @db.Date
+  description String?   @db.Text
+  is_current  Boolean?  @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([is_current])
   @@index([start_date])
@@ -170,20 +170,20 @@ model WorkExperience {
 // ============================================
 
 model Education {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  education_type  EducationType @default(academic) // academic or professional
-  degree_diploma  String?   @db.VarChar(200) // Qualification
-  professional_qualification String?   @db.VarChar(200)
-  institution     String?   @db.VarChar(200)
-  status          EducationStatus @default(incomplete)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  education_type             EducationType   @default(academic) // academic or professional
+  degree_diploma             String?         @db.VarChar(200) // Qualification
+  professional_qualification String?         @db.VarChar(200)
+  institution                String?         @db.VarChar(200)
+  status                     EducationStatus @default(incomplete)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([education_type])
   @@map("educations")
@@ -194,18 +194,18 @@ model Education {
 // ============================================
 
 model Award {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id        String   @db.Uuid
-  
-  nature_of_award     String?   @db.VarChar(300)
-  offered_by          String?   @db.VarChar(200)
-  description         String?  @db.Text
-  
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
-  
-  candidate           Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  nature_of_award String? @db.VarChar(300)
+  offered_by      String? @db.VarChar(200)
+  description     String? @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@map("awards")
 }
@@ -215,19 +215,19 @@ model Award {
 // ============================================
 
 model Project {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  project_name    String?   @db.VarChar(200)
-  description     String?  @db.Text
-  demo_url        String?  @db.VarChar(500) // Demo/Github URL
-  is_current      Boolean  @default(false)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  project_name String? @db.VarChar(200)
+  description  String? @db.Text
+  demo_url     String? @db.VarChar(500) // Demo/Github URL
+  is_current   Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([is_current])
   @@map("projects")
@@ -238,22 +238,22 @@ model Project {
 // ============================================
 
 model Certificate {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id        String    @db.Uuid
-  
-  certificate_name    String?    @db.VarChar(200)
-  issuing_authority   String?    @db.VarChar(200)
-  issue_date          DateTime? @db.Date
-  expiry_date         DateTime? @db.Date
-  credential_id       String?   @db.VarChar(100)
-  credential_url      String?   @db.VarChar(500)
-  description         String?   @db.Text
-  
-  created_at          DateTime  @default(now())
-  updated_at          DateTime  @updatedAt
-  
-  candidate           Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  certificate_name  String?   @db.VarChar(200)
+  issuing_authority String?   @db.VarChar(200)
+  issue_date        DateTime? @db.Date
+  expiry_date       DateTime? @db.Date
+  credential_id     String?   @db.VarChar(100)
+  credential_url    String?   @db.VarChar(500)
+  description       String?   @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([issue_date])
   @@index([expiry_date])
@@ -265,35 +265,35 @@ model Certificate {
 // ============================================
 
 model FinanceAcademicEducation {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  degree_diploma  String   @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Accounting and Finance
-  institution     String   @db.VarChar(200)
-  status          FinanceEducationStatus @default(incomplete)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  degree_diploma String                 @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Accounting and Finance
+  institution    String                 @db.VarChar(200)
+  status         FinanceEducationStatus @default(incomplete)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@map("finance_academic_education")
 }
 
 model FinanceProfessionalEducation {
-  id                          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id                String   @db.Uuid
-  
-  professional_qualification  String   @db.VarChar(300) // Professional Qualifications/Professional Programs/Specialized programs
-  institution                 String   @db.VarChar(200)
-  status                      FinanceEducationStatus @default(incomplete)
-  
-  created_at                  DateTime @default(now())
-  updated_at                  DateTime @updatedAt
-  
-  candidate                   Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  professional_qualification String                 @db.VarChar(300) // Professional Qualifications/Professional Programs/Specialized programs
+  institution                String                 @db.VarChar(200)
+  status                     FinanceEducationStatus @default(incomplete)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@map("finance_professional_education")
 }
@@ -303,53 +303,53 @@ model FinanceProfessionalEducation {
 // ============================================
 
 model BankingAcademicEducation {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  degree_diploma  String   @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Banking and Finance
-  institution     String   @db.VarChar(200)
-  status          BankingEducationStatus @default(incomplete)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  degree_diploma String                 @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Banking and Finance
+  institution    String                 @db.VarChar(200)
+  status         BankingEducationStatus @default(incomplete)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@map("banking_academic_education")
 }
 
 model BankingProfessionalEducation {
-  id                          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id                String   @db.Uuid
-  
-  professional_qualification  String   @db.VarChar(300) // Professional Banking Programs/Specialist diplomas/International Professional Qualifications
-  institution                 String   @db.VarChar(200)
-  status                      BankingEducationStatus @default(incomplete)
-  
-  created_at                  DateTime @default(now())
-  updated_at                  DateTime @updatedAt
-  
-  candidate                   Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  professional_qualification String                 @db.VarChar(300) // Professional Banking Programs/Specialist diplomas/International Professional Qualifications
+  institution                String                 @db.VarChar(200)
+  status                     BankingEducationStatus @default(incomplete)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@map("banking_professional_education")
 }
 
 model BankingSpecializedTraining {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id            String    @db.Uuid
-  
-  certificate_name        String    @db.VarChar(300) // Certificate Name/Training program name
-  issuing_authority       String    @db.VarChar(200) // Issuing Authority/Institution
-  certificate_issue_month DateTime? @db.Date         // Certificate Issue Month/training completion month
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  certificate_name        String                 @db.VarChar(300) // Certificate Name/Training program name
+  issuing_authority       String                 @db.VarChar(200) // Issuing Authority/Institution
+  certificate_issue_month DateTime?              @db.Date // Certificate Issue Month/training completion month
   status                  BankingEducationStatus @default(incomplete)
-  
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
-  
-  candidate               Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([certificate_issue_month])
   @@map("banking_specialized_training")
@@ -360,19 +360,19 @@ model BankingSpecializedTraining {
 // ============================================
 
 model IndustrySpecialization {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidate_id    String   @db.Uuid
-  
-  industry        IndustryType
-  specialization  String   @db.VarChar(200)  // e.g., "Mobile Development", "Trade Finance"
-  description     String?  @db.Text
-  years_experience Int?    @default(0)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String @db.Uuid
+
+  industry         IndustryType
+  specialization   String       @db.VarChar(200) // e.g., "Mobile Development", "Trade Finance"
+  description      String?      @db.Text
+  years_experience Int?         @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
   @@index([candidate_id])
   @@index([industry])
   @@map("industry_specializations")
@@ -383,35 +383,35 @@ model IndustrySpecialization {
 // ============================================
 
 model Company {
-  id                          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
   // Company Information (Section 1)
   company_name                String   @db.VarChar(200)
   business_registration_no    String   @unique @db.VarChar(50)
   industry                    String   @db.VarChar(100)
   bio                         String?  @db.VarChar(255)
   business_registered_address String   @db.VarChar(255)
-  br_certificate_url          String   @db.VarChar(255)// BR Certificate URL
+  br_certificate_url          String   @db.VarChar(255) // BR Certificate URL
   logo_url                    String?  @db.VarChar(255)
   description                 String?  @db.VarChar(5000)
   phone                       String   @db.VarChar(20)
   website                     String?  @db.VarChar(255)
   headoffice_location         String?  @db.VarChar(200)
   company_size                String?  @db.VarChar(50)
-  specialities                String[] @default([])  // Array of specialities
+  specialities                String[] @default([]) // Array of specialities
   map_link                    String?  @db.VarChar(1000)
-  
-  approval_status             ApprovalStatus @default(pending)
-  profile_completed           Boolean @default(false)
-  
-  created_at                  DateTime @default(now())
-  updated_at                  DateTime @updatedAt
-  
+
+  approval_status   ApprovalStatus @default(pending)
+  profile_completed Boolean        @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Relations
-  employers                   Employer[]
-  jobs                        Job[]
-  job_invitations             JobInvitation[]
-  
+  employers       Employer[]
+  jobs            Job[]
+  job_invitations JobInvitation[]
+
   @@index([business_registration_no])
   @@index([industry])
   @@index([approval_status])
@@ -419,31 +419,30 @@ model Company {
 }
 
 model Employer {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id     String   @unique @db.Uuid
-  company_id  String   @db.Uuid
-  
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String @unique @db.Uuid
+  company_id String @db.Uuid
 
-  first_name  String   @db.VarChar(100)
-  last_name   String   @db.VarChar(100)
-  designation String?  @db.VarChar(200)
-  phone       String?  @db.VarChar(20)
-  email       String   @db.VarChar(255)
-  address     String   @db.VarChar(255)
-  job_title   String?  @db.VarChar(200)
-  department  String?  @db.VarChar(100)
-  is_super_admin Boolean @default(false)
+  first_name        String  @db.VarChar(100)
+  last_name         String  @db.VarChar(100)
+  designation       String? @db.VarChar(200)
+  phone             String? @db.VarChar(20)
+  email             String  @db.VarChar(255)
+  address           String  @db.VarChar(255)
+  job_title         String? @db.VarChar(200)
+  department        String? @db.VarChar(100)
+  is_super_admin    Boolean @default(false)
   profile_completed Boolean @default(false)
   profile_image_url String? @db.VarChar(255)
-  
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  company     Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  jobs        Job[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company         Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  jobs            Job[]
   job_invitations JobInvitation[]
-  
+
   @@index([user_id])
   @@index([company_id])
   @@map("employers")
@@ -454,13 +453,13 @@ model Employer {
 // ============================================
 
 model MisUser {
-  user_id        String             @id @db.Uuid
-  first_name     String            @db.VarChar(100)
-  last_name      String            @db.VarChar(100)
-  email          String             @unique @db.VarChar(255)
-  created_at     DateTime           @default(now())
-  updated_at     DateTime           @updatedAt
-  user           User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id             String      @id @db.Uuid
+  first_name          String      @db.VarChar(100)
+  last_name           String      @db.VarChar(100)
+  email               String      @unique @db.VarChar(255)
+  created_at          DateTime    @default(now())
+  updated_at          DateTime    @updatedAt
+  user                User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   reviewed_candidates Candidate[]
 
   @@map("mis_user")
@@ -471,29 +470,29 @@ model MisUser {
 // ============================================
 
 model Job {
-  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  employer_id             String   @db.Uuid
-  company_id              String   @db.Uuid
-  
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employer_id String @db.Uuid
+  company_id  String @db.Uuid
+
   // Job Information
-  job_title               String   @db.VarChar(200)
-  location                String?  @db.VarChar(200)
-  industry                String?  @db.VarChar(100)
-  deadline                DateTime? @db.Date
-  job_type                JobType  @default(full_time)
-  advertisement_link      String?  @db.VarChar(500)
-  
-  description             String?  @db.Text
-  status                  JobStatus @default(draft)
-  
-  created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
-  published_at            DateTime?
-  
-  employer                Employer @relation(fields: [employer_id], references: [id], onDelete: Cascade)
-  company                 Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  job_invitations         JobInvitation[]
-  
+  job_title          String    @db.VarChar(200)
+  location           String?   @db.VarChar(200)
+  industry           String?   @db.VarChar(100)
+  deadline           DateTime? @db.Date
+  job_type           JobType   @default(full_time)
+  advertisement_link String?   @db.VarChar(500)
+
+  description String?   @db.Text
+  status      JobStatus @default(draft)
+
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  published_at DateTime?
+
+  employer        Employer        @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+  company         Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  job_invitations JobInvitation[]
+
   @@index([employer_id])
   @@index([company_id])
   @@index([status])
@@ -509,50 +508,56 @@ model Job {
 // ============================================
 
 model JobInvitation {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  job_id          String?  @db.Uuid  // Optional - invitations can be sent without a job posting
-  candidate_id    String   @db.Uuid
-  employer_id     String   @db.Uuid
-  company_id      String   @db.Uuid
-  
-  status          InvitationStatus @default(pending)
-  message         String?  @db.Text  // Optional custom message from employer
-  
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_id       String? @db.Uuid // Optional - invitations can be sent without a job posting
+  candidate_id String  @db.Uuid
+  employer_id  String  @db.Uuid
+  company_id   String  @db.Uuid
+
+  status  InvitationStatus @default(pending)
+  message String?          @db.Text // Optional custom message from employer
+
   // Interview scheduling context
-  industry        String   @db.VarChar(100)      // From filter context
-  job_designation String   @db.VarChar(200)      // From filter context
-  
+  industry        String @db.VarChar(100) // From filter context
+  job_designation String @db.VarChar(200) // From filter context
+
   // Time slots stored as JSON arrays
-  given_time_slots   Json?    // Array of {date, time, order} objects
-  alternative_dates  Json?    // Array of {date, time, order} objects
-  selected_time_slot Json?    // Candidate's chosen time slot {date, time, is_alternative}
-  interview_mode     InterviewMode?  // Candidate's preference: online or physical
-  
+  given_time_slots   Json? // Array of {date, time, order} objects
+  alternative_dates  Json? // Array of {date, time, order} objects
+  selected_time_slot Json? // Candidate's chosen time slot {date, time, is_alternative}
+  interview_mode     InterviewMode? // Candidate's preference: online or physical
+
   // Interview confirmation by employer
-  interview_confirmed Boolean   @default(false)  // True when employer confirms the interview
-  confirmed_time      String?   @db.VarChar(10)  // Time slot for alternative dates (e.g., "09:00")
-  meeting_link        String?   @db.Text         // For online interviews
-  interview_address   String?   @db.Text         // For physical interviews
-  map_link            String?   @db.Text         // Map link for physical location
-  confirmed_at        DateTime?                  // When employer confirmed
-  
+  interview_confirmed Boolean   @default(false) // True when employer confirms the interview
+  confirmed_time      String?   @db.VarChar(10) // Time slot for alternative dates (e.g., "09:00")
+  meeting_link        String?   @db.Text // For online interviews
+  interview_address   String?   @db.Text // For physical interviews
+  map_link            String?   @db.Text // Map link for physical location
+  confirmed_at        DateTime? // When employer confirmed
+
   // Interview cancellation tracking
-  invitation_canceled Boolean  @default(false)     // True if interview was cancelled
-  canceled_by         CanceledBy?                  // Who canceled: candidate or employer
-  cancellation_reason String?  @db.Text            // Reason for cancellation
-  canceled_at         DateTime?                    // When the interview was cancelled
-  
+  invitation_canceled Boolean     @default(false) // True if interview was cancelled
+  canceled_by         CanceledBy? // Who canceled: candidate or employer
+  cancellation_reason String?     @db.Text // Reason for cancellation
+  canceled_at         DateTime? // When the interview was cancelled
+
+  // MIS Reschedule tracking (for rescheduling cancelled confirmed interviews)
+  mis_rescheduled     Boolean   @default(false) // True if MIS rescheduled the interview
+  mis_rescheduled_at  DateTime? // When MIS rescheduled the interview
+  mis_rescheduled_by  String?   @db.Uuid // MIS user who rescheduled
+  mis_reschedule_data Json? // New interview details (date, time, mode, link/address)
+
   // Tracking
-  sent_at         DateTime @default(now())
-  viewed_at       DateTime?
-  responded_at    DateTime?
-  
+  sent_at      DateTime  @default(now())
+  viewed_at    DateTime?
+  responded_at DateTime?
+
   // Relations
-  job             Job?      @relation(fields: [job_id], references: [id], onDelete: Cascade)
-  candidate       Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
-  employer        Employer  @relation(fields: [employer_id], references: [id], onDelete: Cascade)
-  company         Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  
+  job       Job?      @relation(fields: [job_id], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+  employer  Employer  @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+  company   Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
   // Ensure no duplicate invitations for same candidate from same employer
   @@unique([candidate_id, employer_id])
   @@index([candidate_id, status])
@@ -568,33 +573,33 @@ model JobInvitation {
 // ============================================
 
 model Industry {
-  industry_id   Int              @id
-  industry_name String           @db.VarChar(100)
-  
-  designations  JobDesignation[]
-  
+  industry_id   Int    @id
+  industry_name String @db.VarChar(100)
+
+  designations JobDesignation[]
+
   @@map("industries")
 }
 
 model SeniorityLevel {
-  level_id     Int              @id
-  level_name   String           @db.VarChar(50)
-  level_order  Int
-  
+  level_id    Int    @id
+  level_name  String @db.VarChar(50)
+  level_order Int
+
   designations JobDesignation[]
-  
+
   @@map("seniority_levels")
 }
 
 model JobDesignation {
-  designation_id   Int            @id @default(autoincrement())
-  designation_name String         @db.VarChar(150)
+  designation_id   Int    @id @default(autoincrement())
+  designation_name String @db.VarChar(150)
   industry_id      Int
   level_id         Int
-  
-  industry         Industry       @relation(fields: [industry_id], references: [industry_id])
-  seniority_level  SeniorityLevel @relation(fields: [level_id], references: [level_id])
-  
+
+  industry        Industry       @relation(fields: [industry_id], references: [industry_id])
+  seniority_level SeniorityLevel @relation(fields: [level_id], references: [level_id])
+
   @@index([industry_id])
   @@index([level_id])
   @@map("job_designations")

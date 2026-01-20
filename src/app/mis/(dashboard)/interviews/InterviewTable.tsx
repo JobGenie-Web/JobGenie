@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, Search, Video, MapPin, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Eye, Search, Video, MapPin, CheckCircle2, Clock, XCircle, Calendar } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -34,6 +34,9 @@ interface Interview {
     viewed_at: string | null;
     responded_at: string | null;
     selected_time_slot: any;
+    mis_rescheduled?: boolean;
+    mis_rescheduled_at?: string;
+    mis_reschedule_data?: any;
     candidate: {
         first_name: string;
         last_name: string;
@@ -136,6 +139,16 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
     }, [interviews]);
 
     const getStatusBadge = (interview: Interview) => {
+        // Show MIS reschedule badge if rescheduled
+        if (interview.mis_rescheduled) {
+            return (
+                <Badge className="bg-blue-600 text-white gap-1">
+                    <Calendar className="h-3 w-3" />
+                    MIS Rescheduled
+                </Badge>
+            );
+        }
+
         if (interview.invitation_canceled) {
             return (
                 <Badge variant="destructive" className="gap-1">

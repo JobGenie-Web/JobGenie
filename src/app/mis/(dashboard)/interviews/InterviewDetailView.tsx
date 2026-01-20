@@ -21,6 +21,7 @@ import {
     MapPinned,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RescheduleModal } from "./RescheduleModal";
 
 interface InterviewDetailViewProps {
     interviewId: string | null;
@@ -31,6 +32,7 @@ export function InterviewDetailView({ interviewId, onClose }: InterviewDetailVie
     const [interview, setInterview] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showRescheduleModal, setShowRescheduleModal] = useState(false);
 
     // Fetch interview details when dialog opens or ID changes
     useEffect(() => {
@@ -62,6 +64,19 @@ export function InterviewDetailView({ interviewId, onClose }: InterviewDetailVie
                 .finally(() => setLoading(false));
         }
     }, [interviewId]);
+
+    const handleRescheduleSuccess = () => {
+        // Refetch interview data
+        if (interviewId) {
+            fetch(`/api/mis/interviews/${interviewId}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.success) {
+                        setInterview(data.interview);
+                    }
+                });
+        }
+    };
 
     const formatDateTime = (dateString: string, timeString?: string) => {
         const date = new Date(dateString);
@@ -108,256 +123,380 @@ export function InterviewDetailView({ interviewId, onClose }: InterviewDetailVie
     if (!interviewId) return null;
 
     return (
-        <Dialog open={!!interviewId} onOpenChange={onClose}>
-            <DialogContent
-                className="max-w-4xl max-h-[90vh] overflow-y-auto"
-                style={{
-                    maxWidth: '50rem',
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                } as React.CSSProperties}
-            >
-                <DialogHeader className="pb-4 border-b">
-                    <DialogTitle className="text-2xl font-semibold">Interview Details</DialogTitle>
-                    <DialogDescription className="text-base">
-                        Comprehensive information about this interview engagement
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={!!interviewId} onOpenChange={onClose}>
+                <DialogContent
+                    className="max-w-4xl max-h-[90vh] overflow-y-auto"
+                    style={{
+                        maxWidth: '50rem',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                    } as React.CSSProperties}
+                >
+                    <DialogHeader className="pb-4 border-b">
+                        <DialogTitle className="text-2xl font-semibold">Interview Details</DialogTitle>
+                        <DialogDescription className="text-base">
+                            Comprehensive information about this interview engagement
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {loading ? (
-                    <div className="flex items-center justify-center py-16">
-                        <div className="text-muted-foreground">Loading interview details...</div>
-                    </div>
-                ) : error ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <XCircle className="h-12 w-12 text-destructive mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Error Loading Details</h3>
-                        <p className="text-muted-foreground text-sm">{error}</p>
-                    </div>
-                ) : interview ? (
-                    <div className="space-y-6 pt-2">
-                        {/* Status Header */}
-                        {(() => {
-                            const status = getStatusInfo(interview);
-                            const StatusIcon = status.icon;
-                            return (
-                                <div className={`flex items-center justify-between p-4 rounded-lg border ${status.borderColor} ${status.bgColor}`}>
-                                    <div className="flex items-center gap-3">
-                                        <StatusIcon className={`h-5 w-5 ${status.color}`} />
-                                        <div>
-                                            <p className={`font-semibold ${status.text_color}`}>{status.label}</p>
-                                            {interview.selected_time_slot && (
-                                                <p className={`text-sm ${status.text_color}`}>
-                                                    {formatDateTime(
-                                                        interview.selected_time_slot.date,
-                                                        interview.selected_time_slot.time
-                                                    )}
-                                                </p>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-16">
+                            <div className="text-muted-foreground">Loading interview details...</div>
+                        </div>
+                    ) : error ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <XCircle className="h-12 w-12 text-destructive mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Error Loading Details</h3>
+                            <p className="text-muted-foreground text-sm">{error}</p>
+                        </div>
+                    ) : interview ? (
+                        <div className="space-y-6 pt-2">
+                            {/* Status Header */}
+                            {(() => {
+                                const status = getStatusInfo(interview);
+                                const StatusIcon = status.icon;
+                                return (
+                                    <div className={`flex items-center justify-between p-4 rounded-lg border ${status.borderColor} ${status.bgColor}`}>
+                                        <div className="flex items-center gap-3">
+                                            <StatusIcon className={`h-5 w-5 ${status.color}`} />
+                                            <div>
+                                                <p className={`font-semibold ${status.text_color}`}>{status.label}</p>
+                                                {interview.selected_time_slot && (
+                                                    <p className={`text-sm ${status.text_color}`}>
+                                                        {formatDateTime(
+                                                            interview.selected_time_slot.date,
+                                                            interview.selected_time_slot.time
+                                                        )}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className={`${status.color} border-current`}>
+                                            {status.label}
+                                        </Badge>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Main Grid */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Candidate Profile */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                        <User className="h-4 w-4" />
+                                        Candidate
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                        <Avatar className="h-16 w-16 border-2">
+                                            <AvatarImage src={interview.candidate.profile_image_url || undefined} />
+                                            <AvatarFallback className="text-lg">
+                                                {interview.candidate.first_name[0]}{interview.candidate.last_name[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-semibold truncate">
+                                                {interview.candidate.first_name} {interview.candidate.last_name}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground">{interview.candidate.current_position}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {interview.candidate.years_of_experience || 0} years experience · {interview.candidate.experience_level}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Mail className="h-4 w-4 text-muted-foreground" />
+                                            <span className="truncate">{interview.candidate.email}</span>
+                                        </div>
+                                        {interview.candidate.phone && (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                                <span>{interview.candidate.phone}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Company & Employer */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                        <Building2 className="h-4 w-4" />
+                                        Company
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                        <Avatar className="h-16 w-16 border-2">
+                                            <AvatarImage src={interview.company.logo_url || undefined} />
+                                            <AvatarFallback className="text-lg">
+                                                {interview.company.company_name[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-semibold truncate">{interview.company.company_name}</h3>
+                                            <p className="text-sm text-muted-foreground">{interview.company.industry}</p>
+                                            {interview.company.headoffice_location && (
+                                                <p className="text-xs text-muted-foreground mt-1">{interview.company.headoffice_location}</p>
                                             )}
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className={`${status.color} border-current`}>
-                                        {status.label}
-                                    </Badge>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Main Grid */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* Candidate Profile */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                    <User className="h-4 w-4" />
-                                    Candidate
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <Avatar className="h-16 w-16 border-2">
-                                        <AvatarImage src={interview.candidate.profile_image_url || undefined} />
-                                        <AvatarFallback className="text-lg">
-                                            {interview.candidate.first_name[0]}{interview.candidate.last_name[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold truncate">
-                                            {interview.candidate.first_name} {interview.candidate.last_name}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">{interview.candidate.current_position}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {interview.candidate.years_of_experience || 0} years experience · {interview.candidate.experience_level}
+                                    <Separator />
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-2">Contact Person</p>
+                                        <p className="font-medium text-sm">
+                                            {interview.employer.first_name} {interview.employer.last_name}
                                         </p>
+                                        {interview.employer.designation && (
+                                            <p className="text-xs text-muted-foreground">{interview.employer.designation}</p>
+                                        )}
                                     </div>
-                                </div>
-                                <Separator />
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Mail className="h-4 w-4 text-muted-foreground" />
-                                        <span className="truncate">{interview.candidate.email}</span>
-                                    </div>
-                                    {interview.candidate.phone && (
+                                    <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-sm">
-                                            <Phone className="h-4 w-4 text-muted-foreground" />
-                                            <span>{interview.candidate.phone}</span>
+                                            <Mail className="h-4 w-4 text-muted-foreground" />
+                                            <span className="truncate">{interview.employer.email}</span>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Company & Employer */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                    <Building2 className="h-4 w-4" />
-                                    Company
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <Avatar className="h-16 w-16 border-2">
-                                        <AvatarImage src={interview.company.logo_url || undefined} />
-                                        <AvatarFallback className="text-lg">
-                                            {interview.company.company_name[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold truncate">{interview.company.company_name}</h3>
-                                        <p className="text-sm text-muted-foreground">{interview.company.industry}</p>
-                                        {interview.company.headoffice_location && (
-                                            <p className="text-xs text-muted-foreground mt-1">{interview.company.headoffice_location}</p>
+                                        {interview.employer.phone && (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                                <span>{interview.employer.phone}</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                <Separator />
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-2">Contact Person</p>
-                                    <p className="font-medium text-sm">
-                                        {interview.employer.first_name} {interview.employer.last_name}
-                                    </p>
-                                    {interview.employer.designation && (
-                                        <p className="text-xs text-muted-foreground">{interview.employer.designation}</p>
-                                    )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Interview Details */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                    <Briefcase className="h-4 w-4" />
+                                    Interview Information
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Mail className="h-4 w-4 text-muted-foreground" />
-                                        <span className="truncate">{interview.employer.email}</span>
+                                <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Position</p>
+                                        <p className="font-medium text-sm">{interview.job_designation}</p>
                                     </div>
-                                    {interview.employer.phone && (
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <Phone className="h-4 w-4 text-muted-foreground" />
-                                            <span>{interview.employer.phone}</span>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Industry</p>
+                                        <p className="font-medium text-sm">{interview.industry}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Mode</p>
+                                        <div className="flex items-center gap-1.5">
+                                            {interview.interview_mode === "online" ? (
+                                                <>
+                                                    <Video className="h-4 w-4 text-blue-600" />
+                                                    <span className="text-sm">Online</span>
+                                                </>
+                                            ) : interview.interview_mode === "physical" ? (
+                                                <>
+                                                    <MapPin className="h-4 w-4 text-purple-600" />
+                                                    <span className="text-sm">Physical</span>
+                                                </>
+                                            ) : (
+                                                <span className="text-sm text-muted-foreground">—</span>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Interview Details */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                <Briefcase className="h-4 w-4" />
-                                Interview Information
-                            </div>
-                            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Position</p>
-                                    <p className="font-medium text-sm">{interview.job_designation}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Industry</p>
-                                    <p className="font-medium text-sm">{interview.industry}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Mode</p>
-                                    <div className="flex items-center gap-1.5">
-                                        {interview.interview_mode === "online" ? (
-                                            <>
-                                                <Video className="h-4 w-4 text-blue-600" />
-                                                <span className="text-sm">Online</span>
-                                            </>
-                                        ) : interview.interview_mode === "physical" ? (
-                                            <>
-                                                <MapPin className="h-4 w-4 text-purple-600" />
-                                                <span className="text-sm">Physical</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-sm text-muted-foreground">—</span>
-                                        )}
                                     </div>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Invitation Sent</p>
-                                    <p className="font-medium text-sm">
-                                        {new Date(interview.sent_at).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-
-
-                        {/* Engagement Timeline */}
-                        <Separator />
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                <Clock className="h-4 w-4" />
-                                Engagement Timeline
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5" />
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium">Invitation Sent</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {new Date(interview.sent_at).toLocaleString()}
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Invitation Sent</p>
+                                        <p className="font-medium text-sm">
+                                            {new Date(interview.sent_at).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>
-                                {interview.viewed_at && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium">Invitation Viewed</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {new Date(interview.viewed_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                                {interview.responded_at && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-2 w-2 rounded-full bg-purple-500 mt-1.5" />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium">Candidate Responded</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {new Date(interview.responded_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                                {interview.confirmed_at && (
+                            </div>
+
+
+
+                            {/* Engagement Timeline */}
+                            <Separator />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                    <Clock className="h-4 w-4" />
+                                    Engagement Timeline
+                                </div>
+                                <div className="space-y-3">
                                     <div className="flex items-start gap-3">
                                         <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5" />
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium">Interview Confirmed</p>
+                                            <p className="text-sm font-medium">Invitation Sent</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {new Date(interview.confirmed_at).toLocaleString()}
+                                                {new Date(interview.sent_at).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
-                                )}
+                                    {interview.viewed_at && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Invitation Viewed</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {new Date(interview.viewed_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {interview.responded_at && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="h-2 w-2 rounded-full bg-purple-500 mt-1.5" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Candidate Responded</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {new Date(interview.responded_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {interview.confirmed_at && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Interview Confirmed</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {new Date(interview.confirmed_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center py-16">
-                        <div className="text-muted-foreground">Interview not found</div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex items-center justify-center py-16">
+                            <div className="text-muted-foreground">Interview not found</div>
+                        </div>
+                    )}
 
-                <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                    <Button variant="outline" onClick={onClose}>Close</Button>
-                </div>
-            </DialogContent>
-        </Dialog>
+                    {/* MIS Reschedule Section */}
+                    {interview && interview.mis_rescheduled && interview.mis_reschedule_data && (
+                        <>
+                            <Separator className="my-6" />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Badge className="bg-green-600 text-white">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        Rescheduled by MIS
+                                    </Badge>
+                                    {interview.mis_rescheduled_at && (
+                                        <span className="text-xs text-muted-foreground">
+                                            on {new Date(interview.mis_rescheduled_at).toLocaleDateString()}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg space-y-3">
+                                    <h3 className="font-semibold text-green-900 dark:text-green-100">New Interview Schedule</h3>
+
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs text-green-700 dark:text-green-300 mb-1">Date & Time</p>
+                                            <p className="text-sm font-medium">
+                                                {formatDateTime(interview.mis_reschedule_data.date, interview.mis_reschedule_data.time)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-green-700 dark:text-green-300 mb-1">Mode</p>
+                                            <div className="flex items-center gap-1.5">
+                                                {interview.mis_reschedule_data.interview_mode === "online" ? (
+                                                    <>
+                                                        <Video className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                        <span className="text-sm">Online</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <MapPin className="h-4 w-4 text-purple-600" />
+                                                        <span className="text-sm">Physical</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {interview.mis_reschedule_data.meeting_link && (
+                                        <div>
+                                            <p className="text-xs text-green-700 dark:text-green-300 mb-1.5">Meeting Link</p>
+                                            <a
+                                                href={interview.mis_reschedule_data.meeting_link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 hover:underline"
+                                            >
+                                                <LinkIcon className="h-4 w-4" />
+                                                <span className="truncate">{interview.mis_reschedule_data.meeting_link}</span>
+                                            </a>
+                                        </div>
+                                    )}
+
+                                    {interview.mis_reschedule_data.interview_address && (
+                                        <div>
+                                            <p className="text-xs text-green-700 dark:text-green-300 mb-1.5">Interview Address</p>
+                                            <div className="flex items-start gap-2">
+                                                <MapPinned className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5" />
+                                                <p className="text-sm">{interview.mis_reschedule_data.interview_address}</p>
+                                            </div>
+                                            {interview.mis_reschedule_data.map_link && (
+                                                <a
+                                                    href={interview.mis_reschedule_data.map_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm text-green-600 dark:text-green-400 hover:underline mt-1 inline-block"
+                                                >
+                                                    View on Map →
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {interview.mis_reschedule_data.notes && (
+                                        <div>
+                                            <p className="text-xs text-green-700 dark:text-green-300 mb-1.5">Notes</p>
+                                            <p className="text-sm">{interview.mis_reschedule_data.notes}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {interview.mis_user && interview.mis_user.mis_user && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Rescheduled by {interview.mis_user.mis_user.first_name} {interview.mis_user.mis_user.last_name}
+                                    </p>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+                        {/* Show reschedule button only for cancelled confirmed interviews that haven't been rescheduled */}
+                        {interview &&
+                            interview.interview_confirmed &&
+                            interview.invitation_canceled &&
+                            !interview.mis_rescheduled && (
+                                <Button
+                                    onClick={() => setShowRescheduleModal(true)}
+                                    className="bg-green-600 text-white hover:bg-green-700"
+                                >
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    Reschedule Interview
+                                </Button>
+                            )}
+                        <Button variant="outline" onClick={onClose}>Close</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Reschedule Modal */}
+            {
+                interview && (
+                    <RescheduleModal
+                        interviewId={interview.id}
+                        isOpen={showRescheduleModal}
+                        onClose={() => setShowRescheduleModal(false)}
+                        onSuccess={handleRescheduleSuccess}
+                    />
+                )
+            }
+        </>
     );
 }

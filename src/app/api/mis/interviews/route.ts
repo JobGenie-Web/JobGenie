@@ -68,6 +68,10 @@ export async function GET(request: NextRequest) {
                 sent_at,
                 viewed_at,
                 responded_at,
+                mis_rescheduled,
+                mis_rescheduled_at,
+                mis_rescheduled_by,
+                mis_reschedule_data,
                 candidate:candidates!inner(
                     id,
                     first_name,
