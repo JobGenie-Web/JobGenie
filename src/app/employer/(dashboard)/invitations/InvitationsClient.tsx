@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown } from "lucide-react";
+import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +23,9 @@ interface TimeSlot {
     order: number;
     is_alternative?: boolean;
 }
+
+import { formatUTCTime } from "@/lib/date-utils";
+
 
 interface Invitation {
     id: string;
@@ -91,7 +94,7 @@ export default function InvitationsClient() {
     const [isCanceling, setIsCanceling] = useState(false);
     const [showOriginalDetails, setShowOriginalDetails] = useState(false);
     const [showConfirmedDetails, setShowConfirmedDetails] = useState(true);
-    const [showCanceledDetails, setShowCanceledDetails] = useState(true);
+    const [showCanceledDetails, setShowCanceledDetails] = useState(false);
 
     useEffect(() => {
         fetchInvitations();
@@ -449,7 +452,7 @@ export default function InvitationsClient() {
                                                         <div>
                                                             <p className="text-xs text-muted-foreground">Time</p>
                                                             <p className="font-semibold text-sm text-green-700 dark:text-green-300">
-                                                                {selectedInvitation.selected_time_slot.time}
+                                                                {formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -505,7 +508,7 @@ export default function InvitationsClient() {
                                                             <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                                                             <div>
                                                                 <p className="text-xs text-green-700 dark:text-green-300">New Time</p>
-                                                                <p className="font-semibold text-sm">{selectedInvitation.mis_reschedule_data.time}</p>
+                                                                <p className="font-semibold text-sm">{formatUTCTime(selectedInvitation.mis_reschedule_data.date, selectedInvitation.mis_reschedule_data.time)}</p>
                                                             </div>
                                                         </div>
 
@@ -607,7 +610,14 @@ export default function InvitationsClient() {
                                                                 <div className="flex items-center gap-2 text-xs">
                                                                     <Clock className="h-3 w-3 text-muted-foreground" />
                                                                     <span className="text-muted-foreground">Time:</span>
-                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot?.time || selectedInvitation.confirmed_time}</span>
+                                                                    <span className="font-medium">
+                                                                        {selectedInvitation.selected_time_slot
+                                                                            ? formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time)
+                                                                            : (selectedInvitation.confirmed_time && selectedInvitation.confirmed_at
+                                                                                ? formatUTCTime(selectedInvitation.confirmed_at, selectedInvitation.confirmed_time)
+                                                                                : selectedInvitation.confirmed_time)
+                                                                        }
+                                                                    </span>
                                                                 </div>
                                                                 {selectedInvitation.interview_mode && (
                                                                     <div className="flex items-center gap-2 text-xs">
@@ -757,7 +767,11 @@ export default function InvitationsClient() {
                                                                     {(selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time && (
                                                                         <div>
                                                                             <p className="text-xs text-muted-foreground">Confirmed Time</p>
-                                                                            <p className="font-semibold">{selectedInvitation.confirmed_time}</p>
+                                                                            <p className="font-semibold">
+                                                                                {selectedInvitation.confirmed_at
+                                                                                    ? formatUTCTime(selectedInvitation.confirmed_at, selectedInvitation.confirmed_time)
+                                                                                    : selectedInvitation.confirmed_time}
+                                                                            </p>
                                                                         </div>
                                                                     )}
 
@@ -842,24 +856,34 @@ export default function InvitationsClient() {
 
                                         {/* Canceled Interview Status */}
                                         {selectedInvitation.invitation_canceled && (
-                                            <div className="bg-gray-50 dark:bg-gray-900/10 border border-red-500 rounded-md p-3">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                                        <X className="h-4 w-4 text-red-700 dark:text-red-300" />
-                                                        Interview Canceled
-                                                    </h4>
+                                            <div className="mt-3">
+                                                {!showCanceledDetails ? (
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
-                                                        className="h-6 px-2"
-                                                        onClick={() => setShowCanceledDetails(!showCanceledDetails)}
+                                                        className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                        onClick={() => setShowCanceledDetails(true)}
                                                     >
-                                                        <ChevronDown className={`h-3 w-3 transition-transform ${showCanceledDetails ? '' : 'rotate-180'}`} />
+                                                        <X className="h-3 w-3 mr-2" />
+                                                        View Canceled Interview Details
                                                     </Button>
-                                                </div>
-                                                <Collapsible open={showCanceledDetails}>
-                                                    <CollapsibleContent>
-                                                        <div className="space-y-2 text-sm">
+                                                ) : (
+                                                    <div className="bg-gray-50 dark:bg-gray-900/10 border border-red-500 rounded-md p-3">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                                                <X className="h-4 w-4 text-red-700 dark:text-red-300" />
+                                                                Interview Canceled
+                                                            </h4>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-2"
+                                                                onClick={() => setShowCanceledDetails(false)}
+                                                            >
+                                                                <ChevronUp className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                        <div className="space-y-2 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
                                                             <div>
                                                                 <p className="text-xs text-muted-foreground">Canceled By</p>
                                                                 <p className="font-semibold">
@@ -881,8 +905,8 @@ export default function InvitationsClient() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </CollapsibleContent>
-                                                </Collapsible>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 

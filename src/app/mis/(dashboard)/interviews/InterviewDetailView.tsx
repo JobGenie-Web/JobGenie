@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RescheduleModal } from "./RescheduleModal";
+import { formatUTCTime, formatDate } from "@/lib/date-utils";
+
 
 interface InterviewDetailViewProps {
     interviewId: string | null;
@@ -85,19 +87,21 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
         setShowRescheduleModal(false);
     };
 
-    const formatDateTime = (dateString: string, timeString?: string) => {
-        const date = new Date(dateString);
-        const dateStr = date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-        return timeString ? `${dateStr} at ${timeString}` : dateStr;
-    };
+
 
     const getStatusInfo = (interview: any) => {
         if (interview.invitation_canceled) {
+            // Prioritize Rescheduled status if it was cancelled and rescheduled
+            if (interview.mis_rescheduled) {
+                return {
+                    icon: Calendar,
+                    label: "Rescheduled",
+                    text_color: "text-green-600",
+                    color: "text-green-600",
+                    bgColor: "bg-green-50",
+                    borderColor: "border-green-200",
+                };
+            }
             return {
                 icon: XCircle,
                 label: "Cancelled",
@@ -171,7 +175,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                                 <p className={`font-semibold ${status.text_color}`}>{status.label}</p>
                                                 {interview.selected_time_slot && (
                                                     <p className={`text-sm ${status.text_color}`}>
-                                                        {formatDateTime(
+                                                        {formatUTCTime(
                                                             interview.selected_time_slot.date,
                                                             interview.selected_time_slot.time
                                                         )}
@@ -310,7 +314,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Invitation Sent</p>
                                         <p className="font-medium text-sm">
-                                            {new Date(interview.sent_at).toLocaleDateString()}
+                                            {formatDate(interview.sent_at)}
                                         </p>
                                     </div>
                                 </div>
@@ -331,7 +335,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                         <div className="flex-1">
                                             <p className="text-sm font-medium">Invitation Sent</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {new Date(interview.sent_at).toLocaleString()}
+                                                {formatDate(interview.sent_at, "MMM d, yyyy h:mm a")}
                                             </p>
                                         </div>
                                     </div>
@@ -341,7 +345,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Invitation Viewed</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {new Date(interview.viewed_at).toLocaleString()}
+                                                    {formatDate(interview.viewed_at, "MMM d, yyyy h:mm a")}
                                                 </p>
                                             </div>
                                         </div>
@@ -352,7 +356,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Candidate Responded</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {new Date(interview.responded_at).toLocaleString()}
+                                                    {formatDate(interview.responded_at, "MMM d, yyyy h:mm a")}
                                                 </p>
                                             </div>
                                         </div>
@@ -363,7 +367,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Interview Confirmed</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {new Date(interview.confirmed_at).toLocaleString()}
+                                                    {formatDate(interview.confirmed_at, "MMM d, yyyy h:mm a")}
                                                 </p>
                                             </div>
                                         </div>
@@ -389,7 +393,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                     </Badge>
                                     {interview.mis_rescheduled_at && (
                                         <span className="text-xs text-muted-foreground">
-                                            on {new Date(interview.mis_rescheduled_at).toLocaleDateString()}
+                                            on {formatDate(interview.mis_rescheduled_at)}
                                         </span>
                                     )}
                                 </div>
@@ -401,7 +405,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                         <div>
                                             <p className="text-xs text-green-700 dark:text-green-300 mb-1">Date & Time</p>
                                             <p className="text-sm font-medium">
-                                                {formatDateTime(interview.mis_reschedule_data.date, interview.mis_reschedule_data.time)}
+                                                {formatUTCTime(interview.mis_reschedule_data.date, interview.mis_reschedule_data.time)}
                                             </p>
                                         </div>
                                         <div>

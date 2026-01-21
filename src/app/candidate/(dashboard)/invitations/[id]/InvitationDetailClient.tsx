@@ -13,6 +13,8 @@ import { Calendar, Clock, Building2, MapPin, Loader2, User, Phone, Globe, Briefc
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
+import { formatUTCTime } from "@/lib/date-utils";
+
 
 interface TimeSlot {
     date: string;
@@ -509,7 +511,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 <Clock className="h-5 w-5 text-primary flex-shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Time</p>
-                                    <p className="font-semibold">{invitation.selected_time_slot.time}</p>
+                                    <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
                                 </div>
                             </div>
 
@@ -617,7 +619,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             <Clock className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                                             <div>
                                                 <p className="text-xs text-green-700 dark:text-green-300">New Time</p>
-                                                <p className="font-semibold">{invitation.mis_reschedule_data.time}</p>
+                                                <p className="font-semibold">{formatUTCTime(invitation.mis_reschedule_data.date, invitation.mis_reschedule_data.time)}</p>
                                             </div>
                                         </div>
 
@@ -744,7 +746,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Selected Time</p>
-                                    <p className="font-semibold">{invitation.selected_time_slot.time}</p>
+                                    <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
                                 </div>
                             </div>
 
@@ -945,7 +947,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                                     </p>
                                                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                         <Clock className="h-3 w-3" />
-                                                        {slot.time}
+                                                        {formatUTCTime(slot.date, slot.time)}
                                                     </p>
                                                 </button>
                                             ))}
@@ -986,7 +988,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                                         </p>
                                                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                             <Clock className="h-3 w-3" />
-                                                            {slot.time}
+                                                            {formatUTCTime(slot.date, slot.time)}
                                                         </p>
                                                     </button>
                                                 );
@@ -1035,7 +1037,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         <Separator />
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-muted-foreground">Selected Time:</span>
-                                            <span className="font-semibold">{selectedSlot?.time}</span>
+                                            <span className="font-semibold">{selectedSlot && formatUTCTime(selectedSlot.date, selectedSlot.time)}</span>
                                         </div>
                                         {selectedSlot?.is_alternative && (
                                             <>

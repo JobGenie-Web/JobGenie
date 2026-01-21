@@ -33,6 +33,9 @@ async function getInterviews() {
                 sent_at,
                 viewed_at,
                 responded_at,
+                mis_rescheduled,
+                mis_rescheduled_at,
+                mis_reschedule_data,
                 candidate:candidates!inner(
                     id,
                     first_name,

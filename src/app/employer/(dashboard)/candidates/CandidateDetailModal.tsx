@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Loader2, User, Briefcase, GraduationCap, Award, FolderGit2, BadgeCheck as CertIcon, FileText } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { X, Loader2, User, Briefcase, GraduationCap, Award, FolderGit2, BadgeCheck as CertIcon, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,13 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -81,6 +88,9 @@ function formatQualification(qual: string): string {
 export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, onClose }: CandidateDetailModalProps) {
     const [candidate, setCandidate] = useState<CandidateData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showCVViewer, setShowCVViewer] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
         async function fetchCandidate() {
@@ -104,7 +114,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
 
     return (
         <Sheet open={true} onOpenChange={onClose}>
-            <SheetContent className="sm:max-w-2xl w-full flex flex-col h-full p-0">
+            <SheetContent className="sm:max-w-4xl w-full flex flex-col h-full p-0">
                 <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
                     <SheetTitle>Candidate Profile</SheetTitle>
                     <SheetDescription>
@@ -123,6 +133,71 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                 ) : (
                     <ScrollArea className="flex-1 overflow-auto">
                         <div className="space-y-6 px-6 pb-6">
+                            {/* Candidate Header */}
+                            <section className="pt-2">
+                                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                                    <Avatar className="h-24 w-24 shrink-0">
+                                        <AvatarImage src={candidate.profile_image_url} alt={`${candidate.first_name} ${candidate.last_name}`} />
+                                        <AvatarFallback className="text-2xl">
+                                            {candidate.first_name[0]}{candidate.last_name[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 space-y-3">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">
+                                                {candidate.first_name} {candidate.last_name}
+                                            </h2>
+                                            <p className="text-muted-foreground">
+                                                {candidate.current_position}
+                                            </p>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <User className="h-4 w-4 text-muted-foreground" />
+                                                <a href={`mailto:${candidate.email}`} className="text-primary hover:underline">
+                                                    {candidate.email}
+                                                </a>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <User className="h-4 w-4 text-muted-foreground" />
+                                                <span>{candidate.phone}</span>
+                                            </div>
+                                            {candidate.alternative_phone && (
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4 text-muted-foreground" />
+                                                    <span>{candidate.alternative_phone} (Alt)</span>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <User className="h-4 w-4 text-muted-foreground" />
+                                                <span>{candidate.address}</span>
+                                            </div>
+                                            {candidate.membership_no && (
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4 text-muted-foreground" />
+                                                    <span>Member: {candidate.membership_no}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {candidate.resume_url && (
+                                            <div className="pt-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setShowCVViewer(true)}
+                                                    className="inline-flex items-center gap-2"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                    View CV
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </section>
+
+                            <Separator />
+
                             {/* Professional Information */}
                             <section>
                                 <div className="flex items-center gap-2 mb-3">
@@ -329,6 +404,73 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                     </ScrollArea>
                 )}
             </SheetContent>
+
+            {/* CV Viewer Dialog */}
+            {candidate && showCVViewer && candidate.resume_url && (
+                <Dialog open={showCVViewer} onOpenChange={setShowCVViewer}>
+                    <DialogContent className="max-w-[95vw] sm:max-w-[50vw] h-[95vh] flex flex-col p-6">
+                        <DialogHeader>
+                            <DialogTitle>Candidate CV - {candidate.first_name} {candidate.last_name}</DialogTitle>
+                            <DialogDescription>
+                                Viewing resume document. Use the scrollbar on the right to navigate.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div
+                            className="flex-1 overflow-hidden rounded-md border relative"
+                            onContextMenu={(e) => e.preventDefault()}
+                            onMouseDown={(e) => {
+                                if (e.button === 2) {
+                                    e.preventDefault();
+                                    return false;
+                                }
+                            }}
+                            style={{ userSelect: 'none' }}
+                        >
+                            {/* Watermark Overlay */}
+                            <div
+                                className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center"
+                                style={{
+                                    background: 'repeating-linear-gradient(45deg, transparent, transparent 200px, rgba(0,0,0,0.02) 200px, rgba(0,0,0,0.02) 400px)'
+                                }}
+                            >
+                                <div className="text-6xl font-bold text-gray-300 opacity-20 rotate-[-45deg] select-none">
+                                    CONFIDENTIAL
+                                </div>
+                            </div>
+
+                            {/* Content Blocking Overlay - Leaves space for scrollbar on right */}
+                            <div
+                                className="absolute inset-0 right-[24px] z-[5]"
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); return false; }}
+                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); return false; }}
+                                style={{
+                                    cursor: 'default'
+                                }}
+                            />
+
+
+                            <iframe
+                                ref={iframeRef}
+                                src={`${candidate.resume_url}#toolbar=0&navpanes=0&view=FitH`}
+                                className="w-full h-full relative z-0"
+                                title="Candidate Resume"
+                                style={{
+                                    border: 'none',
+                                    userSelect: 'none'
+                                }}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); return false; }}
+                                onMouseDown={(e) => {
+                                    if (e.button === 2) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return false;
+                                    }
+                                }}
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
         </Sheet>
     );
 }

@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 
 interface Candidate {
     id: string;
+    first_name: string;
+    last_name: string;
     industry: string;
     current_position: string;
     years_of_experience: number | null;
@@ -267,7 +269,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Job Designation</TableHead>
+                                            <TableHead>Candidate Name</TableHead>
                                             <TableHead>Industry</TableHead>
                                             <TableHead>Experience</TableHead>
                                             <TableHead>Level</TableHead>
@@ -286,7 +288,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                 onClick={() => setSelectedCandidateId(candidate.id)}
                                             >
                                                 <TableCell className="font-medium">
-                                                    {candidate.current_position}
+                                                    {candidate.first_name} {candidate.last_name}
                                                 </TableCell>
                                                 <TableCell>{candidate.industry}</TableCell>
                                                 <TableCell>

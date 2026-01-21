@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { formatUTCTime, formatDate } from "@/lib/date-utils";
 import {
     Table,
     TableBody,
@@ -181,19 +182,15 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
         return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Sent</Badge>;
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
     const getInterviewDateTime = (interview: Interview) => {
+        // Prioritize MIS reschedule data if available and rescheduled
+        if (interview.mis_rescheduled && interview.mis_reschedule_data) {
+            return `${formatDate(interview.mis_reschedule_data.date)} at ${formatUTCTime(interview.mis_reschedule_data.date, interview.mis_reschedule_data.time)}`;
+        }
+
         if (interview.selected_time_slot) {
             const slot = interview.selected_time_slot as any;
-            return `${formatDate(slot.date)} at ${slot.time}`;
+            return `${formatDate(slot.date)} at ${formatUTCTime(slot.date, slot.time)}`;
         }
         return "Not scheduled";
     };

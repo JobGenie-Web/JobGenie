@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 
 interface CandidateForTable {
     id: string;
+    first_name: string;
+    last_name: string;
     industry: string;
     current_position: string;
     years_of_experience: number | null;
@@ -27,7 +29,7 @@ async function getApprovedCandidates() {
     // Fetch only MIS approved candidates
     const { data: candidates, error } = await supabase
         .from('candidates')
-        .select('id, industry, current_position, years_of_experience, experience_level, employment_type, availability_status, qualifications')
+        .select('id, first_name, last_name, industry, current_position, years_of_experience, experience_level, employment_type, availability_status, qualifications')
         .eq('approval_status', 'approved')
         .eq('profile_completed', true)
         .order('years_of_experience', { ascending: false });
