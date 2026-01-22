@@ -22,7 +22,7 @@ export function InterviewsClient({ initialInterviews, initialStats, error }: Int
             const response = await fetch('/api/mis/interviews');
             const data = await response.json();
             if (data.success) {
-                setInterviews(data.data);
+                setInterviews(data.interviews);
             }
         } catch (error) {
             console.error('Error refreshing interviews:', error);

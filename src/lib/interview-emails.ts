@@ -359,3 +359,208 @@ export async function sendEmployerCancellationEmail(
         return { success: false, error: "Failed to send cancellation email" };
     }
 }
+
+/**
+ * Send MIS reschedule notification email to candidate  
+ */
+export async function sendMISRescheduleNotificationToCandidate(
+    candidateEmail: string,
+    candidateName: string,
+    companyName: string,
+    jobDesignation: string,
+    newDate: string,
+    newTime: string,
+    interviewMode: string,
+    meetingLinkOrAddress: string,
+    invitationId: string,
+    notes: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const baseUrl = getBaseUrl();
+
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.log(`\n====================================`);
+            console.log(`[DEV] MIS Reschedule Notification (Candidate)`);
+            console.log(`====================================`);
+            console.log(`To: ${candidateEmail}`);
+            console.log(`Candidate: ${candidateName}`);
+            console.log(`Company: ${companyName}`);
+            console.log(`New Date: ${newDate} at ${newTime}`);
+            console.log(`Invitation Link: ${baseUrl}/login?returnUrl=${encodeURIComponent(`/candidate/invitations/${invitationId}`)}`);
+            console.log(`====================================\n`);
+            return { success: true };
+        }
+
+        const transporter = createTransporter();
+
+        // Create deep link with login redirect
+        const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
+        const loginRedirectUrl = `${baseUrl}/login?returnUrl=${encodeURIComponent(invitationDetailUrl)}`;
+
+        const locationHTML = interviewMode === 'online'
+            ? `<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>📹 Online Interview</strong></p>
+               <p style="margin:0;font-size:14px;color:#1e40af;">Meeting Link: <a href="${meetingLinkOrAddress}" style="color:#3b82f6;">${meetingLinkOrAddress}</a></p>`
+            : `<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>📍 Physical Interview</strong></p>
+               <p style="margin:0;font-size:14px;color:#1e40af;">Address: ${meetingLinkOrAddress}</p>`;
+
+        const notesHTML = notes ? `
+            <div style="background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
+                <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">📝 Additional Notes:</p>
+                <p style="margin:0;font-size:14px;color:#78350f;line-height:1.6;">${notes}</p>
+            </div>` : '';
+
+        const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
+<table role="presentation" style="width:100%;border-collapse:collapse;">
+<tr><td align="center" style="padding:40px 0;">
+<table role="presentation" style="width:100%;max-width:600px;border-collapse:collapse;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<tr><td style="padding:40px 40px 20px;text-align:center;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);border-radius:16px 16px 0 0;">
+<h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">JobGenie</h1>
+<p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">Find Your Perfect Career Match</p>
+</td></tr>
+<tr><td style="padding:40px;">
+<div style="text-align:center;margin-bottom:24px;">
+<div style="display:inline-block;background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);border-radius:50%;width:80px;height:80px;line-height:80px;">
+<span style="font-size:40px;">🔄</span>
+</div></div>
+<h2 style="margin:0 0 16px;font-size:24px;font-weight:600;color:#1f2937;text-align:center;">Interview Rescheduled</h2>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Hi <strong>${candidateName}</strong>,</p>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Your interview with <strong>${companyName}</strong> for the <strong>${jobDesignation}</strong> position has been rescheduled by our MIS team.</p>
+<div style="background-color:#dbeafe;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
+<p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#1e40af;">📅 New Interview Details:</p>
+<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${new Date(newDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${newTime}</p>
+${locationHTML}
+</div>
+${notesHTML}
+<div style="background-color:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
+<p style="margin:0;font-size:14px;color:#166534;"><strong>💡 Tip:</strong> Please review the updated details and prepare accordingly. Good luck!</p>
+</div>
+<div style="text-align:center;margin:32px 0;">
+<a href="${loginRedirectUrl}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:600;">View Interview Details</a>
+</div>
+</td></tr>
+<tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#3b82f6;">support@jobgenie.com</a></p>
+<p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table></body></html>`;
+
+        await transporter.sendMail({
+            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+            to: candidateEmail,
+            subject: `Interview Rescheduled - ${companyName} - JobGenie`,
+            html,
+        });
+
+        console.log(`[EMAIL] MIS reschedule notification sent to candidate ${candidateEmail}`);
+        return { success: true };
+    } catch (error) {
+        console.error("MIS reschedule candidate email error:", error);
+        return { success: false, error: "Failed to send reschedule notification" };
+    }
+}
+
+/**
+ * Send MIS reschedule notification email to employer
+ */
+export async function sendMISRescheduleNotificationToEmployer(
+    employerEmail: string,
+    employerName: string,
+    candidateName: string,
+    jobDesignation: string,
+    newDate: string,
+    newTime: string,
+    interviewMode: string,
+    meetingLinkOrAddress: string,
+    invitationId: string,
+    notes: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const baseUrl = getBaseUrl();
+
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.log(`\n====================================`);
+            console.log(`[DEV] MIS Reschedule Notification (Employer)`);
+            console.log(`====================================`);
+            console.log(`To: ${employerEmail}`);
+            console.log(`Employer: ${employerName}`);
+            console.log(`Candidate: ${candidateName}`);
+            console.log(`New Date: ${newDate} at ${newTime}`);
+            console.log(`Invitation Link: ${baseUrl}/login?returnUrl=${encodeURIComponent(`/employer/invitations`)}`);
+            console.log(`====================================\n`);
+            return { success: true };
+        }
+
+        const transporter = createTransporter();
+
+        // Create deep link with login redirect - employer invitations are viewed in a list/modal, not individual detail pages
+        const invitationDetailUrl = `${baseUrl}/employer/invitations`;
+        const loginRedirectUrl = `${baseUrl}/login?returnUrl=${encodeURIComponent(invitationDetailUrl)}`;
+
+        const locationHTML = interviewMode === 'online'
+            ? `<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>📹 Online Interview</strong></p>
+               <p style="margin:0;font-size:14px;color:#1e40af;">Meeting Link: <a href="${meetingLinkOrAddress}" style="color:#3b82f6;">${meetingLinkOrAddress}</a></p>`
+            : `<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>📍 Physical Interview</strong></p>
+               <p style="margin:0;font-size:14px;color:#1e40af;">Address: ${meetingLinkOrAddress}</p>`;
+
+        const notesHTML = notes ? `
+            <div style="background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
+                <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">📝 Additional Notes:</p>
+                <p style="margin:0;font-size:14px;color:#78350f;line-height:1.6;">${notes}</p>
+            </div>` : '';
+
+        const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
+<table role="presentation" style="width:100%;border-collapse:collapse;">
+<tr><td align="center" style="padding:40px 0;">
+<table role="presentation" style="width:100%;max-width:600px;border-collapse:collapse;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<tr><td style="padding:40px 40px 20px;text-align:center;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);border-radius:16px 16px 0 0;">
+<h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">JobGenie</h1>
+<p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">Employer Portal</p>
+</td></tr>
+<tr><td style="padding:40px;">
+<div style="text-align:center;margin-bottom:24px;">
+<div style="display:inline-block;background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);border-radius:50%;width:80px;height:80px;line-height:80px;">
+<span style="font-size:40px;">🔄</span>
+</div></div>
+<h2 style="margin:0 0 16px;font-size:24px;font-weight:600;color:#1f2937;text-align:center;">Interview Rescheduled</h2>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Hi <strong>${employerName}</strong>,</p>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">The interview with <strong>${candidateName}</strong> for the <strong>${jobDesignation}</strong> position has been rescheduled by our MIS team.</p>
+<div style="background-color:#dbeafe;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
+<p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#1e40af;">📅 New Interview Details:</p>
+<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${new Date(newDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${newTime}</p>
+${locationHTML}
+</div>
+${notesHTML}
+<div style="background-color:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
+<p style="margin:0;font-size:14px;color:#166534;"><strong>💼 Note:</strong> The candidate has been notified about the updated schedule.</p>
+</div>
+<div style="text-align:center;margin:32px 0;">
+<a href="${loginRedirectUrl}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:600;">View Interview Details</a>
+</div>
+</td></tr>
+<tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#3b82f6;">support@jobgenie.com</a></p>
+<p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table></body></html>`;
+
+        await transporter.sendMail({
+            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+            to: employerEmail,
+            subject: `Interview Rescheduled - ${candidateName} - JobGenie`,
+            html,
+        });
+
+        console.log(`[EMAIL] MIS reschedule notification sent to employer ${employerEmail}`);
+        return { success: true };
+    } catch (error) {
+        console.error("MIS reschedule employer email error:", error);
+        return { success: false, error: "Failed to send reschedule notification" };
+    }
+}
+

@@ -286,7 +286,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     return (
         <div className="max-w-5xl mx-auto ">
             {/* Hero Section - Company & Job */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden mb-6">
                 <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-6">
                     <div className="flex items-start gap-6">
                         {/* Company Logo */}
@@ -301,7 +301,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                         )}
 
                         {/* Company & Job Info */}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 ">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
                                     <h1 className="text-3xl font-bold mb-2">{invitation.job_designation}</h1>
@@ -476,121 +476,125 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
             {/* CONFIRMED STATUS */}
             {isConfirmed && invitation.selected_time_slot && (
-                <Card className={invitation.invitation_canceled ? "border-gray-200 bg-gray-50/50 dark:bg-gray-950/20" : "border-green-200 bg-green-50/50 dark:bg-green-950/20"}>
+                <Card className={invitation.invitation_canceled && !invitation.mis_rescheduled ? "border-gray-200 " : "border-green-200 bg-green-50/50 dark:bg-green-950/20"}>
                     <CardContent className="p-6">
-                        <div className="flex items-start gap-3 mb-4">
-                            <div className={`h-10 w-10 rounded-full ${invitation.invitation_canceled ? 'bg-gray-100 dark:bg-gray-900' : 'bg-green-100 dark:bg-green-900'} flex items-center justify-center flex-shrink-0`}>
-                                {invitation.invitation_canceled ? (
-                                    <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                                ) : (
-                                    <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <h3 className={`font-semibold mb-1 ${invitation.invitation_canceled ? 'text-gray-900 dark:text-gray-100' : 'text-green-900 dark:text-green-100'}`}>
-                                    {invitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed!'}
-                                </h3>
-                                <p className={`text-sm ${invitation.invitation_canceled ? 'text-gray-600 dark:text-gray-400' : 'text-green-600 dark:text-green-400'}`}>
-                                    {invitation.invitation_canceled ? 'This interview has been canceled.' : 'Your interview has been scheduled as follows:'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 bg-white dark:bg-gray-900 rounded-lg p-4 border">
-                            <div className="flex items-center gap-3">
-                                <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Date</p>
-                                    <p className="font-semibold">{format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}</p>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className="flex items-center gap-3">
-                                <Clock className="h-5 w-5 text-primary flex-shrink-0" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Time</p>
-                                    <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
-                                </div>
-                            </div>
-
-                            {invitation.interview_mode && (
-                                <>
-                                    <Separator />
-                                    <div className="flex items-center gap-3">
-                                        {invitation.interview_mode === 'online' ? (
-                                            <Video className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        {!invitation.mis_rescheduled && (
+                            <>
+                                <div className="flex items-start gap-3 mb-4">
+                                    <div className={`h-10 w-10 rounded-full ${invitation.invitation_canceled ? 'border-gray-200 dark:border-gray-900 border-2' : 'border-green-200 dark:border-green-900 border-2'} flex items-center justify-center flex-shrink-0`}>
+                                        {invitation.invitation_canceled ? (
+                                            <X className="h-5 w-5 text-red-600 dark:text-red-400" />
                                         ) : (
-                                            <MapPinned className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                                         )}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className={`font-semibold mb-1 ${invitation.invitation_canceled ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'}`}>
+                                            {invitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed!'}
+                                        </h3>
+                                        <p className={`text-sm ${invitation.invitation_canceled ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                            {invitation.invitation_canceled ? 'This interview has been canceled.' : 'Your interview has been scheduled as follows:'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 bg-white dark:bg-red-900 rounded-lg p-4 border">
+                                    <div className="flex items-center gap-3">
+                                        <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
                                         <div>
-                                            <p className="text-sm text-muted-foreground">Mode</p>
-                                            <p className="font-semibold capitalize">{invitation.interview_mode} Interview</p>
+                                            <p className="text-sm text-muted-foreground">Date</p>
+                                            <p className="font-semibold">{format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}</p>
                                         </div>
                                     </div>
-                                </>
-                            )}
 
-                            {/* Meeting Link for Online */}
-                            {invitation.interview_mode === 'online' && invitation.meeting_link && (
-                                <>
                                     <Separator />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-2">Meeting Link</p>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={invitation.meeting_link}
-                                                readOnly
-                                                className="flex-1 text-sm"
-                                            />
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={invitation.invitation_canceled}
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(invitation.meeting_link!);
-                                                    toast.success("Link copied!");
-                                                }}
-                                            >
-                                                <Copy className="h-4 w-4" />
-                                            </Button>
-                                            <Link href={invitation.meeting_link} target="_blank" className={invitation.invitation_canceled ? 'pointer-events-none' : ''}>
-                                                <Button size="sm" disabled={invitation.invitation_canceled}>
-                                                    <ExternalLink className="h-4 w-4 mr-1.5" />
-                                                    Join
-                                                </Button>
-                                            </Link>
+
+                                    <div className="flex items-center gap-3">
+                                        <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Time</p>
+                                            <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
                                         </div>
                                     </div>
-                                </>
-                            )}
 
-                            {/* Address for Physical */}
-                            {invitation.interview_mode === 'physical' && invitation.interview_address && (
-                                <>
-                                    <Separator />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Interview Address</p>
-                                        <p className="text-sm font-medium mb-2">{invitation.interview_address}</p>
-                                        {invitation.map_link && (
-                                            <Link href={invitation.map_link} target="_blank">
-                                                <Button size="sm" variant="outline">
-                                                    <MapPinned className="h-4 w-4 mr-2" />
-                                                    Open in Maps
-                                                </Button>
-                                            </Link>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                    {invitation.interview_mode && (
+                                        <>
+                                            <Separator />
+                                            <div className="flex items-center gap-3">
+                                                {invitation.interview_mode === 'online' ? (
+                                                    <Video className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                                ) : (
+                                                    <MapPinned className="h-5 w-5 text-primary flex-shrink-0" />
+                                                )}
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Mode</p>
+                                                    <p className="font-semibold capitalize">{invitation.interview_mode} Interview</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Meeting Link for Online */}
+                                    {invitation.interview_mode === 'online' && invitation.meeting_link && (
+                                        <>
+                                            <Separator />
+                                            <div>
+                                                <p className="text-sm text-muted-foreground mb-2">Meeting Link</p>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        value={invitation.meeting_link}
+                                                        readOnly
+                                                        className="flex-1 text-sm"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={invitation.invitation_canceled}
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(invitation.meeting_link!);
+                                                            toast.success("Link copied!");
+                                                        }}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                    <Link href={invitation.meeting_link} target="_blank" className={invitation.invitation_canceled ? 'pointer-events-none' : ''}>
+                                                        <Button size="sm" disabled={invitation.invitation_canceled}>
+                                                            <ExternalLink className="h-4 w-4 mr-1.5" />
+                                                            Join
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Address for Physical */}
+                                    {invitation.interview_mode === 'physical' && invitation.interview_address && (
+                                        <>
+                                            <Separator />
+                                            <div>
+                                                <p className="text-sm text-muted-foreground mb-1">Interview Address</p>
+                                                <p className="text-sm font-medium mb-2">{invitation.interview_address}</p>
+                                                {invitation.map_link && (
+                                                    <Link href={invitation.map_link} target="_blank">
+                                                        <Button size="sm" variant="outline">
+                                                            <MapPinned className="h-4 w-4 mr-2" />
+                                                            Open in Maps
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        )}
 
                         {/* MIS Reschedule Section */}
                         {invitation.mis_rescheduled && invitation.mis_reschedule_data && (
                             <>
-                                <Separator className="my-4" />
-                                <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800 space-y-3">
+                                {!invitation.mis_rescheduled && <Separator className="my-4" />}
+                                <div className={!invitation.mis_rescheduled ? "bg-green-50 dark:bg-green-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800 space-y-3" : "space-y-3"}>
                                     <div className="flex items-center gap-2">
                                         <Badge className="bg-green-600 text-white">
                                             <Calendar className="h-3 w-3 mr-1" />
@@ -602,7 +606,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             </span>
                                         )}
                                     </div>
-                                    <h4 className="font-semibold text-green-900 dark:text-green-100">New Interview Schedule</h4>
+                                    <h4 className="font-semibold text-green-900 dark:text-green-100">
+                                        {invitation.mis_rescheduled ? "Interview Details" : "New Interview Schedule"}
+                                    </h4>
 
                                     <div className="space-y-2 bg-white dark:bg-gray-900 rounded p-3 border">
                                         <div className="flex items-center gap-3">
@@ -1095,8 +1101,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
             )}
 
             {/* CANCELED STATUS */}
-            {invitation.invitation_canceled && invitation.cancellation_reason && (
-                <Card className="border-gray-200 bg-gray-50/50 dark:bg-gray-950/20">
+            {/* CANCELED STATUS */}
+            {invitation.invitation_canceled && invitation.cancellation_reason && !invitation.mis_rescheduled && (
+                <Card className="border-red-700 bg-red-50/50 dark:bg-red-950/20 mt-6">
                     <CardContent className="p-6">
                         <div className="flex items-start gap-3">
                             <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center flex-shrink-0">

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+    sendMISRescheduleNotificationToCandidate,
+    sendMISRescheduleNotificationToEmployer
+} from "@/lib/interview-emails";
 
 export async function POST(
     request: NextRequest,
@@ -157,6 +161,10 @@ export async function POST(
                     first_name,
                     last_name,
                     email
+                ),
+                company:companies!inner(
+                    id,
+                    company_name
                 )
             `)
             .single();
@@ -169,10 +177,44 @@ export async function POST(
             );
         }
 
+        // Send email notifications to both candidate and employer
+        const candidateData = updatedInterview.candidate as any;
+        const employerData = updatedInterview.employer as any;
+        const companyData = updatedInterview.company as any;
+        const meetingLinkOrAddress = interview_mode === 'online' ? meeting_link : interview_address;
+
+        // Send to candidate
+        await sendMISRescheduleNotificationToCandidate(
+            candidateData.email,
+            candidateData.first_name,
+            companyData.company_name,
+            updatedInterview.job_designation,
+            date,
+            time,
+            interview_mode,
+            meetingLinkOrAddress || '',
+            id,
+            notes || ''
+        );
+
+        // Send to employer  
+        await sendMISRescheduleNotificationToEmployer(
+            employerData.email,
+            employerData.first_name,
+            `${candidateData.first_name} ${candidateData.last_name}`,
+            updatedInterview.job_designation,
+            date,
+            time,
+            interview_mode,
+            meetingLinkOrAddress || '',
+            id,
+            notes || ''
+        );
+
         return NextResponse.json({
             success: true,
             interview: updatedInterview,
-            message: "Interview rescheduled successfully"
+            message: "Interview rescheduled successfully and notifications sent"
         });
 
     } catch (error) {

@@ -74,7 +74,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
     }, []);
 
     const filteredInterviews = useMemo(() => {
-        return interviews.filter((interview) => {
+        return (interviews || []).filter((interview) => {
             // Search filter
             const searchLower = searchQuery.toLowerCase();
             const matchesSearch =
