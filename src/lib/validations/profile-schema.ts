@@ -276,6 +276,11 @@ export const cvExtractionResultSchema = z.object({
         description: z.string().optional(),
         demoUrl: z.string().optional(),
     })).optional(),
+    awards: z.array(z.object({
+        awardName: z.string().optional(),
+        offeredBy: z.string().optional(),
+        description: z.string().optional(),
+    })).optional(),
 });
 
 export type CVExtractionResult = z.infer<typeof cvExtractionResultSchema>;

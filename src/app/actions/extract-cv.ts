@@ -61,6 +61,13 @@ Extract this structure:
             "description": "string",
             "demoUrl": "string or null"
         }
+    ],
+    "awards": [
+        {
+            "awardName": "string (award or achievement name)",
+            "offeredBy": "string (organization or institution that gave the award)",
+            "description": "string (brief description of the achievement)"
+        }
     ]
 }
 

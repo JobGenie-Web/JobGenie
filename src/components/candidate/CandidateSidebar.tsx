@@ -75,7 +75,7 @@ export function CandidateSidebar() {
     const [unopenedCount, setUnopenedCount] = useState<number>(0);
 
     useEffect(() => {
-        // Fetch unopened invitations count
+        // Fetch unopened invitations count on mount (refreshes on navigation/page load)
         const fetchUnopenedCount = async () => {
             try {
                 const response = await fetch("/api/candidate/invitations/unopened-count");
@@ -89,10 +89,6 @@ export function CandidateSidebar() {
         };
 
         fetchUnopenedCount();
-
-        // Refresh count every 30 seconds
-        const interval = setInterval(fetchUnopenedCount, 30000);
-        return () => clearInterval(interval);
     }, []);
 
     return (

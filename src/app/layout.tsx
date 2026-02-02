@@ -14,6 +14,9 @@ export const metadata: Metadata = {
     description: "JobGenie connects talented candidates with forward-thinking employers.",
     type: "website",
   },
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({

@@ -147,16 +147,31 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
             );
         }
 
-        // Educations
+        // Educations - Map to standard educations AND industry-specific states
+        // This ensures data appears correctly regardless of which industry is selected
         if (data.educations?.length) {
+            const mappedEducations = data.educations.map((edu) => ({
+                degreeDiploma: edu.degreeDiploma || "",
+                institution: edu.institution || "",
+                // Map 'complete' or 'completed' to 'general', otherwise 'incomplete'
+                status: (edu.status?.toLowerCase() === "complete" || edu.status?.toLowerCase() === "completed")
+                    ? "general" as const
+                    : "incomplete" as const,
+            }));
+
+            // Standard education (IT and other industries)
             setEducations(
-                data.educations.map((edu) => ({
+                mappedEducations.map((edu) => ({
+                    ...edu,
                     educationType: "academic" as const,
-                    degreeDiploma: edu.degreeDiploma || "",
-                    institution: edu.institution || "",
-                    status: (edu.status === "complete" ? "general" : "incomplete") as "general" | "incomplete",
                 }))
             );
+
+            // Finance industry academic education
+            setFinanceAcademicEducation(mappedEducations);
+
+            // Banking industry academic education
+            setBankingAcademicEducation(mappedEducations);
         }
 
         // Certificates (for IT)
@@ -178,6 +193,17 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                     description: proj.description || "",
                     demoUrl: proj.demoUrl || "",
                     isCurrent: false,
+                }))
+            );
+        }
+
+        // Awards/Achievements
+        if (data.awards?.length) {
+            setAwards(
+                data.awards.map((award) => ({
+                    natureOfAward: award.awardName || "",
+                    offeredBy: award.offeredBy || "",
+                    description: award.description || "",
                 }))
             );
         }
@@ -223,10 +249,6 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
 
             const formData = new FormData();
             formData.append("profileData", JSON.stringify(profileData));
-
-            if (cvFile) {
-                formData.append("cvFile", cvFile);
-            }
 
             if (cvFile) {
                 formData.append("cvFile", cvFile);

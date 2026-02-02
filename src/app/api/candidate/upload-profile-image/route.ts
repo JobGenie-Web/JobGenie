@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         // Create unique filename
         const fileExt = file.name.split(".").pop();
         const fileName = `${candidate.id}-${Date.now()}.${fileExt}`;
-        const filePath = `profile-images/${fileName}`;
+        const filePath = `${candidate.id}/${fileName}`;
 
         // Convert file to buffer
         const arrayBuffer = await file.arrayBuffer();
