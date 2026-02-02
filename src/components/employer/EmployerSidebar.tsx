@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Briefcase,
@@ -35,41 +36,49 @@ const navigationItems = [
         title: "Dashboard",
         href: "/employer/dashboard",
         icon: LayoutDashboard,
+        requiresApproval: false,
     },
     {
         title: "Job Postings",
         href: "/employer/jobs",
         icon: Briefcase,
+        requiresApproval: true,
     },
     {
         title: "Applications",
         href: "/employer/applications",
         icon: FileText,
+        requiresApproval: true,
     },
     {
         title: "Candidates",
         href: "/employer/candidates",
         icon: Users,
+        requiresApproval: true,
     },
     {
         title: "Invitations",
         href: "/employer/invitations",
         icon: Mail,
+        requiresApproval: true,
     },
     {
         title: "Company Profile",
         href: "/employer/company",
         icon: Building2,
+        requiresApproval: false,
     },
     {
         title: "Company Admins",
         href: "/employer/admins",
         icon: UserCog,
+        requiresApproval: true,
     },
     {
         title: "Settings",
         href: "/employer/settings",
         icon: Settings,
+        requiresApproval: true,
     },
 ];
 
@@ -77,6 +86,24 @@ export function EmployerSidebar() {
     const pathname = usePathname();
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
+    const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
+
+    useEffect(() => {
+        // Fetch company approval status on mount
+        const fetchApprovalStatus = async () => {
+            try {
+                const response = await fetch("/api/employer/company");
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setIsApproved(data.data.approval_status === "approved");
+                }
+            } catch (error) {
+                console.error("Error fetching company approval status:", error);
+            }
+        };
+
+        fetchApprovalStatus();
+    }, []);
 
     return (
         <Sidebar collapsible="icon" className="shadow-sm">
@@ -109,6 +136,38 @@ export function EmployerSidebar() {
                         {navigationItems.map((item) => {
                             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                             const Icon = item.icon;
+                            const isRestricted = item.requiresApproval && !isApproved;
+
+                            // For restricted items, show disabled state
+                            if (isRestricted) {
+                                return (
+                                    <SidebarMenuItem key={item.href}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-3 py-2 rounded-md cursor-not-allowed opacity-50",
+                                                        "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3"
+                                                    )}
+                                                >
+                                                    <Icon className="h-6 w-6 shrink-0 text-muted-foreground" />
+                                                    {!isCollapsed && (
+                                                        <span className="text-muted-foreground">{item.title}</span>
+                                                    )}
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="font-medium">
+                                                <div className="flex flex-col gap-1">
+                                                    <span>{item.title}</span>
+                                                    <span className="text-xs text-amber-500">
+                                                        Awaiting MIS approval
+                                                    </span>
+                                                </div>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </SidebarMenuItem>
+                                );
+                            }
 
                             return (
                                 <SidebarMenuItem key={item.href}>
@@ -145,3 +204,4 @@ export function EmployerSidebar() {
         </Sidebar>
     );
 }
+
