@@ -35,36 +35,43 @@ const navigationItems = [
         title: "Dashboard",
         href: "/candidate/dashboard",
         icon: LayoutDashboard,
+        requiresApproval: false,
     },
     {
         title: "Browse Jobs",
         href: "/candidate/jobs",
         icon: Briefcase,
+        requiresApproval: true,
     },
     {
         title: "Applications",
         href: "/candidate/applications",
         icon: FileText,
+        requiresApproval: true,
     },
     {
         title: "Invitations",
         href: "/candidate/invitations",
         icon: Mail,
+        requiresApproval: true,
     },
     {
         title: "My Profile",
         href: "/candidate/profile",
         icon: User,
+        requiresApproval: false,
     },
     {
         title: "My Resumes",
         href: "/candidate/resumes",
         icon: FileText,
+        requiresApproval: false,
     },
     {
         title: "Settings",
         href: "/candidate/settings",
         icon: Settings,
+        requiresApproval: true,
     },
 ];
 
@@ -73,22 +80,31 @@ export function CandidateSidebar() {
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
     const [unopenedCount, setUnopenedCount] = useState<number>(0);
+    const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
 
     useEffect(() => {
-        // Fetch unopened invitations count on mount (refreshes on navigation/page load)
-        const fetchUnopenedCount = async () => {
+        // Fetch unopened invitations count and approval status on mount
+        const fetchSidebarData = async () => {
             try {
-                const response = await fetch("/api/candidate/invitations/unopened-count");
-                const data = await response.json();
-                if (data.success) {
-                    setUnopenedCount(data.count);
+                // Fetch unopened count
+                const invitationsResponse = await fetch("/api/candidate/invitations/unopened-count");
+                const invitationsData = await invitationsResponse.json();
+                if (invitationsData.success) {
+                    setUnopenedCount(invitationsData.count);
+                }
+
+                // Fetch approval status
+                const profileResponse = await fetch("/api/candidate/profile");
+                const profileData = await profileResponse.json();
+                if (profileData.success && profileData.data) {
+                    setIsApproved(profileData.data.approval_status === "approved");
                 }
             } catch (error) {
-                console.error("Error fetching unopened count:", error);
+                console.error("Error fetching sidebar data:", error);
             }
         };
 
-        fetchUnopenedCount();
+        fetchSidebarData();
     }, []);
 
     return (
@@ -122,6 +138,38 @@ export function CandidateSidebar() {
                         {navigationItems.map((item) => {
                             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                             const Icon = item.icon;
+                            const isRestricted = item.requiresApproval && !isApproved;
+
+                            // For restricted items, show disabled state
+                            if (isRestricted) {
+                                return (
+                                    <SidebarMenuItem key={item.href}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-3 py-2 rounded-md cursor-not-allowed opacity-50",
+                                                        "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3"
+                                                    )}
+                                                >
+                                                    <Icon className="h-6 w-6 shrink-0 text-muted-foreground" />
+                                                    {!isCollapsed && (
+                                                        <span className="text-muted-foreground">{item.title}</span>
+                                                    )}
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="font-medium">
+                                                <div className="flex flex-col gap-1">
+                                                    <span>{item.title}</span>
+                                                    <span className="text-xs text-amber-500">
+                                                        Awaiting MIS approval
+                                                    </span>
+                                                </div>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </SidebarMenuItem>
+                                );
+                            }
 
                             return (
                                 <SidebarMenuItem key={item.href}>
@@ -145,7 +193,6 @@ export function CandidateSidebar() {
                                                     {/* Show badge for unopened invitations */}
                                                     {item.title === "Invitations" && unopenedCount > 0 && !isCollapsed && (
                                                         <Badge
-                                                            // variant="destructive"
                                                             className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
                                                         >
                                                             {unopenedCount}
@@ -159,7 +206,6 @@ export function CandidateSidebar() {
                                                 {item.title}
                                                 {item.title === "Invitations" && unopenedCount > 0 && (
                                                     <Badge
-                                                        // variant="destructive"
                                                         className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold"
                                                     >
                                                         {unopenedCount}
