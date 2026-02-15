@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logBusiness, logError } from "@/lib/logger";
 
 // POST /api/candidate/invitations/:id/respond
 export async function POST(
@@ -144,6 +145,7 @@ export async function POST(
             cancel: 'Acceptance cancelled successfully'
         };
 
+        await logBusiness(`invitation_${action}`, user.id, "candidate", "job_invitation", id, { action, interview_mode });
         return NextResponse.json({
             success: true,
             message: messages[action as keyof typeof messages]
@@ -151,6 +153,7 @@ export async function POST(
 
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/candidate/invitations/respond:POST", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }

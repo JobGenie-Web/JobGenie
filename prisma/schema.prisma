@@ -746,3 +746,92 @@ enum CanceledBy {
   candidate
   employer
 }
+
+// ============================================
+// LOGGING & ANALYTICS
+// ============================================
+
+enum LogCategory {
+  auth
+  activity
+  business
+  system
+}
+
+model EventLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Who
+  user_id   String? @db.Uuid
+  user_role String? @db.VarChar(20)
+
+  // What
+  category LogCategory
+  action   String      @db.VarChar(100)
+  label    String?     @db.VarChar(255)
+
+  // Context
+  resource_type String? @db.VarChar(50)
+  resource_id   String? @db.Uuid
+  metadata      Json?
+
+  // Request info
+  ip_address String? @db.VarChar(45)
+  user_agent String? @db.Text
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([category])
+  @@index([action])
+  @@index([resource_type, resource_id])
+  @@index([created_at])
+  @@index([user_role, category])
+  @@map("event_logs")
+}
+
+model ApiRequestLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  user_id    String? @db.Uuid
+  method     String  @db.VarChar(10)
+  path       String  @db.VarChar(500)
+  status     Int
+  duration   Int // milliseconds
+  query_params String? @db.Text
+  
+  ip_address String? @db.VarChar(45)
+  user_agent String? @db.Text
+  error      String? @db.Text
+
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([path])
+  @@index([status])
+  @@index([created_at])
+  @@map("api_request_logs")
+}
+
+model ErrorLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  user_id    String? @db.Uuid
+  source     String  @db.VarChar(200)
+  error_type String  @db.VarChar(100)
+  message    String  @db.Text
+  stack      String? @db.Text
+  metadata   Json?
+
+  resolved   Boolean @default(false)
+  resolved_at DateTime?
+  resolved_by String? @db.Uuid
+
+  created_at DateTime @default(now())
+
+  @@index([source])
+  @@index([error_type])
+  @@index([resolved])
+  @@index([created_at])
+  @@map("error_logs")
+}

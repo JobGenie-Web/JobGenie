@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { completeProfileSchema, type CompleteProfileData } from "@/lib/validations/profile-schema";
+import { logActivity, logError } from "@/lib/logger";
 
 export type ProfileActionState = {
     success: boolean;
@@ -104,6 +105,7 @@ export async function completeProfile(
         revalidatePath("/candidate/dashboard");
         revalidatePath("/candidate/profile");
 
+        await logActivity("profile_completed", user.id, "candidate", "candidate", undefined, { industry });
         return {
             success: true,
             message: "Profile completed successfully!",
@@ -111,6 +113,7 @@ export async function completeProfile(
         };
     } catch (error) {
         console.error("Complete profile error:", error);
+        await logError({ source: "profile.ts:completeProfile", errorType: "ProfileCompletionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -384,6 +387,7 @@ export async function completeFullProfile(
         revalidatePath("/candidate/profile");
         revalidatePath("/candidate/create-profile");
 
+        await logActivity("full_profile_completed", userId, "candidate", "candidate", candidateId, { industry: data.industry });
         return {
             success: true,
             message: "Profile completed successfully!",
@@ -391,6 +395,7 @@ export async function completeFullProfile(
         };
     } catch (error) {
         console.error("Complete full profile error:", error);
+        await logError({ source: "profile.ts:completeFullProfile", errorType: "FullProfileCompletionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -845,6 +850,7 @@ export async function completeFullProfileWithCV(
         revalidatePath("/candidate/profile");
         revalidatePath("/candidate/create-profile");
 
+        await logActivity("full_profile_with_cv_completed", user.id, "candidate", "candidate");
         return {
             success: true,
             message: "Profile completed successfully!",
@@ -853,6 +859,7 @@ export async function completeFullProfileWithCV(
 
     } catch (error) {
         console.error("Complete full profile W/ CV error:", error);
+        await logError({ source: "profile.ts:completeFullProfileWithCV", errorType: "FullProfileWithCVError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { logAuth } from '@/lib/logger';
 
 export async function POST() {
     const supabase = await createClient();
@@ -37,6 +38,7 @@ export async function POST() {
     }
 
     // Return success with role-specific redirect
+    await logAuth('user_logout', user?.id, (user ? undefined : undefined), { role: user ? undefined : 'unknown' });
     return NextResponse.json({
         success: true,
         message: 'Signed out successfully',

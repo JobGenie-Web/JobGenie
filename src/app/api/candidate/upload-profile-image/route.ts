@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error("Error in profile image upload:", error);
+        await logError({ source: "api/candidate/upload-profile-image:POST", errorType: "UploadError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "An unexpected error occurred" },
             { status: 500 }

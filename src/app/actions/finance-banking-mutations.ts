@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity, logError } from "@/lib/logger";
 import {
     financeAcademicEducationSchema,
     financeProfessionalEducationSchema,
@@ -62,9 +63,11 @@ export async function addFinanceAcademicEducation(data: FinanceAcademicEducation
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_academic_edu_added", user.id, "candidate", "finance_academic_education");
         return { success: true };
     } catch (error) {
         console.error("Error in addFinanceAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:addFinanceAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add finance academic education" };
     }
 }
@@ -106,9 +109,11 @@ export async function updateFinanceAcademicEducation(id: string, data: FinanceAc
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_academic_edu_updated", user.id, "candidate", "finance_academic_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateFinanceAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:updateFinanceAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update finance academic education" };
     }
 }
@@ -143,9 +148,11 @@ export async function deleteFinanceAcademicEducation(id: string): Promise<Action
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_academic_edu_deleted", user.id, "candidate", "finance_academic_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteFinanceAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:deleteFinanceAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete finance academic education" };
     }
 }
@@ -190,9 +197,11 @@ export async function addFinanceProfessionalEducation(data: FinanceProfessionalE
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_prof_edu_added", user.id, "candidate", "finance_professional_education");
         return { success: true };
     } catch (error) {
         console.error("Error in addFinanceProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:addFinanceProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add finance professional education" };
     }
 }
@@ -234,9 +243,11 @@ export async function updateFinanceProfessionalEducation(id: string, data: Finan
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_prof_edu_updated", user.id, "candidate", "finance_professional_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateFinanceProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:updateFinanceProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update finance professional education" };
     }
 }
@@ -271,9 +282,11 @@ export async function deleteFinanceProfessionalEducation(id: string): Promise<Ac
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("finance_prof_edu_deleted", user.id, "candidate", "finance_professional_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteFinanceProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:deleteFinanceProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete finance professional education" };
     }
 }
@@ -318,9 +331,11 @@ export async function addBankingAcademicEducation(data: BankingAcademicEducation
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_academic_edu_added", user.id, "candidate", "banking_academic_education");
         return { success: true };
     } catch (error) {
         console.error("Error in addBankingAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:addBankingAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add banking academic education" };
     }
 }
@@ -362,9 +377,11 @@ export async function updateBankingAcademicEducation(id: string, data: BankingAc
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_academic_edu_updated", user.id, "candidate", "banking_academic_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateBankingAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:updateBankingAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update banking academic education" };
     }
 }
@@ -399,9 +416,11 @@ export async function deleteBankingAcademicEducation(id: string): Promise<Action
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_academic_edu_deleted", user.id, "candidate", "banking_academic_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteBankingAcademicEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:deleteBankingAcademicEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete banking academic education" };
     }
 }
@@ -446,9 +465,11 @@ export async function addBankingProfessionalEducation(data: BankingProfessionalE
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_prof_edu_added", user.id, "candidate", "banking_professional_education");
         return { success: true };
     } catch (error) {
         console.error("Error in addBankingProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:addBankingProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add banking professional education" };
     }
 }
@@ -490,9 +511,11 @@ export async function updateBankingProfessionalEducation(id: string, data: Banki
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_prof_edu_updated", user.id, "candidate", "banking_professional_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateBankingProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:updateBankingProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update banking professional education" };
     }
 }
@@ -527,9 +550,11 @@ export async function deleteBankingProfessionalEducation(id: string): Promise<Ac
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_prof_edu_deleted", user.id, "candidate", "banking_professional_education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteBankingProfessionalEducation:", error);
+        await logError({ source: "finance-banking-mutations.ts:deleteBankingProfessionalEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete banking professional education" };
     }
 }
@@ -575,9 +600,11 @@ export async function addBankingSpecializedTraining(data: BankingSpecializedTrai
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_specialized_training_added", user.id, "candidate", "banking_specialized_training");
         return { success: true };
     } catch (error) {
         console.error("Error in addBankingSpecializedTraining:", error);
+        await logError({ source: "finance-banking-mutations.ts:addBankingSpecializedTraining", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add banking specialized training" };
     }
 }
@@ -620,9 +647,11 @@ export async function updateBankingSpecializedTraining(id: string, data: Banking
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_specialized_training_updated", user.id, "candidate", "banking_specialized_training", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateBankingSpecializedTraining:", error);
+        await logError({ source: "finance-banking-mutations.ts:updateBankingSpecializedTraining", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update banking specialized training" };
     }
 }
@@ -657,9 +686,11 @@ export async function deleteBankingSpecializedTraining(id: string): Promise<Acti
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("banking_specialized_training_deleted", user.id, "candidate", "banking_specialized_training", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteBankingSpecializedTraining:", error);
+        await logError({ source: "finance-banking-mutations.ts:deleteBankingSpecializedTraining", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete banking specialized training" };
     }
 }

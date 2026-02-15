@@ -6,6 +6,7 @@ import { subAdminSchema } from "@/lib/validations/employer-admin-schema";
 import { generateInvitationToken, getInvitationExpiry, sendEmployerInvitationEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { logBusiness, logAuth, logError } from "@/lib/logger";
 
 export type ActionState = {
     success: boolean;
@@ -239,6 +240,7 @@ export async function createSubAdmin(
             };
         }
 
+        await logBusiness("sub_admin_invited", user.id, "employer", "employer", userId, { invitedEmail: data.email });
         return {
             success: true,
             message: `Invitation sent to ${data.email}. They will receive setup instructions via email.`,
@@ -246,6 +248,7 @@ export async function createSubAdmin(
         };
     } catch (error) {
         console.error("Create sub-admin error:", error);
+        await logError({ source: "employer-actions.ts:createSubAdmin", errorType: "CreateSubAdminError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -393,6 +396,7 @@ export async function setupEmployerPassword(
             };
         }
 
+        await logAuth("employer_password_setup_success", user.id, "employer", { email: user.email });
         return {
             success: true,
             message: "Password created successfully! You can now log in with your credentials.",
@@ -400,6 +404,7 @@ export async function setupEmployerPassword(
         };
     } catch (error) {
         console.error("Setup password error:", error);
+        await logError({ source: "employer-actions.ts:setupEmployerPassword", errorType: "SetupPasswordError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

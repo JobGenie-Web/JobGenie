@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity, logError } from "@/lib/logger";
 import {
     experienceSchema,
     projectSchema,
@@ -64,9 +65,11 @@ export async function addExperience(data: ExperienceFormData): Promise<ActionRes
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("experience_added", user.id, "candidate", "work_experience");
         return { success: true };
     } catch (error) {
         console.error("Error in addExperience:", error);
+        await logError({ source: "profile-mutations.ts:addExperience", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add experience" };
     }
 }
@@ -106,9 +109,11 @@ export async function updateExperience(id: string, data: ExperienceFormData): Pr
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("experience_updated", user.id, "candidate", "work_experience", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateExperience:", error);
+        await logError({ source: "profile-mutations.ts:updateExperience", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update experience" };
     }
 }
@@ -145,9 +150,11 @@ export async function deleteExperience(id: string): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("experience_deleted", user.id, "candidate", "work_experience", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteExperience:", error);
+        await logError({ source: "profile-mutations.ts:deleteExperience", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete experience" };
     }
 }
@@ -188,9 +195,11 @@ export async function addProject(data: ProjectFormData): Promise<ActionResponse>
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("project_added", user.id, "candidate", "project");
         return { success: true };
     } catch (error) {
         console.error("Error in addProject:", error);
+        await logError({ source: "profile-mutations.ts:addProject", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add project" };
     }
 }
@@ -227,9 +236,11 @@ export async function updateProject(id: string, data: ProjectFormData): Promise<
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("project_updated", user.id, "candidate", "project", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateProject:", error);
+        await logError({ source: "profile-mutations.ts:updateProject", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update project" };
     }
 }
@@ -264,9 +275,11 @@ export async function deleteProject(id: string): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("project_deleted", user.id, "candidate", "project", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteProject:", error);
+        await logError({ source: "profile-mutations.ts:deleteProject", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete project" };
     }
 }
@@ -307,9 +320,11 @@ export async function addCertification(data: CertificationFormData): Promise<Act
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("certification_added", user.id, "candidate", "certificate");
         return { success: true };
     } catch (error) {
         console.error("Error in addCertification:", error);
+        await logError({ source: "profile-mutations.ts:addCertification", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add certification" };
     }
 }
@@ -346,9 +361,11 @@ export async function updateCertification(id: string, data: CertificationFormDat
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("certification_updated", user.id, "candidate", "certificate", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateCertification:", error);
+        await logError({ source: "profile-mutations.ts:updateCertification", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update certification" };
     }
 }
@@ -383,9 +400,11 @@ export async function deleteCertification(id: string): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("certification_deleted", user.id, "candidate", "certificate", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteCertification:", error);
+        await logError({ source: "profile-mutations.ts:deleteCertification", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete certification" };
     }
 }
@@ -428,9 +447,11 @@ export async function addAward(data: AwardFormData): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("award_added", user.id, "candidate", "award");
         return { success: true };
     } catch (error) {
         console.error("Error in addAward:", error);
+        await logError({ source: "profile-mutations.ts:addAward", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add award" };
     }
 }
@@ -475,9 +496,11 @@ export async function updateAward(id: string, data: AwardFormData): Promise<Acti
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("award_updated", user.id, "candidate", "award", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateAward:", error);
+        await logError({ source: "profile-mutations.ts:updateAward", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update award" };
     }
 }
@@ -512,9 +535,11 @@ export async function deleteAward(id: string): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("award_deleted", user.id, "candidate", "award", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteAward:", error);
+        await logError({ source: "profile-mutations.ts:deleteAward", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete award" };
     }
 }
@@ -557,9 +582,11 @@ export async function addEducation(data: EducationFormData): Promise<ActionRespo
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("education_added", user.id, "candidate", "education");
         return { success: true };
     } catch (error) {
         console.error("Error in addEducation:", error);
+        await logError({ source: "profile-mutations.ts:addEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to add education" };
     }
 }
@@ -606,9 +633,11 @@ export async function updateEducation(id: string, data: EducationFormData): Prom
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("education_updated", user.id, "candidate", "education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateEducation:", error);
+        await logError({ source: "profile-mutations.ts:updateEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update education" };
     }
 }
@@ -643,9 +672,11 @@ export async function deleteEducation(id: string): Promise<ActionResponse> {
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("education_deleted", user.id, "candidate", "education", id);
         return { success: true };
     } catch (error) {
         console.error("Error in deleteEducation:", error);
+        await logError({ source: "profile-mutations.ts:deleteEducation", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to delete education" };
     }
 }
@@ -701,9 +732,11 @@ export async function updateBasicInfo(data: BasicInfoFormData): Promise<ActionRe
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("basic_info_updated", user.id, "candidate", "candidate", candidate.id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateBasicInfo:", error);
+        await logError({ source: "profile-mutations.ts:updateBasicInfo", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update basic information" };
     }
 }
@@ -757,9 +790,11 @@ export async function updateAboutSection(data: AboutSectionFormData): Promise<Ac
         }
 
         revalidatePath("/candidate/profile");
+        await logActivity("about_section_updated", user.id, "candidate", "candidate", candidate.id);
         return { success: true };
     } catch (error) {
         console.error("Error in updateAboutSection:", error);
+        await logError({ source: "profile-mutations.ts:updateAboutSection", errorType: "MutationError", message: error instanceof Error ? error.message : String(error) });
         return { success: false, error: "Failed to update about section" };
     }
 }

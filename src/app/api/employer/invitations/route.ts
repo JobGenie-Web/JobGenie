@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
+import { logBusiness, logError } from "@/lib/logger";
 
 // Helper to calculate alternative dates (3 working days)
 function calculateAlternativeDates(date: Date): Date[] {
@@ -102,6 +103,7 @@ export async function GET(request: Request) {
 
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/employer/invitations:GET", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }
@@ -245,6 +247,7 @@ export async function POST(request: Request) {
             ).catch(err => console.error('Email send error:', err));
         }
 
+        await logBusiness("invitation_sent", user.id, "employer", "job_invitation", invitation.id, { candidateId, industry, jobDesignation });
         return NextResponse.json({
             success: true,
             message: "Invitation sent successfully",
@@ -257,6 +260,7 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/employer/invitations:POST", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }

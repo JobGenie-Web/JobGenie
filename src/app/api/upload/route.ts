@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logError } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
     try {
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error("Upload error:", error);
+        await logError({ source: "api/upload:POST", errorType: "UploadError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { error: "An unexpected error occurred" },
             { status: 500 }

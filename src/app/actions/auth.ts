@@ -15,6 +15,7 @@ import {
 } from "@/lib/email";
 import crypto from "crypto";
 import { generateMembershipNumber } from "@/lib/utils/membership";
+import { logAuth, logError } from "@/lib/logger";
 
 export type ActionState = {
     success: boolean;
@@ -171,6 +172,7 @@ export async function registerCandidate(
         }
 
         // Success - return redirect URL for verify-email page
+        await logAuth("candidate_signup_success", authData.user.id, "candidate", { email: data.email });
         return {
             success: true,
             message: "Account created successfully! Please check your email for the verification code.",
@@ -178,6 +180,7 @@ export async function registerCandidate(
         };
     } catch (error) {
         console.error("Registration error:", error);
+        await logError({ source: "auth.ts:registerCandidate", errorType: "RegistrationError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -294,6 +297,7 @@ export async function verifyEmail(
         const supabase = await createClient();
         await supabase.auth.signOut();
 
+        await logAuth("email_verified", user.id, undefined, { email });
         return {
             success: true,
             message: "Email verified successfully! You can now log in.",
@@ -301,6 +305,7 @@ export async function verifyEmail(
         };
     } catch (error) {
         console.error("Verification error:", error);
+        await logError({ source: "auth.ts:verifyEmail", errorType: "VerificationError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -387,6 +392,7 @@ export async function resendVerificationCode(
         };
     } catch (error) {
         console.error("Resend verification error:", error);
+        await logError({ source: "auth.ts:resendVerificationCode", errorType: "ResendVerificationError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -462,6 +468,7 @@ export async function loginCandidate(
 
         if (authError) {
             console.error("Supabase auth error:", authError);
+            await logAuth("candidate_login_failed", undefined, "candidate", { email, reason: "invalid_credentials" });
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -494,6 +501,7 @@ export async function loginCandidate(
             ? "/candidate/dashboard"
             : "/candidate/create-profile";
 
+        await logAuth("candidate_login_success", authData.user.id, "candidate", { email });
         return {
             success: true,
             message: "Login successful!",
@@ -501,6 +509,7 @@ export async function loginCandidate(
         };
     } catch (error) {
         console.error("Login error:", error);
+        await logError({ source: "auth.ts:loginCandidate", errorType: "LoginError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -662,6 +671,7 @@ export async function registerMISUser(
         }
 
         // Success - redirect to MIS dashboard
+        await logAuth("mis_signup_success", authData.user.id, "mis", { email: data.email });
         return {
             success: true,
             message: "Account created successfully! Redirecting to dashboard...",
@@ -669,6 +679,7 @@ export async function registerMISUser(
         };
     } catch (error) {
         console.error("MIS registration error:", error);
+        await logError({ source: "auth.ts:registerMISUser", errorType: "MISRegistrationError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -748,6 +759,7 @@ export async function loginMISUser(
         }
 
         // Success - redirect to MIS dashboard
+        await logAuth("mis_login_success", authData.user.id, "mis", { email });
         return {
             success: true,
             message: "Login successful!",
@@ -755,6 +767,7 @@ export async function loginMISUser(
         };
     } catch (error) {
         console.error("MIS login error:", error);
+        await logError({ source: "auth.ts:loginMISUser", errorType: "MISLoginError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -951,6 +964,7 @@ export async function addMISUser(
             };
         }
 
+        await logAuth("mis_user_invited", user.id, "mis", { invitedEmail: data.email });
         return {
             success: true,
             message: `Invitation sent to ${data.email}. The user will receive setup instructions via email.`,
@@ -958,6 +972,7 @@ export async function addMISUser(
         };
     } catch (error) {
         console.error("Add MIS user error:", error);
+        await logError({ source: "auth.ts:addMISUser", errorType: "AddMISUserError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -1117,6 +1132,7 @@ export async function setupMISPassword(
         }
 
 
+        await logAuth("mis_password_setup_success", user.id, "mis", { email: user.email });
         return {
             success: true,
             message: "Password created successfully! You can now log in with your credentials.",
@@ -1124,6 +1140,7 @@ export async function setupMISPassword(
         };
     } catch (error) {
         console.error("Setup password error:", error);
+        await logError({ source: "auth.ts:setupMISPassword", errorType: "SetupPasswordError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -1338,6 +1355,7 @@ export async function registerEmployer(
             // Don't fail registration, just log the error
         }
 
+        await logAuth("employer_signup_success", authData.user.id, "employer", { email: validatedData.employer.email, companyName: validatedData.company.companyName });
         return {
             success: true,
             message: "Account created successfully! Please check your email for the verification code.",
@@ -1345,6 +1363,7 @@ export async function registerEmployer(
         };
     } catch (error) {
         console.error("Employer registration error:", error);
+        await logError({ source: "auth.ts:registerEmployer", errorType: "EmployerRegistrationError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -1455,6 +1474,7 @@ export async function loginEmployer(
             !employerData.profile_completed || !companyData?.profile_completed;
 
         // Success - redirect based on profile completion
+        await logAuth("employer_login_success", authData.user.id, "employer", { email });
         return {
             success: true,
             message: "Login successful!",
@@ -1462,6 +1482,7 @@ export async function loginEmployer(
         };
     } catch (error) {
         console.error("Employer login error:", error);
+        await logError({ source: "auth.ts:loginEmployer", errorType: "EmployerLoginError", message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

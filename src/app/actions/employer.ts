@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmployerApprovalEmail, sendEmployerRejectionEmail } from "@/lib/employer-emails";
+import { logAudit, logError } from "@/lib/logger";
 
 export type EmployerActionState = {
     success: boolean;
@@ -152,12 +153,14 @@ export async function approveCompanyProfile(
 
         revalidatePath("/mis/employers");
 
+        await logAudit("company_approved", user.id, "mis", "company", companyId);
         return {
             success: true,
             message: "Company approved successfully!",
         };
     } catch (error) {
         console.error("Approve company profile error:", error);
+        await logError({ source: "employer.ts:approveCompanyProfile", errorType: "ApprovalError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",
@@ -252,12 +255,14 @@ export async function rejectCompanyProfile(
 
         revalidatePath("/mis/employers");
 
+        await logAudit("company_rejected", user.id, "mis", "company", companyId, { reason: rejectionReasonText });
         return {
             success: true,
             message: "Company rejected successfully.",
         };
     } catch (error) {
         console.error("Reject company profile error:", error);
+        await logError({ source: "employer.ts:rejectCompanyProfile", errorType: "RejectionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",
@@ -321,12 +326,14 @@ export async function revokeCompanyApproval(
 
         revalidatePath("/mis/employers");
 
+        await logAudit("company_approval_revoked", user.id, "mis", "company", companyId);
         return {
             success: true,
             message: "Approval status revoked. Company is now pending review.",
         };
     } catch (error) {
         console.error("Revoke company approval error:", error);
+        await logError({ source: "employer.ts:revokeCompanyApproval", errorType: "RevokeError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",

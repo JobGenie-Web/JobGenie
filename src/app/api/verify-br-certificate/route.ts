@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyBRCertificate } from "@/app/actions/verify-br-certificate";
+import { logError } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(result);
     } catch (error) {
         console.error("BR verification API error:", error);
+        await logError({ source: "api/verify-br-certificate:POST", errorType: "VerificationError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             {
                 success: false,

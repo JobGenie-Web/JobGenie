@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { sendCandidateCancellationEmail } from '@/lib/interview-emails';
+import { logBusiness, logError } from '@/lib/logger';
 
 // POST /api/candidate/invitations/:id/cancel-interview
 export async function POST(
@@ -127,12 +128,14 @@ export async function POST(
             ).catch(err => console.error('Email send error:', err));
         }
 
+        await logBusiness("interview_canceled_by_candidate", user.id, "candidate", "job_invitation", id, { reason: cancellation_reason });
         return NextResponse.json({
             success: true,
             message: 'Interview canceled successfully'
         });
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/candidate/invitations/cancel-interview:POST", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: 'Internal server error' },
             { status: 500 }

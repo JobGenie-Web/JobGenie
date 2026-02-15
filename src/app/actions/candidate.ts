@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
+import { logAudit, logError } from "@/lib/logger";
 
 export type CandidateActionState = {
     success: boolean;
@@ -126,12 +127,14 @@ export async function approveCandidateProfile(
 
         revalidatePath("/mis/candidates");
 
+        await logAudit("candidate_approved", user.id, "mis", "candidate", candidateId);
         return {
             success: true,
             message: "Candidate approved successfully!",
         };
     } catch (error) {
         console.error("Approve candidate profile error:", error);
+        await logError({ source: "candidate.ts:approveCandidateProfile", errorType: "ApprovalError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",
@@ -216,12 +219,14 @@ export async function rejectCandidateProfile(
 
         revalidatePath("/mis/candidates");
 
+        await logAudit("candidate_rejected", user.id, "mis", "candidate", candidateId, { reason: rejectionReasonText });
         return {
             success: true,
             message: "Candidate rejected successfully.",
         };
     } catch (error) {
         console.error("Reject candidate profile error:", error);
+        await logError({ source: "candidate.ts:rejectCandidateProfile", errorType: "RejectionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",
@@ -285,12 +290,14 @@ export async function revokeCandidateApproval(
 
         revalidatePath("/mis/candidates");
 
+        await logAudit("candidate_approval_revoked", user.id, "mis", "candidate", candidateId);
         return {
             success: true,
             message: "Approval status revoked. Candidate is now pending review.",
         };
     } catch (error) {
         console.error("Revoke candidate approval error:", error);
+        await logError({ source: "candidate.ts:revokeCandidateApproval", errorType: "RevokeError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred.",

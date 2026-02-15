@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 export async function GET(
     request: NextRequest,
@@ -95,6 +96,7 @@ export async function GET(
         return NextResponse.json(candidate);
     } catch (error) {
         console.error("Error fetching candidate:", error);
+        await logError({ source: "api/employer/candidates/[id]:GET", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

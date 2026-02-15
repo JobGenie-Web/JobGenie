@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendInterviewConfirmedEmail } from "@/lib/interview-emails";
+import { logBusiness, logError } from "@/lib/logger";
 
 // POST /api/employer/invitations/[id]/confirm
 export async function POST(
@@ -162,6 +163,7 @@ export async function POST(
             ).catch(err => console.error('Email send error:', err));
         }
 
+        await logBusiness("interview_confirmed", user.id, "employer", "job_invitation", id, { interview_mode: invitation.interview_mode });
         return NextResponse.json({
             success: true,
             message: "Interview confirmed successfully"
@@ -169,6 +171,7 @@ export async function POST(
 
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/employer/invitations/confirm:POST", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logError } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
     try {
@@ -126,6 +127,7 @@ export async function GET(request: NextRequest) {
         });
     } catch (error) {
         console.error("Error fetching interview statistics:", error);
+        await logError({ source: "api/mis/interviews/stats:GET", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { error: "Failed to fetch statistics" },
             { status: 500 }

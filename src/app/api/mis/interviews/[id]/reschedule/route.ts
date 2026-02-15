@@ -5,6 +5,7 @@ import {
     sendMISRescheduleNotificationToCandidate,
     sendMISRescheduleNotificationToEmployer
 } from "@/lib/interview-emails";
+import { logAudit, logError } from "@/lib/logger";
 
 export async function POST(
     request: NextRequest,
@@ -211,6 +212,7 @@ export async function POST(
             notes || ''
         );
 
+        await logAudit("interview_rescheduled_by_mis", user.id, "mis", "job_invitation", id, { date, time, interview_mode });
         return NextResponse.json({
             success: true,
             interview: updatedInterview,
@@ -219,6 +221,7 @@ export async function POST(
 
     } catch (error) {
         console.error("Error rescheduling interview:", error);
+        await logError({ source: "api/mis/interviews/reschedule:POST", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { error: "Failed to reschedule interview" },
             { status: 500 }

@@ -2,6 +2,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { brVerificationResultSchema, type BRVerificationResult } from "@/lib/validations/employer-schema";
+import { logError } from "@/lib/logger";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
@@ -162,6 +163,7 @@ export async function verifyBRCertificate(
         }
     } catch (error) {
         console.error("BR verification error:", error);
+        await logError({ source: "verify-br-certificate.ts:verifyBRCertificate", errorType: "BRVerificationError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "Failed to verify certificate. Please try again or contact support.",

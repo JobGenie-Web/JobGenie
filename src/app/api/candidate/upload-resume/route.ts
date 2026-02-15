@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { StorageService } from "@/lib/storage";
+import { logError } from "@/lib/logger";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ["application/pdf"];
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error("Error in resume upload:", error);
+        await logError({ source: "api/candidate/upload-resume:POST", errorType: "UploadError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "An unexpected error occurred" },
             { status: 500 }

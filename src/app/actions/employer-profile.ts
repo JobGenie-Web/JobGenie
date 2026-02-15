@@ -7,6 +7,7 @@ import {
     type CompanyProfileCompletion,
     type EmployerProfileCompletion,
 } from "@/lib/validations/employer-profile-schema";
+import { logActivity, logError } from "@/lib/logger";
 
 export interface ProfileData {
     employer: {
@@ -252,12 +253,14 @@ export async function completeEmployerProfile(
             };
         }
 
+        await logActivity("employer_profile_completed", userId, "employer", "employer", employerRecord.id);
         return {
             success: true,
             message: "Profile completed successfully!",
         };
     } catch (error) {
         console.error("Error in completeEmployerProfile:", error);
+        await logError({ source: "employer-profile.ts:completeEmployerProfile", errorType: "ProfileCompletionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",
@@ -345,12 +348,14 @@ export async function updateCompanyInfo(
             };
         }
 
+        await logActivity("company_info_updated", userId, "employer", "company", employerRecord.company_id);
         return {
             success: true,
             message: "Company information updated successfully!",
         };
     } catch (error) {
         console.error("Error in updateCompanyInfo:", error);
+        await logError({ source: "employer-profile.ts:updateCompanyInfo", errorType: "CompanyUpdateError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

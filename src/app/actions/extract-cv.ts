@@ -2,6 +2,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { cvExtractionResultSchema, type CVExtractionResult } from "@/lib/validations/profile-schema";
+import { logActivity, logError } from "@/lib/logger";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
@@ -151,6 +152,7 @@ export async function extractCVData(
         };
     } catch (error) {
         console.error("CV extraction error:", error);
+        await logError({ source: "extract-cv.ts:extractCVData", errorType: "CVExtractionError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "Failed to extract CV data. Please try again or enter manually.",
@@ -203,6 +205,7 @@ Write a compelling professional summary that would be suitable for a CV/resume. 
         };
     } catch (error) {
         console.error("Summary generation error:", error);
+        await logError({ source: "extract-cv.ts:generateProfessionalSummary", errorType: "SummaryGenerationError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",

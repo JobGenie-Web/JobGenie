@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logAuth, logError } from "@/lib/logger";
 
 export interface ActionState {
     success: boolean;
@@ -44,6 +45,7 @@ export async function universalLogin(
 
         if (authError || !authData.session) {
             console.error("Supabase auth error:", authError);
+            await logAuth("universal_login_failed", undefined, undefined, { email, reason: "invalid_credentials" });
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -115,6 +117,7 @@ export async function universalLogin(
                 ? "/candidate/dashboard"
                 : "/candidate/create-profile";
 
+            await logAuth("universal_login_success", authData.user.id, "candidate", { email });
             return {
                 success: true,
                 message: "Login successful!",
@@ -145,6 +148,7 @@ export async function universalLogin(
             // Use returnUrl if provided, otherwise use default redirect
             const defaultRedirect = isProfileIncomplete ? "/employer/complete-profile" : "/employer/dashboard";
 
+            await logAuth("universal_login_success", authData.user.id, "employer", { email });
             return {
                 success: true,
                 message: "Login successful!",
@@ -159,6 +163,7 @@ export async function universalLogin(
         };
     } catch (error) {
         console.error("Universal login error:", error);
+        await logError({ source: "universal-auth.ts:universalLogin", errorType: "UniversalLoginError", message: error instanceof Error ? error.message : String(error) });
         return {
             success: false,
             message: "An unexpected error occurred. Please try again.",

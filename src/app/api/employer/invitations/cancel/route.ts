@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logBusiness, logError } from "@/lib/logger";
 
 // DELETE /api/employer/invitations?candidateId=xxx
 export async function DELETE(request: Request) {
@@ -59,6 +60,7 @@ export async function DELETE(request: Request) {
             );
         }
 
+        await logBusiness("invitation_canceled", user.id, "employer", "job_invitation", undefined, { candidateId });
         return NextResponse.json({
             success: true,
             message: "Invitation cancelled successfully"
@@ -66,6 +68,7 @@ export async function DELETE(request: Request) {
 
     } catch (error) {
         console.error('API error:', error);
+        await logError({ source: "api/employer/invitations/cancel:DELETE", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }
