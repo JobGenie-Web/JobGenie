@@ -15,7 +15,7 @@ import {
 } from "@/lib/email";
 import crypto from "crypto";
 import { generateMembershipNumber } from "@/lib/utils/membership";
-import { logAuth, logError } from "@/lib/logger";
+import { logAuth, logError, getRequestInfo } from "@/lib/logger";
 
 export type ActionState = {
     success: boolean;
@@ -67,6 +67,8 @@ export async function registerCandidate(
     try {
         // Create Supabase client
         const supabase = await createClient();
+
+        const { ipAddress } = await getRequestInfo();
 
         // Sign up the user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -172,7 +174,7 @@ export async function registerCandidate(
         }
 
         // Success - return redirect URL for verify-email page
-        await logAuth("candidate_signup_success", authData.user.id, "candidate", { email: data.email });
+        await logAuth("candidate_signup_success", authData.user.id, "candidate", { email: data.email }, ipAddress || undefined);
         return {
             success: true,
             message: "Account created successfully! Please check your email for the verification code.",
@@ -297,7 +299,8 @@ export async function verifyEmail(
         const supabase = await createClient();
         await supabase.auth.signOut();
 
-        await logAuth("email_verified", user.id, undefined, { email });
+        const { ipAddress } = await getRequestInfo();
+        await logAuth("email_verified", user.id, undefined, { email }, ipAddress || undefined);
         return {
             success: true,
             message: "Email verified successfully! You can now log in.",
@@ -421,6 +424,8 @@ export async function loginCandidate(
         const adminClient = createAdminClient();
         const supabase = await createClient();
 
+        const { ipAddress } = await getRequestInfo();
+
         // First check if user exists and is a candidate with verified email
         const { data: userData, error: userError } = await adminClient
             .from("users")
@@ -468,7 +473,7 @@ export async function loginCandidate(
 
         if (authError) {
             console.error("Supabase auth error:", authError);
-            await logAuth("candidate_login_failed", undefined, "candidate", { email, reason: "invalid_credentials" });
+            await logAuth("candidate_login_failed", undefined, "candidate", { email, reason: "invalid_credentials" }, ipAddress || undefined);
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -501,7 +506,7 @@ export async function loginCandidate(
             ? "/candidate/dashboard"
             : "/candidate/create-profile";
 
-        await logAuth("candidate_login_success", authData.user.id, "candidate", { email });
+        await logAuth("candidate_login_success", authData.user.id, "candidate", { email }, ipAddress || undefined);
         return {
             success: true,
             message: "Login successful!",
@@ -671,7 +676,8 @@ export async function registerMISUser(
         }
 
         // Success - redirect to MIS dashboard
-        await logAuth("mis_signup_success", authData.user.id, "mis", { email: data.email });
+        const { ipAddress } = await getRequestInfo();
+        await logAuth("mis_signup_success", authData.user.id, "mis", { email: data.email }, ipAddress || undefined);
         return {
             success: true,
             message: "Account created successfully! Redirecting to dashboard...",
@@ -706,6 +712,8 @@ export async function loginMISUser(
         // Use admin client to check user status (bypasses RLS)
         const adminClient = createAdminClient();
         const supabase = await createClient();
+
+        const { ipAddress } = await getRequestInfo();
 
         // First check if user exists and is a MIS user
         const { data: userData, error: userError } = await adminClient
@@ -759,7 +767,7 @@ export async function loginMISUser(
         }
 
         // Success - redirect to MIS dashboard
-        await logAuth("mis_login_success", authData.user.id, "mis", { email });
+        await logAuth("mis_login_success", authData.user.id, "mis", { email }, ipAddress || undefined);
         return {
             success: true,
             message: "Login successful!",

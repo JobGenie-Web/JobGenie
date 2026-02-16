@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { logApiRequest } from '@/lib/logger';
 
 // Role-based route configuration
 const roleRoutes: Record<string, string[]> = {
@@ -76,6 +77,23 @@ export async function middleware(request: NextRequest) {
     // Check if accessing a protected route or auth route
     const isProtectedRoute = allProtectedRoutes.some(route => pathname.startsWith(route));
     const isAuthRoute = authRoutes.some(route => pathname === route);
+
+    // Filter for API routes to log
+    if (pathname.startsWith('/api/')) {
+        // Log the API request (fire and forget)
+        const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            request.headers.get("x-real-ip") ||
+            "unknown";
+
+        logApiRequest({
+            method: request.method,
+            path: pathname,
+            status: 0, // 0 indicates request started/in-progress
+            duration: 0,
+            ipAddress: ip,
+            userAgent: request.headers.get("user-agent") || undefined
+        }).catch(err => console.error("Middleware logging error:", err));
+    }
 
     // Skip middleware if not a relevant route
     if (!isProtectedRoute && !isAuthRoute) {

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { logAuth, logError } from "@/lib/logger";
+import { logAuth, logError, getRequestInfo } from "@/lib/logger";
 
 export interface ActionState {
     success: boolean;
@@ -37,6 +37,8 @@ export async function universalLogin(
         const supabase = await createClient();
         const adminClient = createAdminClient();
 
+        const { ipAddress } = await getRequestInfo();
+
         // OPTIMIZATION 1: Authenticate first (this is the slowest operation)
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
@@ -45,7 +47,7 @@ export async function universalLogin(
 
         if (authError || !authData.session) {
             console.error("Supabase auth error:", authError);
-            await logAuth("universal_login_failed", undefined, undefined, { email, reason: "invalid_credentials" });
+            await logAuth("universal_login_failed", undefined, undefined, { email, reason: "invalid_credentials" }, ipAddress || undefined);
             return {
                 success: false,
                 message: "Invalid email or password.",
@@ -117,7 +119,7 @@ export async function universalLogin(
                 ? "/candidate/dashboard"
                 : "/candidate/create-profile";
 
-            await logAuth("universal_login_success", authData.user.id, "candidate", { email });
+            await logAuth("universal_login_success", authData.user.id, "candidate", { email }, ipAddress || undefined);
             return {
                 success: true,
                 message: "Login successful!",
@@ -148,7 +150,7 @@ export async function universalLogin(
             // Use returnUrl if provided, otherwise use default redirect
             const defaultRedirect = isProfileIncomplete ? "/employer/complete-profile" : "/employer/dashboard";
 
-            await logAuth("universal_login_success", authData.user.id, "employer", { email });
+            await logAuth("universal_login_success", authData.user.id, "employer", { email }, ipAddress || undefined);
             return {
                 success: true,
                 message: "Login successful!",

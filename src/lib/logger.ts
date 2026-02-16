@@ -51,7 +51,11 @@ interface ErrorLogParams {
  * Extract IP address and User-Agent from incoming request headers.
  * Safe to call in server actions / RSC — silently returns nulls if unavailable.
  */
-async function getRequestInfo(): Promise<{ ipAddress: string | null; userAgent: string | null }> {
+/**
+ * Extract IP address and User-Agent from incoming request headers.
+ * Safe to call in server actions / RSC — silently returns nulls if unavailable.
+ */
+export async function getRequestInfo(): Promise<{ ipAddress: string | null; userAgent: string | null }> {
     try {
         const headersList = await headers();
         const ipAddress =
@@ -159,7 +163,8 @@ export async function logAuth(
     action: string,
     userId?: string,
     userRole?: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
+    ipAddress?: string
 ): Promise<void> {
     return logEvent({
         userId,
@@ -167,6 +172,7 @@ export async function logAuth(
         category: "auth",
         action,
         metadata,
+        ipAddress,
     });
 }
 
