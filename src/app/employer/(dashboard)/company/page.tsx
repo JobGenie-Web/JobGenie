@@ -42,7 +42,6 @@ export default async function CompanyProfilePage() {
         >
             <CompanyProfileClient
                 company={companyProfile}
-                userId={user.id}
                 isSuperAdmin={isSuperAdmin}
             />
         </EmployerLayout>

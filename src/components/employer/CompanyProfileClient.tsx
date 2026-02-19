@@ -13,11 +13,10 @@ import { CompanyInfoDialog } from "@/components/employer/dialogs/CompanyInfoDial
 
 interface CompanyProfileClientProps {
     company: CompanyProfile;
-    userId: string;
     isSuperAdmin: boolean;
 }
 
-export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyProfileClientProps) {
+export function CompanyProfileClient({ company, isSuperAdmin }: CompanyProfileClientProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -329,7 +328,6 @@ export function CompanyProfileClient({ company, userId, isSuperAdmin }: CompanyP
                 open={editDialogOpen}
                 onOpenChange={setEditDialogOpen}
                 company={company}
-                userId={userId}
             />
         </>
     );

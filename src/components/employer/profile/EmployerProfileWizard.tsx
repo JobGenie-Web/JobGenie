@@ -154,7 +154,7 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
                 phone: employerData.phone || "",
             };
 
-            const result = await completeEmployerProfile(user.id, updatedCompanyData, updatedEmployerData);
+            const result = await completeEmployerProfile(updatedCompanyData, updatedEmployerData);
 
             if (result.success) {
                 toast.success(result.message);

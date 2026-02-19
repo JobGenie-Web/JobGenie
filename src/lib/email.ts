@@ -731,3 +731,157 @@ export async function sendRejectionEmail(
     }
 }
 
+// ============================================
+// PASSWORD RESET EMAILS
+// ============================================
+
+/**
+ * Generate password reset email HTML template
+ */
+function getPasswordResetEmailTemplate(firstName: string, resetUrl: string): string {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password - JobGenie</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 16px 16px 0 0;">
+                            <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                JobGenie
+                            </h1>
+                            <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">
+                                Find Your Perfect Career Match
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div style="display: inline-block; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 50%; width: 80px; height: 80px; line-height: 80px;">
+                                    <span style="font-size: 40px;">🔑</span>
+                                </div>
+                            </div>
+
+                            <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #1f2937; text-align: center;">
+                                Reset Your Password
+                            </h2>
+                            <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                                Hi <strong>${firstName}</strong>,
+                            </p>
+                            <p style="margin: 0 0 32px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                                We received a request to reset your password. Click the button below to create a new password. This link will expire in <strong>1 hour</strong>.
+                            </p>
+
+                            <!-- Reset Button -->
+                            <div style="text-align: center; margin: 32px 0;">
+                                <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);">
+                                    Reset My Password
+                                </a>
+                            </div>
+
+                            <!-- URL fallback -->
+                            <p style="margin: 24px 0 0; font-size: 14px; line-height: 1.6; color: #6b7280; text-align: center;">
+                                Or copy this link: <a href="${resetUrl}" style="color: #22c55e; word-break: break-all;">${resetUrl}</a>
+                            </p>
+
+                            <!-- Expiry & Security Notice -->
+                            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 24px 0;">
+                                <p style="margin: 0; font-size: 14px; color: #92400e;">
+                                    <strong>⏰ This link expires in 1 hour.</strong> If you didn&apos;t request a password reset, you can safely ignore this email — your password will not change.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
+                            <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
+                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #22c55e; text-decoration: none;">support@jobgenie.com</a>
+                            </p>
+                            <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                                © ${new Date().getFullYear()} JobGenie. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Security Notice -->
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 24px;">
+                    <tr>
+                        <td style="text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
+                                🔒 This is an automated message from JobGenie. Please do not reply to this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `.trim();
+}
+
+/**
+ * Send password reset email to user
+ */
+export async function sendPasswordResetEmail(
+    email: string,
+    firstName: string,
+    token: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const baseUrl = getBaseUrl();
+        const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+        // Check if SMTP is configured
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.log(`\n====================================`);
+            console.log(`[DEV] Password Reset Email`);
+            console.log(`====================================`);
+            console.log(`To: ${email}`);
+            console.log(`Name: ${firstName}`);
+            console.log(`Reset URL: ${resetUrl}`);
+            console.log(`Token: ${token}`);
+            console.log(`Expires: 1 hour from now`);
+            console.log(`====================================\n`);
+            console.log("[DEV] SMTP not configured. Set SMTP_USER and SMTP_PASS in .env to send actual emails.");
+            return { success: true };
+        }
+
+        const transporter = createTransporter();
+
+        const mailOptions = {
+            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "🔑 Reset Your Password - JobGenie",
+            html: getPasswordResetEmailTemplate(firstName, resetUrl),
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Password reset email sent to ${email}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Password reset email error:", error);
+        return {
+            success: false,
+            error: "Failed to send password reset email",
+        };
+    }
+}
+
+

@@ -3,6 +3,7 @@ import { ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UniversalLoginForm } from '@/components/auth/UniversalLoginForm';
 import { Separator } from '@/components/ui/separator';
+import { KeyRound } from 'lucide-react';
 
 export default async function LoginPage({
     searchParams,
@@ -33,6 +34,17 @@ export default async function LoginPage({
 
                     {/* Login Form */}
                     <UniversalLoginForm returnUrl={returnUrl} />
+
+                    {/* Forgot Password Link */}
+                    <div className="mt-3 text-center">
+                        <Link
+                            href="/forgot-password"
+                            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            <KeyRound className="h-3.5 w-3.5" />
+                            Forgot your password?
+                        </Link>
+                    </div>
 
                     {/* Separator */}
                     <div className="my-6">

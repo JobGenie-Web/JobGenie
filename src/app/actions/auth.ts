@@ -1497,3 +1497,237 @@ export async function loginEmployer(
         };
     }
 }
+
+// ============================================
+// FORGOT PASSWORD / RESET PASSWORD
+// ============================================
+
+/**
+ * Step 1: User submits their email on /forgot-password
+ * - Looks up the user (candidates & employers only)
+ * - Generates a secure token, stores its hash in the DB
+ * - Sends a password reset email with a link
+ * Always returns a generic "success" message to prevent email enumeration.
+ */
+export async function requestPasswordReset(
+    _prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { success: false, message: "Please enter a valid email address." };
+    }
+
+    // Generic success message used in all cases — prevents email enumeration
+    const genericSuccess: ActionState = {
+        success: true,
+        message: "If an account with that email exists, a password reset link has been sent.",
+    };
+
+    try {
+        const adminClient = createAdminClient();
+
+        // Look up user (only candidates and employers — MIS resets via admin)
+        const { data: userData, error: userError } = await adminClient
+            .from("users")
+            .select("id, email, role, status")
+            .eq("email", email)
+            .in("role", ["candidate", "employer"])
+            .maybeSingle();
+
+        if (userError || !userData) {
+            // Don't reveal whether email exists
+            return genericSuccess;
+        }
+
+        // Don't allow reset for suspended/deleted accounts
+        if (userData.status === "suspended" || userData.status === "deleted") {
+            return genericSuccess;
+        }
+
+        // Generate a cryptographically secure token (64-char hex = 32 bytes)
+        const rawToken = crypto.randomBytes(32).toString("hex");
+
+        // Store the token expiry as LOCAL machine time (no 'Z' suffix) to match
+        // the PostgreSQL 'timestamp without timezone' column type — same pattern
+        // as getVerificationExpiry() in email.ts. Storing UTC+Z into this column
+        // type strips the 'Z', and JS then re-reads it as local time, causing the
+        // token to appear expired immediately for non-UTC servers (e.g. UTC+5:30).
+        const expiryDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+        const expiresAt = expiryDate.getFullYear() + '-' +
+            String(expiryDate.getMonth() + 1).padStart(2, '0') + '-' +
+            String(expiryDate.getDate()).padStart(2, '0') + 'T' +
+            String(expiryDate.getHours()).padStart(2, '0') + ':' +
+            String(expiryDate.getMinutes()).padStart(2, '0') + ':' +
+            String(expiryDate.getSeconds()).padStart(2, '0');
+
+        const { error: updateError } = await adminClient
+            .from("users")
+            .update({
+                password_reset_token: rawToken,
+                password_reset_expires_at: expiresAt,
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", userData.id);
+
+        if (updateError) {
+            console.error("Failed to store reset token:", updateError);
+            // Still return generic success — don't leak DB errors
+            return genericSuccess;
+        }
+
+        // Look up user's first name from their profile
+        let firstName = "User";
+        if (userData.role === "candidate") {
+            const { data: profile } = await adminClient
+                .from("candidates")
+                .select("first_name")
+                .eq("user_id", userData.id)
+                .maybeSingle();
+            if (profile?.first_name) firstName = profile.first_name;
+        } else if (userData.role === "employer") {
+            const { data: profile } = await adminClient
+                .from("employers")
+                .select("first_name")
+                .eq("user_id", userData.id)
+                .maybeSingle();
+            if (profile?.first_name) firstName = profile.first_name;
+        }
+
+        // Send the reset email
+        const { sendPasswordResetEmail } = await import("@/lib/email");
+        await sendPasswordResetEmail(userData.email, firstName, rawToken);
+
+        await logAuth("password_reset_requested", userData.id, userData.role, { email });
+
+        return genericSuccess;
+    } catch (error) {
+        console.error("requestPasswordReset error:", error);
+        await logError({
+            source: "auth.ts:requestPasswordReset",
+            errorType: "PasswordResetRequestError",
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+        // Generic success — don't reveal internal errors to attacker
+        return genericSuccess;
+    }
+}
+
+/**
+ * Step 2: User submits new password on /reset-password?token=...
+ * - Validates the token against DB (checks expiry)
+ * - Updates password in BOTH Supabase Auth AND custom bcrypt field
+ * - Clears the reset token
+ */
+export async function resetPassword(
+    _prevState: ActionState | null,
+    formData: FormData
+): Promise<ActionState> {
+    const token = (formData.get("token") as string)?.trim();
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    // Validation — must satisfy Supabase's password policy
+    if (!token) {
+        return { success: false, message: "Invalid or missing reset token. Please request a new link." };
+    }
+    if (!newPassword || newPassword.length < 8) {
+        return { success: false, message: "Password must be at least 8 characters long." };
+    }
+    if (!/[a-z]/.test(newPassword)) {
+        return { success: false, message: "Password must contain at least one lowercase letter." };
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+        return { success: false, message: "Password must contain at least one uppercase letter." };
+    }
+    if (!/[0-9]/.test(newPassword)) {
+        return { success: false, message: "Password must contain at least one number." };
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(newPassword)) {
+        return { success: false, message: "Password must contain at least one special character (e.g. !@#$%)." };
+    }
+    if (newPassword !== confirmPassword) {
+        return { success: false, message: "Passwords do not match." };
+    }
+
+    try {
+        const adminClient = createAdminClient();
+
+        // Look up user by reset token
+        const { data: userData, error: userError } = await adminClient
+            .from("users")
+            .select("id, email, role, password_reset_token, password_reset_expires_at")
+            .eq("password_reset_token", token)
+            .maybeSingle();
+
+        if (userError || !userData) {
+            return { success: false, message: "Invalid or expired reset link. Please request a new one." };
+        }
+
+        // Check token expiry
+        if (!userData.password_reset_expires_at) {
+            return { success: false, message: "Invalid reset link. Please request a new one." };
+        }
+        const expiresAt = new Date(userData.password_reset_expires_at).getTime();
+        if (Date.now() > expiresAt) {
+            return { success: false, message: "This reset link has expired. Please request a new one." };
+        }
+
+        // Hash the new password for our custom users table
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+        // 1. Update password in Supabase Auth (handles sessions/JWT)
+        const { error: supabaseAuthError } = await adminClient.auth.admin.updateUserById(
+            userData.id,
+            { password: newPassword }
+        );
+
+        if (supabaseAuthError) {
+            console.error("Supabase Auth password update failed:", supabaseAuthError);
+            // Specifically handle weak password error from Supabase policy
+            if (supabaseAuthError.message?.includes("weak_password") ||
+                supabaseAuthError.message?.includes("Password should")) {
+                return {
+                    success: false,
+                    message: "Password is too weak. It must have at least 8 characters, with uppercase, lowercase, a number, and a special character (e.g. !@#$%)."
+                };
+            }
+            return { success: false, message: "Failed to update password. Please try again." };
+        }
+
+        // 2. Update bcrypt hash in our users table AND clear the reset token
+        const { error: dbError } = await adminClient
+            .from("users")
+            .update({
+                password: hashedPassword,
+                password_reset_token: null,
+                password_reset_expires_at: null,
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", userData.id);
+
+        if (dbError) {
+            console.error("DB password update failed:", dbError);
+            return { success: false, message: "Failed to update password. Please try again." };
+        }
+
+        await logAuth("password_reset_success", userData.id, userData.role, { email: userData.email });
+
+        return {
+            success: true,
+            message: "Password updated successfully! You can now sign in with your new password.",
+            redirectTo: "/login",
+        };
+    } catch (error) {
+        console.error("resetPassword error:", error);
+        await logError({
+            source: "auth.ts:resetPassword",
+            errorType: "PasswordResetError",
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+        return { success: false, message: "An unexpected error occurred. Please try again." };
+    }
+}

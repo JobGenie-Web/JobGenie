@@ -44,10 +44,9 @@ interface CompanyInfoDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     company: CompanyProfile;
-    userId: string;
 }
 
-export function CompanyInfoDialog({ open, onOpenChange, company, userId }: CompanyInfoDialogProps) {
+export function CompanyInfoDialog({ open, onOpenChange, company }: CompanyInfoDialogProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,7 +212,7 @@ export function CompanyInfoDialog({ open, onOpenChange, company, userId }: Compa
                     : null,
             };
 
-            const result = await updateCompanyInfo(userId, formattedData);
+            const result = await updateCompanyInfo(formattedData);
 
             if (result.success) {
                 toast({

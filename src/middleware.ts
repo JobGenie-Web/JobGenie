@@ -45,6 +45,8 @@ const authRoutes = [
     '/employer/signup',
     '/mis/login',
     '/mis/register',
+    '/forgot-password',
+    '/reset-password',
 ];
 
 // Get the default dashboard for a role

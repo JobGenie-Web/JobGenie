@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
     companyProfileCompletionSchema,
@@ -130,11 +131,22 @@ export async function getEmployerProfileData(userId: string): Promise<ProfileDat
  * Transaction-safe: Both updates happen atomically
  */
 export async function completeEmployerProfile(
-    userId: string,
     companyData: CompanyProfileCompletion | null,
     employerData: EmployerProfileCompletion
 ): Promise<ActionState> {
     try {
+        // ── EP-09: Resolve actor server-side — never trust caller-supplied userId ──
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return {
+                success: false,
+                message: "Unauthorized – please sign in first.",
+            };
+        }
+
+        const userId = user.id;
         // Validate employer data (always required)
         const employerValidation = employerProfileCompletionSchema.safeParse(employerData);
 
@@ -273,7 +285,6 @@ export async function completeEmployerProfile(
  * Optimized: Only updates provided fields with validation
  */
 export async function updateCompanyInfo(
-    userId: string,
     updateData: {
         bio?: string | null;
         description?: string;
@@ -286,6 +297,18 @@ export async function updateCompanyInfo(
     }
 ): Promise<ActionState> {
     try {
+        // ── EP-09: Resolve actor server-side — never trust caller-supplied userId ──
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return {
+                success: false,
+                message: "Unauthorized – please sign in first.",
+            };
+        }
+
+        const userId = user.id;
         const adminClient = createAdminClient();
 
         // Get employer's company_id

@@ -110,12 +110,12 @@ export async function universalLogin(
             // Single query for candidate profile completion
             const { data: candidateData } = await adminClient
                 .from("candidates")
-                .select("checkprofile_completed")
+                .select("profile_completed")
                 .eq("user_id", authData.user.id)
                 .single();
 
             // Use returnUrl if provided, otherwise use default redirect
-            const defaultRedirect = candidateData?.checkprofile_completed
+            const defaultRedirect = candidateData?.profile_completed
                 ? "/candidate/dashboard"
                 : "/candidate/create-profile";
 
