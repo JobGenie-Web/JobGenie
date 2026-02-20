@@ -1,0 +1,138 @@
+"use client";
+
+import Link from "next/link";
+import { Bookmark, ChevronRight, MapPin, Briefcase } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { RecommendedJob } from "@/app/actions/candidate-dashboard-data";
+
+interface RecommendedJobsWidgetProps {
+    jobs: RecommendedJob[];
+}
+
+function formatSalary(min: number | null, max: number | null): string | null {
+    if (!min && !max) return null;
+    const fmt = (n: number) => {
+        if (n >= 1000) return `$${(n / 1000).toFixed(0)}k`;
+        return `$${n}`;
+    };
+    if (min && max) return `${fmt(min)} – ${fmt(max)}`;
+    if (min) return `From ${fmt(min)}`;
+    if (max) return `Up to ${fmt(max)}`;
+    return null;
+}
+
+function getCompanyInitial(name: string | null): string {
+    if (!name) return "J";
+    return name.charAt(0).toUpperCase();
+}
+
+const avatarColors = [
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+];
+
+const employmentTypeLabels: Record<string, string> = {
+    full_time: "Full-Time",
+    part_time: "Part-Time",
+    contract: "Contract",
+    internship: "Internship",
+    freelance: "Freelance",
+    temporary: "Temporary",
+};
+
+export function RecommendedJobsWidget({ jobs }: RecommendedJobsWidgetProps) {
+    return (
+        <div className="rounded-2xl border border-border bg-card shadow-sm">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
+                <div>
+                    <h3 className="text-sm font-semibold text-foreground">Recommended for you</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Based on your profile & industry</p>
+                </div>
+                <Link
+                    href="/candidate/jobs"
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                    View all
+                    <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+            </div>
+
+            {/* Job list */}
+            <div className="divide-y divide-border/50">
+                {jobs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+                        <Briefcase className="h-8 w-8 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">No jobs available yet</p>
+                        <p className="text-xs text-muted-foreground/70">Check back soon for new opportunities</p>
+                    </div>
+                ) : (
+                    jobs.map((job, index) => {
+                        const avatarColor = avatarColors[index % avatarColors.length];
+                        const salaryStr = formatSalary(job.salary_min, job.salary_max);
+                        const typeLabel = job.employment_type
+                            ? (employmentTypeLabels[job.employment_type] || job.employment_type)
+                            : null;
+
+                        return (
+                            <div
+                                key={job.id}
+                                className="flex items-start gap-3 px-5 py-4 hover:bg-muted/30 transition-colors"
+                            >
+                                {/* Company avatar */}
+                                <div className={cn(
+                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold",
+                                    avatarColor
+                                )}>
+                                    {getCompanyInitial(job.company_name)}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="text-sm font-semibold text-foreground truncate">
+                                            {job.job_title}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                                            {job.is_new && (
+                                                <span className="rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold">
+                                                    New
+                                                </span>
+                                            )}
+                                            <button className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+                                                <Bookmark className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                        {job.company_name || "Company"}
+                                        {job.location && ` • ${job.location}`}
+                                    </p>
+
+                                    {/* Badges row */}
+                                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                        {typeLabel && (
+                                            <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                                {typeLabel}
+                                            </span>
+                                        )}
+                                        {salaryStr && (
+                                            <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                                                <MapPin className="h-2.5 w-2.5" />
+                                                {salaryStr}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        </div>
+    );
+}

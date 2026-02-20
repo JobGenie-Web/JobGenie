@@ -46,7 +46,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* JobGenie Light Theme - Clean white with green accents */
+/* ─── JobGenie Light Theme ─────────────────────────────────────────────── */
 :root {
   --radius: 0.625rem;
   /* Background: Pure white */
@@ -94,51 +94,60 @@
   --sidebar-ring: oklch(0.50 0.14 145);
 }
 
-/* JobGenie Dark Theme - Clean dark grey with readable text */
+/* ─── JobGenie Dark Theme — Modern Deep Navy-Slate ──────────────────────── */
+/*
+  Design philosophy:
+  - Background: Rich deep blue-slate (not plain gray)
+  - Cards: Slightly elevated deep slate with a hint of blue tint
+  - Borders: Subtle glowing lines with low chroma blue
+  - Primary: Vivid bright green that pops
+  - Sidebar: Deeper navy than main bg for clear hierarchy
+  - Muted: Warm blue-tinted gray text (not cold gray)
+*/
 .dark {
-  /* Background: Dark grey */
-  --background: oklch(0.16 0 0);
-  /* Foreground: Light grey for highly readable text */
-  --foreground: oklch(0.92 0 0);
-  /* Card */
-  --card: oklch(0.20 0 0);
-  --card-foreground: oklch(0.92 0 0);
+  /* Background: Deep blue-tinted dark — feels rich, not cheap */
+  --background: oklch(0.13 0.018 250);
+  /* Foreground: Warm off-white — easier on eyes than pure white */
+  --foreground: oklch(0.93 0.006 240);
+  /* Card: Slightly lighter, with subtle blue tint — clearly elevated */
+  --card: oklch(0.17 0.020 250);
+  --card-foreground: oklch(0.93 0.006 240);
   /* Popover */
-  --popover: oklch(0.20 0 0);
-  --popover-foreground: oklch(0.92 0 0);
-  /* Primary: Brighter green for dark mode visibility */
-  --primary: oklch(0.68 0.16 145);
-  --primary-foreground: oklch(0.15 0.02 145);
-  /* Secondary */
-  --secondary: oklch(0.28 0.02 145);
-  --secondary-foreground: oklch(0.92 0 0);
-  /* Muted */
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.65 0 0);
+  --popover: oklch(0.19 0.022 250);
+  --popover-foreground: oklch(0.93 0.006 240);
+  /* Primary: Vivid electric green — punchy accent, stands out */
+  --primary: oklch(0.72 0.18 145);
+  --primary-foreground: oklch(0.10 0.025 145);
+  /* Secondary: Deep teal-navy — subtle background for chips */
+  --secondary: oklch(0.22 0.030 240);
+  --secondary-foreground: oklch(0.85 0.010 240);
+  /* Muted: Blue-tinted dark — feels cohesive, not muddy */
+  --muted: oklch(0.20 0.018 250);
+  --muted-foreground: oklch(0.62 0.018 240);
   /* Accent */
-  --accent: oklch(0.28 0.02 145);
-  --accent-foreground: oklch(0.92 0 0);
+  --accent: oklch(0.22 0.030 240);
+  --accent-foreground: oklch(0.90 0.008 240);
   /* Destructive */
   --destructive: oklch(0.704 0.191 22.216);
-  /* Borders & inputs */
-  --border: oklch(0.28 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.68 0.16 145);
-  /* Chart colors */
-  --chart-1: oklch(0.68 0.16 145);
-  --chart-2: oklch(0.55 0.12 145);
-  --chart-3: oklch(0.60 0.10 155);
-  --chart-4: oklch(0.65 0.12 135);
-  --chart-5: oklch(0.58 0.10 145);
-  /* Sidebar */
-  --sidebar: oklch(0.18 0 0);
-  --sidebar-foreground: oklch(0.92 0 0);
-  --sidebar-primary: oklch(0.68 0.16 145);
-  --sidebar-primary-foreground: oklch(0.15 0.02 145);
-  --sidebar-accent: oklch(0.25 0.01 145);
-  --sidebar-accent-foreground: oklch(0.92 0 0);
-  --sidebar-border: oklch(0.28 0 0);
-  --sidebar-ring: oklch(0.68 0.16 145);
+  /* Borders: Glowing subtle blue-white lines */
+  --border: oklch(0.26 0.020 250);
+  --input: oklch(0.22 0.018 250);
+  --ring: oklch(0.72 0.18 145);
+  /* Chart colors — vivid for dark bg */
+  --chart-1: oklch(0.72 0.18 145);
+  --chart-2: oklch(0.65 0.16 200);
+  --chart-3: oklch(0.70 0.14 280);
+  --chart-4: oklch(0.68 0.16 60);
+  --chart-5: oklch(0.66 0.16 320);
+  /* Sidebar: Deeper navy for clear visual hierarchy vs main bg */
+  --sidebar: oklch(0.10 0.020 255);
+  --sidebar-foreground: oklch(0.88 0.008 240);
+  --sidebar-primary: oklch(0.72 0.18 145);
+  --sidebar-primary-foreground: oklch(0.10 0.025 145);
+  --sidebar-accent: oklch(0.17 0.025 250);
+  --sidebar-accent-foreground: oklch(0.88 0.008 240);
+  --sidebar-border: oklch(0.20 0.018 255);
+  --sidebar-ring: oklch(0.72 0.18 145);
 }
 
 @layer base {
@@ -159,4 +168,17 @@ html {
 /* Hide scrollbar but allow scrolling */
 .overflow-y-auto::-webkit-scrollbar {
   display: none;
+}
+
+/* ─── Dark mode: Give cards a subtle shimmer border ──────────────────────── */
+.dark .rounded-2xl,
+.dark .rounded-xl {
+  --tw-shadow-color: oklch(0.72 0.18 145 / 0.03);
+}
+
+/* ─── Dark mode: Soft gradient on page background for depth ─────────────── */
+.dark body {
+  background-image: radial-gradient(ellipse 80% 50% at 50% -20%,
+      oklch(0.22 0.040 250 / 0.4),
+      transparent);
 }

@@ -72,7 +72,7 @@ export function EmployerSignupWizard() {
                 uploadFormData.append("file", brCertificateFile);
                 uploadFormData.append("bucket", "br-certificates");
 
-                const uploadResponse = await fetch("/api/upload", {
+                const uploadResponse = await fetch("/api/upload-presignup", {
                     method: "POST",
                     body: uploadFormData,
                 });
@@ -121,7 +121,7 @@ export function EmployerSignupWizard() {
                 // Registration failed - clean up uploaded certificate
                 if (uploadedCertificateUrl) {
                     try {
-                        await fetch("/api/delete-file", {
+                        await fetch("/api/delete-presignup-file", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ fileUrl: uploadedCertificateUrl }),

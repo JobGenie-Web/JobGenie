@@ -404,6 +404,13 @@ model Company {
   approval_status   ApprovalStatus @default(pending)
   profile_completed Boolean        @default(false)
 
+  // Approval workflow tracking
+  approval_status_message_seen Boolean   @default(false)
+  approved_at                  DateTime?
+  rejected_at                  DateTime?
+  reviewed_by                  String?   @db.Uuid
+  rejection_reason             String?   @db.Text
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
