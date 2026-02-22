@@ -168,6 +168,8 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 value={data.firstName}
                                 onChange={(e) => updateField("firstName", e.target.value)}
                                 placeholder="John"
+                                readOnly
+                                className="bg-muted cursor-not-allowed"
                             />
                         </FormField>
                         <FormField label="Last Name" id="lastName" required error={errors.lastName}>
@@ -176,6 +178,8 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 value={data.lastName}
                                 onChange={(e) => updateField("lastName", e.target.value)}
                                 placeholder="Doe"
+                                readOnly
+                                className="bg-muted cursor-not-allowed"
                             />
                         </FormField>
                     </div>
@@ -217,6 +221,8 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 value={data.email}
                                 onChange={(e) => updateField("email", e.target.value)}
                                 placeholder="john@example.com"
+                                readOnly
+                                className="bg-muted cursor-not-allowed"
                             />
                         </FormField>
                         <FormField label="Phone" id="phone" required error={errors.phone}>

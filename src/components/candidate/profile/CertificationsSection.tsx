@@ -120,8 +120,14 @@ export function CertificationsSection({ certificates }: CertificationsSectionPro
         }
     };
 
-    const displayedCertificates = showAll ? certificates : certificates.slice(0, 3);
-    const hasMore = certificates.length > 3;
+    const sortedCertificates = [...(certificates || [])].sort((a, b) => {
+        const dateA = a.issue_date ? new Date(a.issue_date).getTime() : 0;
+        const dateB = b.issue_date ? new Date(b.issue_date).getTime() : 0;
+        return dateB - dateA;
+    });
+
+    const displayedCertificates = showAll ? sortedCertificates : sortedCertificates.slice(0, 3);
+    const hasMore = sortedCertificates.length > 3;
 
     return (
         <>

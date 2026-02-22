@@ -78,7 +78,14 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
         });
     });
 
-    const companies = Object.keys(groupedByCompany);
+    const companies = Object.keys(groupedByCompany).sort((a, b) => {
+        const topA = groupedByCompany[a][0];
+        const topB = groupedByCompany[b][0];
+        const dateA = topA?.start_date ? new Date(topA.start_date).getTime() : 0;
+        const dateB = topB?.start_date ? new Date(topB.start_date).getTime() : 0;
+        return dateB - dateA;
+    });
+
     const displayedCompanies = showAll ? companies : companies.slice(0, 3);
     const hasMore = companies.length > 3;
 

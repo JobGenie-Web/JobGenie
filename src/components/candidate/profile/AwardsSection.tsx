@@ -29,9 +29,10 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
     const [awardToDelete, setAwardToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const displayedAwards = showAll ? awards : awards.slice(0, 3);
-    const hasMore = awards && awards.length > 3;
-    const isEmpty = !awards || awards.length === 0;
+    const sortedAwards = [...(awards || [])].reverse();
+    const displayedAwards = showAll ? sortedAwards : sortedAwards.slice(0, 3);
+    const hasMore = sortedAwards && sortedAwards.length > 3;
+    const isEmpty = !sortedAwards || sortedAwards.length === 0;
 
     const toggleDescription = (id: string) => {
         setExpandedDescriptions(prev => ({

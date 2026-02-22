@@ -12,7 +12,7 @@ export const INDUSTRY_OPTIONS = [
     // { value: "accounting", label: "Accounting" },
 ] as const;
 
-export const IT_INDUSTRIES = ["it_software", "fintech"] as const;
+export const IT_INDUSTRIES = ["it_software"] as const;
 export const BANKING_FINANCE_INDUSTRIES = ["banking", "finance_investment", "insurance", "accounting"] as const;
 
 // ============================================

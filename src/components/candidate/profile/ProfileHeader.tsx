@@ -88,7 +88,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                                 </p>
                             )}
                         </div>
-                        <p className="text-lg text-muted-foreground flex items-center gap-2">
+                        <p className="text-lg text-muted-foreground flex items-center gap-2 font-semibold">
                             <Briefcase className="h-4 w-4" />
                             {profile.current_position}
                         </p>

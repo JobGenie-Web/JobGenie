@@ -191,6 +191,7 @@ export async function completeFullProfile(
                 availability_status: data.basicInfo.availabilityStatus,
                 notice_period: data.basicInfo.noticePeriod || null,
                 employment_type: data.basicInfo.employmentType,
+                highest_qualification: data.basicInfo.highestQualification || null,
                 professional_summary: data.professionalSummary,
                 profile_completed: true,
                 // Reset approval status for resubmission
@@ -603,6 +604,7 @@ export async function completeFullProfileWithCV(
                     availability_status: data.basicInfo.availabilityStatus,
                     notice_period: data.basicInfo.noticePeriod || null,
                     employment_type: data.basicInfo.employmentType,
+                    highest_qualification: data.basicInfo.highestQualification || null,
                     professional_summary: data.professionalSummary,
                     profile_completed: true,
                     approval_status: "pending",

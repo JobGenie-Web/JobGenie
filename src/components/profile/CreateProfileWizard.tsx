@@ -121,10 +121,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
     const handleCVExtracted = useCallback((data: CVExtractionResult) => {
         setCvUploaded(true);
 
-        // Populate form fields from extracted data
-        if (data.firstName) setBasicInfo((prev) => ({ ...prev, firstName: data.firstName! }));
-        if (data.lastName) setBasicInfo((prev) => ({ ...prev, lastName: data.lastName! }));
-        if (data.email) setBasicInfo((prev) => ({ ...prev, email: data.email! }));
+        // Populate form fields from extracted data (excluding name and email as they come from registration)
         if (data.phone) setBasicInfo((prev) => ({ ...prev, phone: data.phone! }));
         if (data.address) setBasicInfo((prev) => ({ ...prev, address: data.address! }));
         if (data.currentPosition) setBasicInfo((prev) => ({ ...prev, currentPosition: data.currentPosition! }));

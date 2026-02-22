@@ -10,6 +10,7 @@ import { EducationSection } from "./EducationSection";
 import { ProjectsSection } from "./ProjectsSection";
 import { CertificationsSection } from "./CertificationsSection";
 import { AwardsSection } from "./AwardsSection";
+import { IT_INDUSTRIES } from "@/lib/validations/profile-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
@@ -105,7 +106,7 @@ export function ProfileContent() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-7xl mx-auto">
             {/* Profile Header */}
             <ProfileHeader profile={profile} />
 
@@ -127,12 +128,14 @@ export function ProfileContent() {
             />
 
             {/* Projects Section - IT Industry Only */}
-            {profile.industry.toLowerCase().includes("it") && (
+            {IT_INDUSTRIES.includes(profile.industry as any) && (
                 <ProjectsSection projects={profile.projects || []} />
             )}
 
-            {/* Certifications Section */}
-            <CertificationsSection certificates={profile.certificates || []} />
+            {/* Certifications Section - IT Industry Only */}
+            {IT_INDUSTRIES.includes(profile.industry as any) && (
+                <CertificationsSection certificates={profile.certificates || []} />
+            )}
 
             {/* Awards Section */}
             <AwardsSection awards={profile.awards || []} />

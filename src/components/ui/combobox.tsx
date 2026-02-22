@@ -64,7 +64,7 @@ export function Combobox({
                     className={cn("w-full justify-between", className)}
                     disabled={disabled}
                 >
-                    <span className="truncate text-left">
+                    <span className={cn("truncate text-left", !selectedOption && "text-muted-foreground/50")}>
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

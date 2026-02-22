@@ -201,8 +201,8 @@ export function EducationSection({
     const renderGeneralEducation = () => {
         if (educations.length === 0) return null;
 
-        const academic = educations.filter(e => e.education_type === "academic");
-        const professional = educations.filter(e => e.education_type === "professional");
+        const academic = [...educations].filter(e => e.education_type === "academic").reverse();
+        const professional = [...educations].filter(e => e.education_type === "professional").reverse();
 
         return (
             <Tabs defaultValue="academic" className="w-full">
@@ -344,7 +344,7 @@ export function EducationSection({
                             Add Academic Education
                         </Button>
                     </div>
-                    {financeAcademic.length > 0 ? financeAcademic.map((edu, index) => (
+                    {financeAcademic.length > 0 ? [...financeAcademic].reverse().map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -399,7 +399,7 @@ export function EducationSection({
                             Add Professional Education
                         </Button>
                     </div>
-                    {financeProfessional.length > 0 ? financeProfessional.map((edu, index) => (
+                    {financeProfessional.length > 0 ? [...financeProfessional].reverse().map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -467,7 +467,7 @@ export function EducationSection({
                             Add Academic Education
                         </Button>
                     </div>
-                    {bankingAcademic.length > 0 ? bankingAcademic.map((edu, index) => (
+                    {bankingAcademic.length > 0 ? [...bankingAcademic].reverse().map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -522,7 +522,7 @@ export function EducationSection({
                             Add Professional Education
                         </Button>
                     </div>
-                    {bankingProfessional.length > 0 ? bankingProfessional.map((edu, index) => (
+                    {bankingProfessional.length > 0 ? [...bankingProfessional].reverse().map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -577,7 +577,7 @@ export function EducationSection({
                             Add Specialized Training
                         </Button>
                     </div>
-                    {bankingTraining.length > 0 ? bankingTraining.map((training, index) => (
+                    {bankingTraining.length > 0 ? [...bankingTraining].reverse().map((training, index) => (
                         <div key={training.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -631,9 +631,9 @@ export function EducationSection({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {industry.toLowerCase().includes("it") && educations.length > 0 && renderGeneralEducation()}
-                    {industry.toLowerCase().includes("finance") && renderFinanceEducation()}
-                    {industry.toLowerCase().includes("banking") && renderBankingEducation()}
+                    {industry !== "finance_investment" && industry !== "banking" && educations.length > 0 && renderGeneralEducation()}
+                    {industry === "finance_investment" && renderFinanceEducation()}
+                    {industry === "banking" && renderBankingEducation()}
                 </CardContent>
             </Card>
 
