@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +37,35 @@ export function EmployerSignupWizard() {
         confirmPassword: "",
         jobTitle: "",
     });
+
+    // Load state from local storage on mount
+    useEffect(() => {
+        const savedCompany = localStorage.getItem("employer-company-data");
+        if (savedCompany) {
+            try { setCompanyData(JSON.parse(savedCompany)); } catch (e) { }
+        }
+        const savedEmployer = localStorage.getItem("employer-profile-data");
+        if (savedEmployer) {
+            try { setEmployerData(JSON.parse(savedEmployer)); } catch (e) { }
+        }
+        const savedStep = localStorage.getItem("employer-wizard-step");
+        if (savedStep) {
+            try { setCurrentStep(JSON.parse(savedStep)); } catch (e) { }
+        }
+    }, []);
+
+    // Save state whenever it changes
+    useEffect(() => {
+        localStorage.setItem("employer-company-data", JSON.stringify(companyData));
+    }, [companyData]);
+
+    useEffect(() => {
+        localStorage.setItem("employer-profile-data", JSON.stringify(employerData));
+    }, [employerData]);
+
+    useEffect(() => {
+        localStorage.setItem("employer-wizard-step", JSON.stringify(currentStep));
+    }, [currentStep]);
 
     const steps = [
         { id: "company", title: "Company Information" },
@@ -111,6 +140,11 @@ export function EmployerSignupWizard() {
             const result = await registerEmployer(null, formData);
 
             if (result.success) {
+                // Clear local storage on success
+                localStorage.removeItem("employer-company-data");
+                localStorage.removeItem("employer-profile-data");
+                localStorage.removeItem("employer-wizard-step");
+
                 toast.success(result.message || "Registration successful!");
                 if (result.redirectTo) {
                     setTimeout(() => {

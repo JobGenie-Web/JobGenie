@@ -59,6 +59,7 @@ export function CandidateSignupForm() {
     // Handle redirect on success
     useEffect(() => {
         if (state?.success && state.redirectTo) {
+            localStorage.removeItem("candidate-signup-form");
             // Small delay to show success message before redirect
             const timer = setTimeout(() => {
                 router.push(state.redirectTo!);
@@ -68,23 +69,52 @@ export function CandidateSignupForm() {
     }, [state, router]);
 
     // Form state for controlled inputs
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        nicPassport: "",
+        gender: "",
+        dateOfBirth: "",
+        address: "",
+        contactNo: "",
+        email: "",
+        password: "",
+        confirmPassword: ""
+    });
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [gender, setGender] = useState("");
+
+    // Load from local storage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem("candidate-signup-form");
+        if (saved) {
+            try {
+                setFormData(JSON.parse(saved));
+            } catch (e) { }
+        }
+    }, []);
+
+    // Save to local storage on change
+    useEffect(() => {
+        localStorage.setItem("candidate-signup-form", JSON.stringify(formData));
+    }, [formData]);
+
+    const handleChange = (field: string, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    };
 
     // Client-side validation state
     const [clientErrors, setClientErrors] = useState<Record<string, string[]>>({});
 
     // Password strength
-    const passwordStrength = calculatePasswordStrength(password);
+    const passwordStrength = calculatePasswordStrength(formData.password);
     const strengthLabel = getStrengthLabel(passwordStrength);
     const strengthColor = getStrengthColor(passwordStrength);
 
     // Password match check
-    const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
-    const passwordsDontMatch = confirmPassword.length > 0 && password !== confirmPassword;
+    const passwordsMatch = formData.password.length > 0 && formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword;
+    const passwordsDontMatch = formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword;
 
     // Combine server and client errors
     const errors = { ...clientErrors, ...state?.errors };
@@ -136,6 +166,8 @@ export function CandidateSignupForm() {
                         id="firstName"
                         name="firstName"
                         placeholder="John"
+                        value={formData.firstName}
+                        onChange={(e) => handleChange("firstName", e.target.value)}
                         onBlur={(e) => validateField("firstName", e.target.value)}
                         aria-invalid={!!errors.firstName}
                     />
@@ -146,6 +178,8 @@ export function CandidateSignupForm() {
                         id="lastName"
                         name="lastName"
                         placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={(e) => handleChange("lastName", e.target.value)}
                         onBlur={(e) => validateField("lastName", e.target.value)}
                         aria-invalid={!!errors.lastName}
                     />
@@ -158,15 +192,18 @@ export function CandidateSignupForm() {
                     <Input
                         id="nicPassport"
                         name="nicPassport"
-                        placeholder="123456789V"
+                        placeholder="123456789V or 200012345678"
+                        maxLength={12}
+                        value={formData.nicPassport}
+                        onChange={(e) => handleChange("nicPassport", e.target.value)}
                         onBlur={(e) => validateField("nicPassport", e.target.value)}
                         aria-invalid={!!errors.nicPassport}
                     />
                 </FormField>
 
                 <FormField label="Gender" id="gender" error={errors.gender}>
-                    <input type="hidden" name="gender" value={gender} />
-                    <Select value={gender} onValueChange={setGender}>
+                    <input type="hidden" name="gender" value={formData.gender} />
+                    <Select value={formData.gender} onValueChange={(value) => handleChange("gender", value)}>
                         <SelectTrigger id="gender" className="w-full" aria-invalid={!!errors.gender}>
                             <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
@@ -185,6 +222,9 @@ export function CandidateSignupForm() {
                     id="dateOfBirth"
                     name="dateOfBirth"
                     type="date"
+                    max="9999-12-31"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => handleChange("dateOfBirth", e.target.value)}
                     onBlur={(e) => validateField("dateOfBirth", e.target.value)}
                     aria-invalid={!!errors.dateOfBirth}
                 />
@@ -196,6 +236,8 @@ export function CandidateSignupForm() {
                     id="address"
                     name="address"
                     placeholder="123 Main Street, City"
+                    value={formData.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
                     onBlur={(e) => validateField("address", e.target.value)}
                     aria-invalid={!!errors.address}
                 />
@@ -209,6 +251,8 @@ export function CandidateSignupForm() {
                         name="contactNo"
                         type="tel"
                         placeholder="+94 77 123 4567"
+                        value={formData.contactNo}
+                        onChange={(e) => handleChange("contactNo", e.target.value)}
                         onBlur={(e) => validateField("contactNo", e.target.value)}
                         aria-invalid={!!errors.contactNo}
                     />
@@ -220,6 +264,8 @@ export function CandidateSignupForm() {
                         name="email"
                         type="email"
                         placeholder="you@example.com"
+                        value={formData.email}
+                        onChange={(e) => handleChange("email", e.target.value)}
                         onBlur={(e) => validateField("email", e.target.value)}
                         aria-invalid={!!errors.email}
                     />
@@ -234,8 +280,8 @@ export function CandidateSignupForm() {
                         name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={(e) => handleChange("password", e.target.value)}
                         onBlur={(e) => validateField("password", e.target.value)}
                         className="pr-10"
                         aria-invalid={!!errors.password}
@@ -250,8 +296,13 @@ export function CandidateSignupForm() {
                     </button>
                 </div>
 
+                {/* Password Validation Message */}
+                <p className="text-xs text-muted-foreground mt-2 mb-2">
+                    Minimum 8 characters, must include atleast an uppercase, a lowercase, a number and a special character
+                </p>
+
                 {/* Password Strength Indicator */}
-                {password.length > 0 && (
+                {formData.password.length > 0 && (
                     <div className="mt-2 space-y-1">
                         <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((level) => (
@@ -279,8 +330,8 @@ export function CandidateSignupForm() {
                         name="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={formData.confirmPassword}
+                        onChange={(e) => handleChange("confirmPassword", e.target.value)}
                         className={cn(
                             "pr-16",
                             passwordsMatch && "border-green-500 focus-visible:ring-green-500/50",
@@ -289,7 +340,7 @@ export function CandidateSignupForm() {
                         aria-invalid={passwordsDontMatch || !!errors.confirmPassword}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                        {confirmPassword.length > 0 && (
+                        {formData.confirmPassword.length > 0 && (
                             <span className={cn(
                                 "flex items-center",
                                 passwordsMatch ? "text-green-500" : "text-destructive"
@@ -313,7 +364,7 @@ export function CandidateSignupForm() {
                 </div>
 
                 {/* Password Match Indicator */}
-                {confirmPassword.length > 0 && (
+                {formData.confirmPassword.length > 0 && (
                     <p className={cn(
                         "text-xs mt-1",
                         passwordsMatch ? "text-green-500" : "text-destructive"

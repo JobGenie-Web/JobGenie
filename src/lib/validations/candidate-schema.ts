@@ -64,9 +64,7 @@ export const candidateRegistrationSchema = z
 
         nicPassport: z
             .string()
-            .min(5, "NIC/Passport must be at least 5 characters")
-            .max(20, "NIC/Passport must be less than 20 characters")
-            .regex(/^[a-zA-Z0-9-]+$/, "NIC/Passport can only contain letters, numbers, and hyphens"),
+            .regex(/^([0-9]{9}[vV]|[0-9]{12})$/, "NIC must be 9 digits followed by 'V' or 12 digits"),
 
         gender: z.enum(["male", "female", "other"], {
             message: "Please select a gender",

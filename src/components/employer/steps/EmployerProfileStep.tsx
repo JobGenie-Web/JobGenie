@@ -234,6 +234,11 @@ export function EmployerProfileStep({
                             <p className="text-sm text-destructive">{errors.password}</p>
                         )}
 
+                        {/* Password Validation Message */}
+                        <p className="text-xs text-muted-foreground mt-2 mb-2">
+                            Minimum 8 characters, must include atleast an uppercase, a lowercase, a number and a special character
+                        </p>
+
                         {/* Password Strength Indicator */}
                         {data.password && (
                             <div className="space-y-1">
