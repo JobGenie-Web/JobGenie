@@ -21,7 +21,7 @@ export function DynamicList<T>({
     renderItem,
     addLabel = "Add Item",
     emptyMessage = "No items added yet",
-    maxItems = 10,
+    maxItems = 100,
 }: DynamicListProps<T>) {
     const canAdd = items.length < maxItems;
 
@@ -29,8 +29,16 @@ export function DynamicList<T>({
         <div className="space-y-4">
             {items.length === 0 ? (
                 <Card className="border-dashed">
-                    <CardContent className="p-6 text-center">
+                    <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-4">
                         <p className="text-muted-foreground">{emptyMessage}</p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onAdd}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            {addLabel}
+                        </Button>
                     </CardContent>
                 </Card>
             ) : (
@@ -52,7 +60,7 @@ export function DynamicList<T>({
                 ))
             )}
 
-            {canAdd && (
+            {items.length > 0 && canAdd && (
                 <Button
                     type="button"
                     variant="outline"

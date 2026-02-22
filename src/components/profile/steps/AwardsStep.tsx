@@ -8,6 +8,9 @@ import { FormSection } from "../shared/FormSection";
 import { DynamicList } from "../shared/DynamicList";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { AwardData } from "@/lib/validations/profile-schema";
+import { awardSchema } from "@/lib/validations/profile-schema";
+import { useState } from "react";
+import { z } from "zod";
 
 interface AwardsStepProps {
     awards: AwardData[];
@@ -34,7 +37,33 @@ export function AwardsStep({ awards, onChange, onNext, onPrevious }: AwardsStepP
     const handleUpdate = (index: number, field: keyof AwardData, value: string) => {
         const updated = [...awards];
         updated[index] = { ...updated[index], [field]: value };
+
+        if (errors[`${index}.${field as string}`]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[`${index}.${field as string}`];
+                return newErrors;
+            });
+        }
+
         onChange(updated);
+    };
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const handleNextStep = () => {
+        const result = z.array(awardSchema).safeParse(awards);
+        if (result.success) {
+            setErrors({});
+            onNext();
+        } else {
+            const newErrors: Record<string, string> = {};
+            result.error.issues.forEach(issue => {
+                const pathKey = issue.path.join('.');
+                newErrors[pathKey] = issue.message;
+            });
+            setErrors(newErrors);
+        }
     };
 
     return (
@@ -49,7 +78,7 @@ export function AwardsStep({ awards, onChange, onNext, onPrevious }: AwardsStepP
                     onRemove={handleRemove}
                     addLabel="Add Award"
                     emptyMessage="No awards added yet. This section is optional."
-                    maxItems={10}
+                    maxItems={100}
                     renderItem={(award, index) => (
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -62,6 +91,7 @@ export function AwardsStep({ awards, onChange, onNext, onPrevious }: AwardsStepP
                                     onChange={(e) => handleUpdate(index, "natureOfAward", e.target.value)}
                                     placeholder="e.g., Employee of the Year"
                                 />
+                                {errors[`${index}.natureOfAward`] && <p className="text-sm text-destructive">{errors[`${index}.natureOfAward`]}</p>}
                             </div>
 
                             <div className="space-y-2">
@@ -93,7 +123,7 @@ export function AwardsStep({ awards, onChange, onNext, onPrevious }: AwardsStepP
                 currentStep={5}
                 totalSteps={10}
                 onPrevious={onPrevious}
-                onNext={onNext}
+                onNext={handleNextStep}
             />
         </div>
     );

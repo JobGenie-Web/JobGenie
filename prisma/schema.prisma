@@ -177,7 +177,7 @@ model Education {
   degree_diploma             String?         @db.VarChar(200) // Qualification
   professional_qualification String?         @db.VarChar(200)
   institution                String?         @db.VarChar(200)
-  status                     EducationStatus @default(incomplete)
+  status                     String          @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -270,7 +270,7 @@ model FinanceAcademicEducation {
 
   degree_diploma String                 @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Accounting and Finance
   institution    String                 @db.VarChar(200)
-  status         FinanceEducationStatus @default(incomplete)
+  status         String                 @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -287,7 +287,7 @@ model FinanceProfessionalEducation {
 
   professional_qualification String                 @db.VarChar(300) // Professional Qualifications/Professional Programs/Specialized programs
   institution                String                 @db.VarChar(200)
-  status                     FinanceEducationStatus @default(incomplete)
+  status                     String                 @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -308,7 +308,7 @@ model BankingAcademicEducation {
 
   degree_diploma String                 @db.VarChar(200) // Degree/Diploma/Postgraduate Diploma – Banking and Finance
   institution    String                 @db.VarChar(200)
-  status         BankingEducationStatus @default(incomplete)
+  status         String                 @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -325,7 +325,7 @@ model BankingProfessionalEducation {
 
   professional_qualification String                 @db.VarChar(300) // Professional Banking Programs/Specialist diplomas/International Professional Qualifications
   institution                String                 @db.VarChar(200)
-  status                     BankingEducationStatus @default(incomplete)
+  status                     String                 @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -343,7 +343,7 @@ model BankingSpecializedTraining {
   certificate_name        String                 @db.VarChar(300) // Certificate Name/Training program name
   issuing_authority       String                 @db.VarChar(200) // Issuing Authority/Institution
   certificate_issue_month DateTime?              @db.Date // Certificate Issue Month/training completion month
-  status                  BankingEducationStatus @default(incomplete)
+  status                  String                 @default("incomplete") @db.VarChar(100)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -630,9 +630,12 @@ enum UserStatus {
 }
 
 enum ExperienceLevel {
+  entry
   junior
   mid
   senior
+  lead
+  principal
 }
 
 enum Gender {
@@ -680,14 +683,6 @@ enum EducationType {
   professional
 }
 
-enum EducationStatus {
-  incomplete
-  first_class
-  second_class_upper
-  second_class_lower
-  general
-}
-
 enum ApprovalStatus {
   pending
   approved
@@ -711,24 +706,6 @@ enum JobStatus {
 }
 
 // ============================================
-// FINANCE & BANKING EDUCATION STATUS ENUMS
-// ============================================
-
-enum FinanceEducationStatus {
-  incomplete
-  first_class
-  second_class_upper
-  second_class_lower
-  general
-}
-
-enum BankingEducationStatus {
-  incomplete
-  first_class
-  second_class_upper
-  second_class_lower
-  general
-}
 
 enum IndustryType {
   it_software

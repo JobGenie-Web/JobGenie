@@ -9,7 +9,9 @@ import { Combobox } from "@/components/ui/combobox";
 import { FormSection } from "../shared/FormSection";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { BasicInfoData } from "@/lib/validations/profile-schema";
+import { basicInfoSchema } from "@/lib/validations/profile-schema";
 import { useJobDesignations } from "@/hooks/useJobDesignations";
+import { useState } from "react";
 
 interface BasicInfoStepProps {
     data: BasicInfoData;
@@ -21,9 +23,12 @@ interface BasicInfoStepProps {
 }
 
 const EXPERIENCE_LEVELS = [
+    { value: "entry", label: "Entry Level" },
     { value: "junior", label: "Junior" },
     { value: "mid", label: "Mid Level" },
     { value: "senior", label: "Senior" },
+    { value: "lead", label: "Lead" },
+    { value: "principal", label: "Principal" },
 ];
 
 const AVAILABILITY_STATUSES = [
@@ -101,12 +106,34 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
     // Fetch job designations from the database, filtered by industry if available
     const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industryId);
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
     const updateField = <K extends keyof BasicInfoData>(key: K, value: BasicInfoData[K]) => {
         onChange({ ...data, [key]: value });
+        // Clear error for this field when user types
+        if (errors[key]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[key];
+                return newErrors;
+            });
+        }
     };
 
-    const canProceed = data.firstName && data.lastName && data.email && data.phone &&
-        data.address && data.currentPosition;
+    const handleNextStep = () => {
+        const result = basicInfoSchema.safeParse(data);
+        if (result.success) {
+            setErrors({});
+            onNext();
+        } else {
+            const newErrors: Record<string, string> = {};
+            result.error.issues.forEach(issue => {
+                const pathKey = issue.path.join('.');
+                newErrors[pathKey] = issue.message;
+            });
+            setErrors(newErrors);
+        }
+    };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -135,7 +162,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
             >
                 <div className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <FormField label="First Name" id="firstName" required>
+                        <FormField label="First Name" id="firstName" required error={errors.firstName}>
                             <Input
                                 id="firstName"
                                 value={data.firstName}
@@ -143,7 +170,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 placeholder="John"
                             />
                         </FormField>
-                        <FormField label="Last Name" id="lastName" required>
+                        <FormField label="Last Name" id="lastName" required error={errors.lastName}>
                             <Input
                                 id="lastName"
                                 value={data.lastName}
@@ -183,7 +210,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                        <FormField label="Email" id="email" required>
+                        <FormField label="Email" id="email" required error={errors.email}>
                             <Input
                                 id="email"
                                 type="email"
@@ -192,7 +219,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 placeholder="john@example.com"
                             />
                         </FormField>
-                        <FormField label="Phone" id="phone" required>
+                        <FormField label="Phone" id="phone" required error={errors.phone}>
                             <Input
                                 id="phone"
                                 value={data.phone}
@@ -202,7 +229,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                         </FormField>
                     </div>
 
-                    <FormField label="Alternative Phone" id="alternativePhone">
+                    <FormField label="Alternative Phone" id="alternativePhone" error={errors.alternativePhone}>
                         <Input
                             id="alternativePhone"
                             value={data.alternativePhone}
@@ -211,7 +238,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                         />
                     </FormField>
 
-                    <FormField label="Address" id="address" required>
+                    <FormField label="Address" id="address" required error={errors.address}>
                         <Textarea
                             id="address"
                             value={data.address}
@@ -221,7 +248,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                         />
                     </FormField>
 
-                    <FormField label="Country" id="country">
+                    <FormField label="Country" id="country" error={errors.country}>
                         <Select
                             value={data.country}
                             onValueChange={(value) => updateField("country", value)}
@@ -246,7 +273,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                 description="Your current role and experience"
             >
                 <div className="space-y-4">
-                    <FormField label="Current Position" id="currentPosition" required>
+                    <FormField label="Current Position" id="currentPosition" required error={errors.currentPosition}>
                         {loadingDesignations ? (
                             <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -283,7 +310,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                     </FormField>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                        <FormField label="Years of Experience" id="yearsOfExperience">
+                        <FormField label="Years of Experience" id="yearsOfExperience" error={errors.yearsOfExperience}>
                             <Input
                                 id="yearsOfExperience"
                                 type="number"
@@ -301,7 +328,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 placeholder="Enter years"
                             />
                         </FormField>
-                        <FormField label="Experience Level" id="experienceLevel">
+                        <FormField label="Current Experience Level" id="experienceLevel" error={errors.experienceLevel}>
                             <Select
                                 value={data.experienceLevel}
                                 onValueChange={(value) => updateField("experienceLevel", value as BasicInfoData["experienceLevel"])}
@@ -320,7 +347,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                         </FormField>
                     </div>
 
-                    <FormField label="Highest Qualification" id="highestQualification">
+                    <FormField label="Highest Qualification" id="highestQualification" error={errors.highestQualification}>
                         <Select
                             value={data.highestQualification}
                             onValueChange={(value) => updateField("highestQualification", value as BasicInfoData["highestQualification"])}
@@ -346,7 +373,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
             >
                 <div className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <FormField label="Availability Status" id="availabilityStatus">
+                        <FormField label="Availability Status" id="availabilityStatus" error={errors.availabilityStatus}>
                             <Select
                                 value={data.availabilityStatus}
                                 onValueChange={(value) => updateField("availabilityStatus", value as BasicInfoData["availabilityStatus"])}
@@ -363,7 +390,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 </SelectContent>
                             </Select>
                         </FormField>
-                        <FormField label="Notice Period" id="noticePeriod">
+                        <FormField label="Notice Period" id="noticePeriod" error={errors.noticePeriod}>
                             <Select
                                 value={data.noticePeriod}
                                 onValueChange={(value) => updateField("noticePeriod", value)}
@@ -383,7 +410,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                        <FormField label="Employment Type" id="employmentType">
+                        <FormField label="Employment Type" id="employmentType" error={errors.employmentType}>
                             <Select
                                 value={data.employmentType}
                                 onValueChange={(value) => updateField("employmentType", value as BasicInfoData["employmentType"])}
@@ -400,7 +427,7 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 </SelectContent>
                             </Select>
                         </FormField>
-                        <FormField label="Expected Monthly Salary (LKR)" id="expectedMonthlySalary">
+                        <FormField label="Expected Monthly Salary (LKR)" id="expectedMonthlySalary" error={errors.expectedMonthlySalary}>
                             <Input
                                 id="expectedMonthlySalary"
                                 type="number"
@@ -418,8 +445,8 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                 currentStep={2}
                 totalSteps={10}
                 onPrevious={onPrevious}
-                onNext={onNext}
-                canProceed={!!canProceed}
+                onNext={handleNextStep}
+                canProceed={true}
             />
         </div >
     );

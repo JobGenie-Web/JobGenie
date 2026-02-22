@@ -43,7 +43,9 @@ Extract this structure:
     ],
     "educations": [
         {
-            "degreeDiploma": "string",
+            "educationType": "academic or professional",
+            "degreeDiploma": "string (for academic qualifications like BSc, MSc, etc., use null if professional)",
+            "professionalQualification": "string (for professional qualifications like ACCA, CIMA, etc., use null if academic)",
             "institution": "string",
             "status": "complete or incomplete"
         }

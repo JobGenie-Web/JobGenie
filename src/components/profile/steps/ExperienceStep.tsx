@@ -10,6 +10,9 @@ import { FormSection } from "../shared/FormSection";
 import { DynamicList } from "../shared/DynamicList";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { WorkExperienceData } from "@/lib/validations/profile-schema";
+import { workExperienceSchema } from "@/lib/validations/profile-schema";
+import { useState } from "react";
+import { z } from "zod";
 
 interface ExperienceStepProps {
     experiences: WorkExperienceData[];
@@ -57,12 +60,38 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
         const updated = [...experiences];
         updated[index] = { ...updated[index], [field]: value };
 
+        // Clear error if present
+        if (errors[`${index}.${field as string}`]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[`${index}.${field as string}`];
+                return newErrors;
+            });
+        }
+
         // Clear end date if current is toggled on
         if (field === "isCurrent" && value === true) {
             updated[index].endDate = null;
         }
 
         onChange(updated);
+    };
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const handleNextStep = () => {
+        const result = z.array(workExperienceSchema).safeParse(experiences);
+        if (result.success) {
+            setErrors({});
+            onNext();
+        } else {
+            const newErrors: Record<string, string> = {};
+            result.error.issues.forEach(issue => {
+                const pathKey = issue.path.join('.');
+                newErrors[pathKey] = issue.message;
+            });
+            setErrors(newErrors);
+        }
     };
 
     return (
@@ -77,7 +106,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                     onRemove={handleRemove}
                     addLabel="Add Experience"
                     emptyMessage="No work experience added yet. Click below to add your first position."
-                    maxItems={10}
+                    maxItems={100}
                     renderItem={(exp, index) => (
                         <div className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-2">
@@ -91,6 +120,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                                         onChange={(e) => handleUpdate(index, "jobTitle", e.target.value)}
                                         placeholder="e.g., Senior Developer"
                                     />
+                                    {errors[`${index}.jobTitle`] && <p className="text-sm text-destructive">{errors[`${index}.jobTitle`]}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor={`company-${index}`}>
@@ -102,6 +132,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                                         onChange={(e) => handleUpdate(index, "company", e.target.value)}
                                         placeholder="Company name"
                                     />
+                                    {errors[`${index}.company`] && <p className="text-sm text-destructive">{errors[`${index}.company`]}</p>}
                                 </div>
                             </div>
 
@@ -152,6 +183,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                                     onChange={(e) => handleUpdate(index, "location", e.target.value)}
                                     placeholder="e.g., Colombo, Sri Lanka"
                                 />
+                                {errors[`${index}.location`] && <p className="text-sm text-destructive">{errors[`${index}.location`]}</p>}
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
@@ -163,6 +195,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                                         value={exp.startDate || ""}
                                         onChange={(e) => handleUpdate(index, "startDate", e.target.value)}
                                     />
+                                    {errors[`${index}.startDate`] && <p className="text-sm text-destructive">{errors[`${index}.startDate`]}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor={`endDate-${index}`}>End Month</Label>
@@ -173,6 +206,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                                         onChange={(e) => handleUpdate(index, "endDate", e.target.value)}
                                         disabled={exp.isCurrent}
                                     />
+                                    {errors[`${index}.endDate`] && <p className="text-sm text-destructive">{errors[`${index}.endDate`]}</p>}
                                 </div>
                             </div>
 
@@ -204,7 +238,7 @@ export function ExperienceStep({ experiences, onChange, onNext, onPrevious }: Ex
                 currentStep={3}
                 totalSteps={10}
                 onPrevious={onPrevious}
-                onNext={onNext}
+                onNext={handleNextStep}
             />
         </div>
     );

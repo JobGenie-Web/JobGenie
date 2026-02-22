@@ -8,6 +8,9 @@ import { FormSection } from "../shared/FormSection";
 import { DynamicList } from "../shared/DynamicList";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { EducationData } from "@/lib/validations/profile-schema";
+import { ACADEMIC_EDUCATION_STATUSES, PROFESSIONAL_EDUCATION_STATUSES, educationSchema } from "@/lib/validations/profile-schema";
+import { useState } from "react";
+import { z } from "zod";
 
 interface EducationStepProps {
     educations: EducationData[];
@@ -21,13 +24,7 @@ const EDUCATION_TYPES = [
     { value: "professional", label: "Professional" },
 ];
 
-const EDUCATION_STATUSES = [
-    { value: "incomplete", label: "In Progress / Incomplete" },
-    { value: "first_class", label: "First Class" },
-    { value: "second_class_upper", label: "Second Class Upper" },
-    { value: "second_class_lower", label: "Second Class Lower" },
-    { value: "general", label: "General" },
-];
+
 
 const emptyEducation: EducationData = {
     educationType: "academic",
@@ -48,7 +45,33 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
     const handleUpdate = (index: number, field: keyof EducationData, value: unknown) => {
         const updated = [...educations];
         updated[index] = { ...updated[index], [field]: value };
+
+        if (errors[`${index}.${field as string}`]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[`${index}.${field as string}`];
+                return newErrors;
+            });
+        }
+
         onChange(updated);
+    };
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const handleNextStep = () => {
+        const result = z.array(educationSchema).safeParse(educations);
+        if (result.success) {
+            setErrors({});
+            onNext();
+        } else {
+            const newErrors: Record<string, string> = {};
+            result.error.issues.forEach(issue => {
+                const pathKey = issue.path.join('.');
+                newErrors[pathKey] = issue.message;
+            });
+            setErrors(newErrors);
+        }
     };
 
     return (
@@ -63,7 +86,7 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
                     onRemove={handleRemove}
                     addLabel="Add Education"
                     emptyMessage="No education added yet. Click below to add your qualifications."
-                    maxItems={10}
+                    maxItems={100}
                     renderItem={(edu, index) => (
                         <div className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-2">
@@ -87,21 +110,66 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor={`status-${index}`}>Status</Label>
-                                    <Select
-                                        value={edu.status}
-                                        onValueChange={(value) => handleUpdate(index, "status", value)}
-                                    >
-                                        <SelectTrigger id={`status-${index}`}>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {EDUCATION_STATUSES.map((status) => (
-                                                <SelectItem key={status.value} value={status.value}>
-                                                    {status.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-2">
+                                        <Select
+                                            value={
+                                                edu.educationType === "academic"
+                                                    ? ACADEMIC_EDUCATION_STATUSES.some(s => s.value === edu.status)
+                                                        ? edu.status
+                                                        : "other"
+                                                    : PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === edu.status)
+                                                        ? edu.status
+                                                        : "other"
+                                            }
+                                            onValueChange={(value) => {
+                                                if (value !== "other") {
+                                                    handleUpdate(index, "status", value);
+                                                } else {
+                                                    handleUpdate(index, "status", "");
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger id={`status-${index}`} className={(edu.educationType === "academic" && !ACADEMIC_EDUCATION_STATUSES.some(s => s.value === edu.status)) || (edu.educationType === "professional" && !PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === edu.status)) ? "w-[40%]" : "w-full"}>
+                                                <SelectValue placeholder="Select Status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {edu.educationType === "academic"
+                                                    ? [
+                                                        ...ACADEMIC_EDUCATION_STATUSES,
+                                                        { value: "other", label: "Other (Please specify)" }
+                                                    ].map((status) => (
+                                                        <SelectItem key={status.value} value={status.value}>
+                                                            {status.label}
+                                                        </SelectItem>
+                                                    ))
+                                                    : [
+                                                        ...PROFESSIONAL_EDUCATION_STATUSES,
+                                                        { value: "other", label: "Other (Please specify)" }
+                                                    ].map((status) => (
+                                                        <SelectItem key={status.value} value={status.value}>
+                                                            {status.label}
+                                                        </SelectItem>
+                                                    ))
+                                                }
+                                            </SelectContent>
+                                        </Select>
+
+                                        {/* Show text input if custom value or 'other' is selected */}
+                                        {(
+                                            edu.educationType === "academic" && !ACADEMIC_EDUCATION_STATUSES.some(s => s.value === edu.status)
+                                            ||
+                                            edu.educationType === "professional" && !PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === edu.status)
+                                        ) && (
+                                                <Input
+                                                    id={`status-custom-${index}`}
+                                                    value={edu.status}
+                                                    onChange={(e) => handleUpdate(index, "status", e.target.value)}
+                                                    placeholder="Specify status..."
+                                                    className="flex-1"
+                                                />
+                                            )}
+                                    </div>
+                                    {errors[`${index}.status`] && <p className="text-sm text-destructive">{errors[`${index}.status`]}</p>}
                                 </div>
                             </div>
 
@@ -115,6 +183,7 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
                                     onChange={(e) => handleUpdate(index, "degreeDiploma", e.target.value)}
                                     placeholder="e.g., BSc in Computer Science"
                                 />
+                                {errors[`${index}.degreeDiploma`] && <p className="text-sm text-destructive">{errors[`${index}.degreeDiploma`]}</p>}
                             </div>
 
                             <div className="space-y-2">
@@ -127,6 +196,7 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
                                     onChange={(e) => handleUpdate(index, "institution", e.target.value)}
                                     placeholder="e.g., University of Colombo"
                                 />
+                                {errors[`${index}.institution`] && <p className="text-sm text-destructive">{errors[`${index}.institution`]}</p>}
                             </div>
                         </div>
                     )}
@@ -137,7 +207,7 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
                 currentStep={4}
                 totalSteps={10}
                 onPrevious={onPrevious}
-                onNext={onNext}
+                onNext={handleNextStep}
             />
         </div>
     );

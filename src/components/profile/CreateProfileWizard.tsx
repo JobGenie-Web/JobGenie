@@ -148,30 +148,51 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         }
 
         // Educations - Map to standard educations AND industry-specific states
-        // This ensures data appears correctly regardless of which industry is selected
         if (data.educations?.length) {
-            const mappedEducations = data.educations.map((edu) => ({
-                degreeDiploma: edu.degreeDiploma || "",
-                institution: edu.institution || "",
-                // Map 'complete' or 'completed' to 'general', otherwise 'incomplete'
-                status: (edu.status?.toLowerCase() === "complete" || edu.status?.toLowerCase() === "completed")
+            const academicEdus: FinanceAcademicEducationData[] = [];
+            const professionalEdus: FinanceProfessionalEducationData[] = [];
+            const standardEdus: EducationData[] = [];
+
+            data.educations.forEach((edu) => {
+                const status = (edu.status?.toLowerCase() === "complete" || edu.status?.toLowerCase() === "completed")
                     ? "general" as const
-                    : "incomplete" as const,
-            }));
+                    : "incomplete" as const;
+
+                const type = (edu.educationType?.toLowerCase() === "professional") ? "professional" as const : "academic" as const;
+
+                // For standard education list (used by IT/Other)
+                standardEdus.push({
+                    educationType: type,
+                    degreeDiploma: type === "professional" ? (edu.professionalQualification || edu.degreeDiploma || "") : (edu.degreeDiploma || ""),
+                    institution: edu.institution || "",
+                    status
+                });
+
+                if (type === "academic") {
+                    academicEdus.push({
+                        degreeDiploma: edu.degreeDiploma || "",
+                        institution: edu.institution || "",
+                        status
+                    });
+                } else {
+                    professionalEdus.push({
+                        professionalQualification: edu.professionalQualification || edu.degreeDiploma || "",
+                        institution: edu.institution || "",
+                        status
+                    });
+                }
+            });
 
             // Standard education (IT and other industries)
-            setEducations(
-                mappedEducations.map((edu) => ({
-                    ...edu,
-                    educationType: "academic" as const,
-                }))
-            );
+            setEducations(standardEdus);
 
-            // Finance industry academic education
-            setFinanceAcademicEducation(mappedEducations);
+            // Finance industry
+            setFinanceAcademicEducation(academicEdus);
+            setFinanceProfessionalEducation(professionalEdus);
 
-            // Banking industry academic education
-            setBankingAcademicEducation(mappedEducations);
+            // Banking industry
+            setBankingAcademicEducation(academicEdus);
+            setBankingProfessionalEducation(professionalEdus);
         }
 
         // Certificates (for IT)

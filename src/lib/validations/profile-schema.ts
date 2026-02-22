@@ -49,24 +49,18 @@ export const professionalQualificationSchema = z.enum([
     "no_formal_education"
 ]);
 
-// ============================================
-// FINANCE & BANKING EDUCATION STATUS ENUMS
-// ============================================
-export const financeEducationStatusSchema = z.enum([
-    "incomplete",
-    "first_class",
-    "second_class_upper",
-    "second_class_lower",
-    "general"
-]);
+export const ACADEMIC_EDUCATION_STATUSES = [
+    { value: "incomplete", label: "In Progress / Incomplete" },
+    { value: "first_class", label: "First Class" },
+    { value: "second_class_upper", label: "Second Class Upper" },
+    { value: "second_class_lower", label: "Second Class Lower" },
+    { value: "general", label: "General" },
+];
 
-export const bankingEducationStatusSchema = z.enum([
-    "incomplete",
-    "first_class",
-    "second_class_upper",
-    "second_class_lower",
-    "general"
-]);
+export const PROFESSIONAL_EDUCATION_STATUSES = [
+    { value: "partially_completed", label: "Partially Completed" },
+    { value: "completed", label: "Completed" },
+];
 
 // ============================================
 // WORK EXPERIENCE SCHEMA
@@ -94,7 +88,7 @@ export const educationSchema = z.object({
     educationType: educationTypeSchema.default("academic"),
     degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: educationStatusSchema.default("incomplete"), // Changed from 'complete' to match schema enum
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type EducationData = z.infer<typeof educationSchema>;
@@ -147,7 +141,7 @@ export const financeAcademicEducationSchema = z.object({
     id: z.string().optional(),
     degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: financeEducationStatusSchema.default("incomplete"),
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type FinanceAcademicEducationData = z.infer<typeof financeAcademicEducationSchema>;
@@ -156,7 +150,7 @@ export const financeProfessionalEducationSchema = z.object({
     id: z.string().optional(),
     professionalQualification: z.string().min(1, "Professional qualification is required").max(300),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: financeEducationStatusSchema.default("incomplete"),
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type FinanceProfessionalEducationData = z.infer<typeof financeProfessionalEducationSchema>;
@@ -168,7 +162,7 @@ export const bankingAcademicEducationSchema = z.object({
     id: z.string().optional(),
     degreeDiploma: z.string().min(1, "Degree/Diploma is required").max(200),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: bankingEducationStatusSchema.default("incomplete"),
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type BankingAcademicEducationData = z.infer<typeof bankingAcademicEducationSchema>;
@@ -177,7 +171,7 @@ export const bankingProfessionalEducationSchema = z.object({
     id: z.string().optional(),
     professionalQualification: z.string().min(1, "Professional qualification is required").max(300),
     institution: z.string().min(1, "Institution is required").max(200),
-    status: bankingEducationStatusSchema.default("incomplete"),
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type BankingProfessionalEducationData = z.infer<typeof bankingProfessionalEducationSchema>;
@@ -187,7 +181,7 @@ export const bankingSpecializedTrainingSchema = z.object({
     certificateName: z.string().min(1, "Certificate/Training name is required").max(300),
     issuingAuthority: z.string().min(1, "Issuing Authority/Institution is required").max(200),
     certificateIssueMonth: z.string().optional(),
-    status: bankingEducationStatusSchema.default("incomplete"),
+    status: z.string().min(1, "Status is required").default("incomplete"),
 });
 
 export type BankingSpecializedTrainingData = z.infer<typeof bankingSpecializedTrainingSchema>;
@@ -261,7 +255,9 @@ export const cvExtractionResultSchema = z.object({
         isCurrent: z.boolean().optional(),
     })).optional(),
     educations: z.array(z.object({
+        educationType: z.string().optional(),
         degreeDiploma: z.string().optional(),
+        professionalQualification: z.string().optional(),
         institution: z.string().optional(),
         status: z.string().optional(),
     })).optional(),
