@@ -25,7 +25,7 @@ interface TimeSlot {
 }
 
 import { formatUTCTime } from "@/lib/date-utils";
-
+import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface Invitation {
     id: string;
@@ -397,7 +397,7 @@ export default function InvitationsClient() {
                                                         </div>
                                                         <div className="flex items-center gap-1.5">
                                                             <Phone className="h-3 w-3" />
-                                                            {selectedInvitation.candidate.phone}
+                                                            {formatPhoneNumber(selectedInvitation.candidate.phone)}
                                                         </div>
                                                     </CardDescription>
                                                 </div>
@@ -417,7 +417,7 @@ export default function InvitationsClient() {
                                             </div>
                                             <div>
                                                 <p className="text-xs font-medium text-muted-foreground">Industry</p>
-                                                <p className="text-base">{selectedInvitation.industry}</p>
+                                                <p className="text-base">{formatIndustry(selectedInvitation.industry)}</p>
                                             </div>
                                         </div>
 

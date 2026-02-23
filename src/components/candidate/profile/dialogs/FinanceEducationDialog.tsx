@@ -35,6 +35,8 @@ import {
     financeProfessionalEducationSchema,
     type FinanceAcademicEducationData,
     type FinanceProfessionalEducationData,
+    ACADEMIC_EDUCATION_STATUSES,
+    PROFESSIONAL_EDUCATION_STATUSES
 } from "@/lib/validations/profile-schema";
 import {
     addFinanceAcademicEducation,
@@ -161,7 +163,7 @@ export function FinanceEducationDialog({
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {isEditing ? "Edit" : "Add"} Finance {isAcademic ? "Academic" : "Professional"} Education
+                        {isEditing ? "Edit" : "Add"} {isAcademic ? "Academic" : "Professional"} Education
                     </DialogTitle>
                     <DialogDescription>
                         {isEditing
@@ -223,20 +225,45 @@ export function FinanceEducationDialog({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Status *</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select status" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="incomplete">Incomplete</SelectItem>
-                                            <SelectItem value="first_class">First Class</SelectItem>
-                                            <SelectItem value="second_class_upper">Second Class Upper</SelectItem>
-                                            <SelectItem value="second_class_lower">Second Class Lower</SelectItem>
-                                            <SelectItem value="general">General</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-2">
+                                        <Select
+                                            onValueChange={(val) => {
+                                                if (val !== "other") {
+                                                    field.onChange(val);
+                                                } else {
+                                                    field.onChange("");
+                                                }
+                                            }}
+                                            value={
+                                                isAcademic
+                                                    ? ACADEMIC_EDUCATION_STATUSES.some(s => s.value === field.value) ? field.value : "other"
+                                                    : PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === field.value) ? field.value : "other"
+                                            }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className={(isAcademic && !ACADEMIC_EDUCATION_STATUSES.some(s => s.value === field.value)) || (!isAcademic && !PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === field.value)) ? "w-[40%]" : "w-full"}>
+                                                    <SelectValue placeholder="Select status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {(isAcademic ? ACADEMIC_EDUCATION_STATUSES : PROFESSIONAL_EDUCATION_STATUSES).map((status) => (
+                                                    <SelectItem key={status.value} value={status.value}>
+                                                        {status.label}
+                                                    </SelectItem>
+                                                ))}
+                                                <SelectItem value="other">Other (Please specify)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        {((isAcademic && !ACADEMIC_EDUCATION_STATUSES.some(s => s.value === field.value)) || (!isAcademic && !PROFESSIONAL_EDUCATION_STATUSES.some(s => s.value === field.value))) && (
+                                            <Input
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Specify status..."
+                                                className="flex-1"
+                                            />
+                                        )}
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

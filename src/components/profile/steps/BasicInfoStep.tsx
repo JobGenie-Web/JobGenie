@@ -75,7 +75,7 @@ const QUALIFICATION_OPTIONS = [
 function FormField({
     label, id, required, children, error,
 }: {
-    label: string; id: string; required?: boolean; children: React.ReactNode; error?: string;
+    label: React.ReactNode; id: string; required?: boolean; children: React.ReactNode; error?: string;
 }) {
     return (
         <div className="space-y-2">
@@ -225,22 +225,24 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 className="bg-muted cursor-not-allowed"
                             />
                         </FormField>
-                        <FormField label="Phone" id="phone" required error={errors.phone}>
+                        <FormField label={<>Phone <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></>} id="phone" required error={errors.phone}>
                             <Input
                                 id="phone"
                                 value={data.phone}
+                                maxLength={15}
                                 onChange={(e) => updateField("phone", e.target.value)}
-                                placeholder="+94 77 123 4567"
+                                placeholder="+94771234567"
                             />
                         </FormField>
                     </div>
 
-                    <FormField label="Alternative Phone" id="alternativePhone" error={errors.alternativePhone}>
+                    <FormField label={<>Alternative Phone <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></>} id="alternativePhone" error={errors.alternativePhone}>
                         <Input
                             id="alternativePhone"
                             value={data.alternativePhone}
+                            maxLength={15}
                             onChange={(e) => updateField("alternativePhone", e.target.value)}
-                            placeholder="Optional"
+                            placeholder="+94771234567 (Optional)"
                         />
                     </FormField>
 

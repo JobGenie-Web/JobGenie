@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
 import { formatUTCTime } from "@/lib/date-utils";
-
+import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface TimeSlot {
     date: string;
@@ -309,7 +309,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                     <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                                         <span className="flex items-center gap-1.5">
                                             <Building2 className="h-4 w-4" />
-                                            {invitation.industry}
+                                            {formatIndustry(invitation.industry)}
                                         </span>
                                         {invitation.company.headoffice_location && (
                                             <>
@@ -407,7 +407,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1.5"
                                         >
                                             <Phone className="h-3.5 w-3.5" />
-                                            {invitation.employer.phone}
+                                            {formatPhoneNumber(invitation.employer.phone)}
                                         </a>
                                     )}
                                 </div>

@@ -13,7 +13,7 @@ export const INDUSTRY_OPTIONS = [
 ] as const;
 
 export const IT_INDUSTRIES = ["it_software"] as const;
-export const BANKING_FINANCE_INDUSTRIES = ["banking", "finance_investment", "insurance", "accounting"] as const;
+export const BANKING_FINANCE_INDUSTRIES = ["banking", "finance_investment"] as const;
 
 // ============================================
 // BASE SCHEMAS
@@ -34,7 +34,7 @@ export const educationStatusSchema = z.enum(["incomplete", "first_class", "secon
 
 export const availabilityStatusSchema = z.enum(["available", "open_to_opportunities", "not_looking"]);
 
-export const industryTypeSchema = z.enum(["it_software", "banking", "finance_investment", "insurance", "fintech", "accounting", "other"]);
+export const industryTypeSchema = z.enum(["it_software", "banking", "finance_investment", "other"]);
 
 export const professionalQualificationSchema = z.enum([
     "bachelors_degree",
@@ -193,8 +193,20 @@ export const basicInfoSchema = z.object({
     firstName: z.string().min(1, "First name is required").max(100),
     lastName: z.string().min(1, "Last name is required").max(100),
     email: z.string().email("Invalid email address").max(255),
-    phone: z.string().min(1, "Phone number is required").max(20),
-    alternativePhone: z.string().max(20).optional(),
+    phone: z
+        .string()
+        .max(15, "Phone number cannot exceed 15 characters")
+        .transform((val) => val.replace(/[\s-]/g, ""))
+        .pipe(z.string().regex(/^\+94\d{9}$/, "Phone number must be in the format +947XXXXXXXX")),
+    alternativePhone: z
+        .string()
+        .max(15, "Phone number cannot exceed 15 characters")
+        .optional()
+        .transform((val) => {
+            if (!val) return "";
+            return val.replace(/[\s-]/g, "");
+        })
+        .pipe(z.string().regex(/^\+94\d{9}$/, "Phone number must be in the format +947XXXXXXXX").or(z.literal(""))),
     address: z.string().min(1, "Address is required"),
     country: z.string().max(100).optional(),
     currentPosition: z.string().min(1, "Current position is required").max(200),

@@ -316,9 +316,9 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                                 name="phone"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Phone *</FormLabel>
+                                        <FormLabel>Phone * <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></FormLabel>
                                         <FormControl>
-                                            <Input placeholder="+94 XX XXX XXXX" {...field} />
+                                            <Input placeholder="+94771234567" maxLength={15} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -331,9 +331,9 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                             name="alternative_phone"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Alternative Phone</FormLabel>
+                                    <FormLabel>Alternative Phone <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></FormLabel>
                                     <FormControl>
-                                        <Input placeholder="+94 XX XXX XXXX (Optional)" {...field} />
+                                        <Input placeholder="+94771234567 (Optional)" maxLength={15} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

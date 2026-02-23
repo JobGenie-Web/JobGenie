@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Phone, Briefcase, Building2, MapPin, User } from "lucide-react";
 import { getEmployerProfile } from "@/app/actions/employer-profiles";
+import { formatPhoneNumber } from "@/lib/utils";
 
 export const metadata: Metadata = {
     title: "Employer Profile | JobGenie",
@@ -100,7 +101,7 @@ export default async function EmployerProfilePage() {
                                     <Phone className="h-5 w-5 text-muted-foreground" />
                                     <div>
                                         <p className="text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium">{employerProfile.phone}</p>
+                                        <p className="font-medium">{formatPhoneNumber(employerProfile.phone)}</p>
                                     </div>
                                 </div>
                             </>

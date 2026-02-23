@@ -30,7 +30,7 @@ function FormField({
     children,
     required = true,
 }: {
-    label: string;
+    label: React.ReactNode;
     id: string;
     error?: string[];
     children: React.ReactNode;
@@ -245,12 +245,13 @@ export function CandidateSignupForm() {
 
             {/* Contact Number and Email - Row */}
             <div className="grid grid-cols-2 gap-4">
-                <FormField label="Contact No" id="contactNo" error={errors.contactNo}>
+                <FormField label={<>Contact No <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></>} id="contactNo" error={errors.contactNo}>
                     <Input
                         id="contactNo"
                         name="contactNo"
                         type="tel"
-                        placeholder="+94 77 123 4567"
+                        maxLength={15}
+                        placeholder="+94771234567"
                         value={formData.contactNo}
                         onChange={(e) => handleChange("contactNo", e.target.value)}
                         onBlur={(e) => validateField("contactNo", e.target.value)}

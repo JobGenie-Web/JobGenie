@@ -12,7 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { CandidateProfileView } from "./CandidateProfileView";
-import { cn } from "@/lib/utils";
+import { cn, formatIndustry } from "@/lib/utils";
 
 interface Candidate {
     id: string;
@@ -197,7 +197,7 @@ export function CandidateTable({ candidates }: CandidateTableProps) {
                                             <TableCell className="text-muted-foreground">
                                                 {candidate.email}
                                             </TableCell>
-                                            <TableCell>{candidate.industry}</TableCell>
+                                            <TableCell>{formatIndustry(candidate.industry)}</TableCell>
                                             <TableCell>{candidate.current_position}</TableCell>
                                             <TableCell>
                                                 {candidate.years_of_experience

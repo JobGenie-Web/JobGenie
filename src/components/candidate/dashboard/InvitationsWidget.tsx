@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Mail, Clock, ChevronRight, CheckCircle, XCircle, AlertCircle, Ban } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatIndustry } from "@/lib/utils";
 import type { RecentInvitation, InvitationStatus } from "@/app/actions/candidate-dashboard-data";
 
 interface InvitationsWidgetProps {
@@ -110,7 +110,7 @@ export function InvitationsWidget({ invitations, totalCount }: InvitationsWidget
                                         {inv.job_title}
                                     </p>
                                     <p className="text-xs text-muted-foreground truncate">
-                                        {inv.company_name || inv.industry || "Company"} • {inv.industry || "Industry"}
+                                        {inv.company_name || formatIndustry(inv.industry) || "Company"} • {formatIndustry(inv.industry) || "Industry"}
                                     </p>
                                 </div>
 

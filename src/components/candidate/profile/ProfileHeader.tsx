@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CandidateProfile } from "@/types/profile-types";
 import { BasicInfoDialog } from "./dialogs/BasicInfoDialog";
+import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface ProfileHeaderProps {
     profile: CandidateProfile;
@@ -113,7 +114,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Phone className="h-4 w-4 flex-shrink-0" />
-                            <span>{profile.phone}</span>
+                            <span>{formatPhoneNumber(profile.phone)}{profile.alternative_phone ? ` / ${formatPhoneNumber(profile.alternative_phone)}` : ''}</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <FileText className="h-4 w-4 flex-shrink-0" />
@@ -127,7 +128,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                         )}
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Calendar className="h-4 w-4 flex-shrink-0" />
-                            <span>{profile.industry}</span>
+                            <span>{formatIndustry(profile.industry)}</span>
                         </div>
                         {profile.highest_qualification && (
                             <div className="flex items-center gap-2 text-muted-foreground">

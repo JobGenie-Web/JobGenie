@@ -12,7 +12,7 @@ import {
     ChevronRight,
     Building2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatIndustry } from "@/lib/utils";
 import type { CandidateDashboardData } from "@/app/actions/candidate-dashboard-data";
 
 interface ProfileHeroWidgetProps {
@@ -165,7 +165,7 @@ export function ProfileHeroWidget({ data }: ProfileHeroWidgetProps) {
                     {industry && (
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
                             <Building2 className="h-3 w-3" />
-                            {industry}
+                            {formatIndustry(industry)}
                         </span>
                     )}
                     {country && (

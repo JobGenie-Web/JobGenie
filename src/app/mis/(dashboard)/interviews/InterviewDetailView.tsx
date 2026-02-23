@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RescheduleModal } from "./RescheduleModal";
 import { formatUTCTime, formatDate } from "@/lib/date-utils";
-
+import { formatIndustry } from "@/lib/utils";
 
 interface InterviewDetailViewProps {
     interviewId: string | null;
@@ -245,7 +245,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-lg font-semibold truncate">{interview.company.company_name}</h3>
-                                            <p className="text-sm text-muted-foreground">{interview.company.industry}</p>
+                                            <p className="text-sm text-muted-foreground">{formatIndustry(interview.company.industry)}</p>
                                             {interview.company.headoffice_location && (
                                                 <p className="text-xs text-muted-foreground mt-1">{interview.company.headoffice_location}</p>
                                             )}
@@ -291,7 +291,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Industry</p>
-                                        <p className="font-medium text-sm">{interview.industry}</p>
+                                        <p className="font-medium text-sm">{formatIndustry(interview.industry)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground mb-1">Mode</p>

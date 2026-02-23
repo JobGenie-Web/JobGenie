@@ -90,9 +90,9 @@ export const candidateRegistrationSchema = z
 
         contactNo: z
             .string()
-            .min(9, "Contact number must be at least 9 digits")
-            .max(15, "Contact number must be less than 15 digits")
-            .regex(/^[+]?[\d\s-]+$/, "Please enter a valid phone number"),
+            .max(15, "Phone number cannot exceed 15 characters")
+            .transform((val) => val.replace(/[\s-]/g, ""))
+            .pipe(z.string().regex(/^\+94\d{9}$/, "Phone number must be in the format +947XXXXXXXX")),
 
         email: z
             .string()

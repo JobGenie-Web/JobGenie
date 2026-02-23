@@ -23,6 +23,7 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { EmployerApprovalActions } from "@/components/mis/EmployerApprovalActions";
 import { EmployerProfileView } from "./EmployerProfileView";
+import { formatIndustry } from "@/lib/utils";
 
 interface Company {
     id: string;
@@ -111,7 +112,7 @@ export function EmployerTable({ companies }: EmployerTableProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-mono text-xs">{company.business_registration_no}</TableCell>
-                                    <TableCell>{company.industry}</TableCell>
+                                    <TableCell>{formatIndustry(company.industry)}</TableCell>
                                     <TableCell className="text-muted-foreground">
                                         {formatDistanceToNow(new Date(company.created_at), { addSuffix: true })}
                                     </TableCell>

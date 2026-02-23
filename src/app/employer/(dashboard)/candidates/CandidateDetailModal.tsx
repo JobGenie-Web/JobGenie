@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { InviteCandidateButton } from "@/components/employer/InviteCandidateButton";
+import { formatIndustry, sortEducations, formatPhoneNumber } from "@/lib/utils";
 
 interface CandidateData {
     id: string;
@@ -160,12 +161,12 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <User className="h-4 w-4 text-muted-foreground" />
-                                                <span>{candidate.phone}</span>
+                                                <span>{formatPhoneNumber(candidate.phone)}</span>
                                             </div>
                                             {candidate.alternative_phone && (
                                                 <div className="flex items-center gap-2">
                                                     <User className="h-4 w-4 text-muted-foreground" />
-                                                    <span>{candidate.alternative_phone} (Alt)</span>
+                                                    <span>{formatPhoneNumber(candidate.alternative_phone)} (Alt)</span>
                                                 </div>
                                             )}
                                             <div className="flex items-center gap-2">
@@ -207,7 +208,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <p className="text-muted-foreground">Industry</p>
-                                        <p className="font-medium">{candidate.industry}</p>
+                                        <p className="font-medium">{formatIndustry(candidate.industry)}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground">Current Position</p>
@@ -315,7 +316,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                             <h3 className="text-lg font-semibold">Education</h3>
                                         </div>
                                         <div className="space-y-3">
-                                            {candidate.educations.map((edu, idx) => (
+                                            {sortEducations(candidate.educations).map((edu, idx) => (
                                                 <div key={idx} className="text-sm">
                                                     <p className="font-medium">{edu.degree_diploma}</p>
                                                     <p className="text-muted-foreground">{edu.institution}</p>

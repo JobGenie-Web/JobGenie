@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { formatUTCTime, formatDate } from "@/lib/date-utils";
+import { formatIndustry } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -81,7 +82,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
                 interview.candidate.first_name.toLowerCase().includes(searchLower) ||
                 interview.candidate.last_name.toLowerCase().includes(searchLower) ||
                 interview.company.company_name.toLowerCase().includes(searchLower) ||
-                interview.industry.toLowerCase().includes(searchLower) ||
+                formatIndustry(interview.industry).toLowerCase().includes(searchLower) ||
                 interview.job_designation.toLowerCase().includes(searchLower);
 
             if (!matchesSearch) return false;
@@ -336,7 +337,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
                                     <TableCell>
                                         <div>
                                             <div className="font-medium text-sm">{interview.job_designation}</div>
-                                            <div className="text-xs text-muted-foreground">{interview.industry}</div>
+                                            <div className="text-xs text-muted-foreground">{formatIndustry(interview.industry)}</div>
                                         </div>
                                     </TableCell>
                                     <TableCell>

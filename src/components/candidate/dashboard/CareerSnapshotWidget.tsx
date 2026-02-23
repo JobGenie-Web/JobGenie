@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Briefcase, GraduationCap, ChevronRight, CalendarDays } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, sortEducations } from "@/lib/utils";
 import type { WorkExperienceSnap, EducationSnap } from "@/app/actions/candidate-dashboard-data";
 
 interface CareerSnapshotWidgetProps {
@@ -126,7 +126,7 @@ export function CareerSnapshotWidget({ experiences, educations }: CareerSnapshot
                                     </span>
                                 </div>
                                 <div className="space-y-3">
-                                    {educations.map((edu) => {
+                                    {sortEducations(educations).map((edu) => {
                                         const statusKey = edu.status || "completed";
                                         const statusColor = educationStatusColors[statusKey] || "bg-muted text-muted-foreground";
                                         const statusLabel = educationStatusLabels[statusKey] || statusKey;

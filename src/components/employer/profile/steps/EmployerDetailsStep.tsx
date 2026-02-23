@@ -115,10 +115,11 @@ export function EmployerDetailsStep({
 
                     {/* Phone Number */}
                     <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phone">Phone Number <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span></Label>
                         <Input
                             id="phone"
                             type="tel"
+                            maxLength={15}
                             placeholder="+94 11 234 5678"
                             value={data.phone}
                             onChange={(e) => handleChange("phone", e.target.value)}

@@ -158,11 +158,12 @@ export function EmployerProfileStep({
                     {/* Phone */}
                     <div className="space-y-2">
                         <Label htmlFor="phone">
-                            Phone Number <span className="text-destructive">*</span>
+                            Phone Number <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span> <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="phone"
                             type="tel"
+                            maxLength={15}
                             placeholder="Enter phone number"
                             value={data.phone}
                             onChange={(e) => handleChange("phone", e.target.value)}

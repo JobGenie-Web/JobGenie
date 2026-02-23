@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, Shield, Briefcase, Phone, Building } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatPhoneNumber } from "@/lib/utils";
 
 interface CompanyAdmin {
     id: string;
@@ -213,7 +214,7 @@ export function AdminProfilesClient({ admins }: AdminProfilesClientProps) {
                                                 <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                                                 <div className="min-w-0">
                                                     <p className="text-xs text-muted-foreground">Phone</p>
-                                                    <p className="font-medium text-sm">{selectedAdmin.phone}</p>
+                                                    <p className="font-medium text-sm">{formatPhoneNumber(selectedAdmin.phone)}</p>
                                                 </div>
                                             </div>
                                         )}

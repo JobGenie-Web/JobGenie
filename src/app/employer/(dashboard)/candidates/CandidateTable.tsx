@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { CandidateDetailModal } from "./CandidateDetailModal";
-import { cn } from "@/lib/utils";
+import { cn, formatIndustry } from "@/lib/utils";
 
 interface Candidate {
     id: string;
@@ -290,7 +290,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                 <TableCell className="font-medium">
                                                     {candidate.first_name} {candidate.last_name}
                                                 </TableCell>
-                                                <TableCell>{candidate.industry}</TableCell>
+                                                <TableCell>{formatIndustry(candidate.industry)}</TableCell>
                                                 <TableCell>
                                                     {candidate.years_of_experience !== null
                                                         ? `${candidate.years_of_experience} ${candidate.years_of_experience === 1 ? 'year' : 'years'}`

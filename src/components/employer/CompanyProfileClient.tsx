@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Globe, MapPin, Phone, FileText, Users, MapPinned, Pencil, Briefcase } from "lucide-react";
 import { CompanyProfile } from "@/app/actions/employer-profiles";
 import { CompanyInfoDialog } from "@/components/employer/dialogs/CompanyInfoDialog";
+import { formatIndustry } from "@/lib/utils";
 
 interface CompanyProfileClientProps {
     company: CompanyProfile;
@@ -89,7 +90,7 @@ export function CompanyProfileClient({ company, isSuperAdmin }: CompanyProfileCl
                             )}
                             <div className="flex items-center gap-1.5">
                                 <Building2 className="h-4 w-4" />
-                                <span>{company.industry}</span>
+                                <span>{formatIndustry(company.industry)}</span>
                             </div>
                             {company.website && (
                                 <a
@@ -260,7 +261,7 @@ export function CompanyProfileClient({ company, isSuperAdmin }: CompanyProfileCl
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-sm font-medium mb-1">Industry</p>
-                                        <p className="text-sm text-muted-foreground">{company.industry}</p>
+                                        <p className="text-sm text-muted-foreground">{formatIndustry(company.industry)}</p>
                                     </div>
 
                                     {company.company_size && (

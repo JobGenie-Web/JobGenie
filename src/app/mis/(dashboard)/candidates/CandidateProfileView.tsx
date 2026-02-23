@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { approveCandidateProfile, rejectCandidateProfile, revokeCandidateApproval } from "@/app/actions/candidate";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { formatIndustry, sortEducations } from "@/lib/utils";
 
 interface CandidateData {
     id: string;
@@ -231,7 +232,7 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <p className="text-muted-foreground">Industry</p>
-                                            <p className="font-medium">{candidate.industry}</p>
+                                            <p className="font-medium">{formatIndustry(candidate.industry)}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Current Position</p>
@@ -317,7 +318,7 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                                 <h3 className="text-lg font-semibold">Education</h3>
                                             </div>
                                             <div className="space-y-2">
-                                                {candidate.educations.map((edu, idx) => (
+                                                {sortEducations(candidate.educations).map((edu, idx) => (
                                                     <div key={idx} className="text-sm">
                                                         <p className="font-medium">{edu.degree_diploma}</p>
                                                         <p className="text-muted-foreground">{edu.institution}</p>

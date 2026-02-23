@@ -29,6 +29,7 @@ import {
     deleteBankingSpecializedTraining,
 } from "@/app/actions/finance-banking-mutations";
 import { useToast } from "@/hooks/use-toast";
+import { sortEducations } from "@/lib/utils";
 
 interface EducationSectionProps {
     educations: Education[];
@@ -201,8 +202,8 @@ export function EducationSection({
     const renderGeneralEducation = () => {
         if (educations.length === 0) return null;
 
-        const academic = [...educations].filter(e => e.education_type === "academic").reverse();
-        const professional = [...educations].filter(e => e.education_type === "professional").reverse();
+        const academic = sortEducations(educations.filter(e => e.education_type === "academic"));
+        const professional = sortEducations(educations.filter(e => e.education_type === "professional"));
 
         return (
             <Tabs defaultValue="academic" className="w-full">
@@ -344,7 +345,7 @@ export function EducationSection({
                             Add Academic Education
                         </Button>
                     </div>
-                    {financeAcademic.length > 0 ? [...financeAcademic].reverse().map((edu, index) => (
+                    {financeAcademic.length > 0 ? sortEducations(financeAcademic).map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -399,7 +400,7 @@ export function EducationSection({
                             Add Professional Education
                         </Button>
                     </div>
-                    {financeProfessional.length > 0 ? [...financeProfessional].reverse().map((edu, index) => (
+                    {financeProfessional.length > 0 ? sortEducations(financeProfessional).map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -467,7 +468,7 @@ export function EducationSection({
                             Add Academic Education
                         </Button>
                     </div>
-                    {bankingAcademic.length > 0 ? [...bankingAcademic].reverse().map((edu, index) => (
+                    {bankingAcademic.length > 0 ? sortEducations(bankingAcademic).map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -522,7 +523,7 @@ export function EducationSection({
                             Add Professional Education
                         </Button>
                     </div>
-                    {bankingProfessional.length > 0 ? [...bankingProfessional].reverse().map((edu, index) => (
+                    {bankingProfessional.length > 0 ? sortEducations(bankingProfessional).map((edu, index) => (
                         <div key={edu.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">
@@ -577,7 +578,7 @@ export function EducationSection({
                             Add Specialized Training
                         </Button>
                     </div>
-                    {bankingTraining.length > 0 ? [...bankingTraining].reverse().map((training, index) => (
+                    {bankingTraining.length > 0 ? sortEducations(bankingTraining).map((training, index) => (
                         <div key={training.id}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="group relative flex gap-4">

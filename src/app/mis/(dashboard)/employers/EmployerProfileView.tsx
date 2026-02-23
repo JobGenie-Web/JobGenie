@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { approveCompanyProfile, rejectCompanyProfile, revokeCompanyApproval } from "@/app/actions/employer";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { formatIndustry } from "@/lib/utils";
 
 interface AdminData {
     first_name: string;
@@ -167,7 +168,7 @@ export function EmployerProfileView({ companyId, onClose }: EmployerProfileViewP
                                             <p className="font-semibold text-xl">{company.company_name}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <Badge variant="secondary" className="font-normal">
-                                                    {company.industry}
+                                                    {formatIndustry(company.industry)}
                                                 </Badge>
                                                 {company.company_size && (
                                                     <span className="text-sm text-muted-foreground">
