@@ -498,7 +498,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 bg-white dark:bg-red-900 rounded-lg p-4 border">
+                                <div className="space-y-3 bg-white dark:bg-gray-900 rounded-lg p-4 border">
                                     <div className="flex items-center gap-3">
                                         <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
                                         <div>

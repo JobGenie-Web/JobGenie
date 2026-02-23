@@ -89,6 +89,7 @@ export function CompanyInfoStep({
                     <Building2 className="h-5 w-5 text-primary" />
                     <h2 className="text-xl font-semibold">Company Information</h2>
                 </div>
+                <p className="p-2 border border-amber-400 bg-amber-50 rounded-lg text-sm text-amber-600">Company name & Business registration number should match with your BR certificate. Please recheck before proceeding.</p>
 
                 <div className="space-y-4">
                     {/* Company Name */}

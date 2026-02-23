@@ -248,10 +248,10 @@ export function EmployerProfileStep({
                                     <span className="font-medium">{strengthLabel}</span>
                                 </div>
                                 <Progress value={(passwordStrength / 5) * 100} className="h-1.5" />
-                                <div
+                                {/* <div
                                     className={`h-1.5 rounded-full transition-all ${strengthColor}`}
                                     style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                                />
+                                /> */}
                             </div>
                         )}
                     </div>
@@ -268,7 +268,13 @@ export function EmployerProfileStep({
                                 placeholder="Re-enter your password"
                                 value={data.confirmPassword}
                                 onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                                className={errors.confirmPassword ? "border-destructive pr-10" : "pr-10"}
+                                className={
+                                    errors.confirmPassword || (data.confirmPassword && data.password !== data.confirmPassword)
+                                        ? "border-destructive pr-10"
+                                        : data.confirmPassword && data.password === data.confirmPassword
+                                            ? "border-green-600 dark:border-green-400 pr-10 focus-visible:ring-green-600"
+                                            : "pr-10"
+                                }
                             />
                             <button
                                 type="button"
@@ -278,8 +284,14 @@ export function EmployerProfileStep({
                                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                         </div>
-                        {errors.confirmPassword && (
+                        {errors.confirmPassword && !data.confirmPassword && (
                             <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                        )}
+                        {data.confirmPassword && data.password !== data.confirmPassword && (
+                            <p className="text-sm text-destructive">Passwords do not match</p>
+                        )}
+                        {data.confirmPassword && data.password === data.confirmPassword && (
+                            <p className="text-sm text-green-600 dark:text-green-400">Passwords are matching</p>
                         )}
                     </div>
                 </div>
