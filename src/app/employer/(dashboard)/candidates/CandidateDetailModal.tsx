@@ -452,7 +452,9 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
 
                             <iframe
                                 ref={iframeRef}
-                                src={`${candidate.resume_url}#toolbar=0&navpanes=0&view=FitH`}
+                                src={(candidate.resume_url?.toLowerCase().includes('.doc') || candidate.resume_url?.toLowerCase().includes('.docx'))
+                                    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(candidate.resume_url)}`
+                                    : `${candidate.resume_url}#toolbar=0&navpanes=0&view=FitH`}
                                 className="w-full h-full relative z-0"
                                 title="Candidate Resume"
                                 style={{

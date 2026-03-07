@@ -217,10 +217,12 @@ export function ResumesClientContent() {
                                 </div>
                             </div>
 
-                            {/* PDF Preview Iframe */}
+                            {/* PDF/DOCX Preview Iframe */}
                             <div className="w-full h-[600px] border rounded-lg overflow-hidden bg-muted/50">
                                 <iframe
-                                    src={`${resumeData.resume_url}#toolbar=0`}
+                                    src={(resumeData.resume_url?.toLowerCase().includes('.doc') || resumeData.resume_url?.toLowerCase().includes('.docx'))
+                                        ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resumeData.resume_url)}`
+                                        : `${resumeData.resume_url}#toolbar=0`}
                                     className="w-full h-full"
                                     title="Resume Preview"
                                 />

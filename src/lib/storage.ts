@@ -132,10 +132,17 @@ export const StorageService = {
             }
         }
 
-        const fileName = `resume_${Date.now()}.pdf`; // Standardize name
+        const fileExt = file.name.split(".").pop();
+        const fileName = `resume_${Date.now()}.${fileExt}`;
         const filePath = `${candidateId}/${fileName}`;
 
-        const url = await uploadFile(RESUME_BUCKET, filePath, fileData, "application/pdf", ["application/pdf"]);
+        const allowedMimeTypes = [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ];
+
+        const url = await uploadFile(RESUME_BUCKET, filePath, fileData, file.type || "application/octet-stream", allowedMimeTypes);
         return { url, filePath };
     },
     deleteResume: async (filePath: string) => {
