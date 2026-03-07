@@ -60,7 +60,17 @@ export function EducationStep({ educations, onChange, onNext, onPrevious }: Educ
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const handleNextStep = () => {
-        const result = z.array(educationSchema).safeParse(educations);
+        // Filter out incomplete entries (must have BOTH institution and degreeDiploma)
+        const nonEmptyEducations = educations.filter(
+            (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+        );
+
+        // If items were removed, update the parent state
+        if (nonEmptyEducations.length !== educations.length) {
+            onChange(nonEmptyEducations);
+        }
+
+        const result = z.array(educationSchema).safeParse(nonEmptyEducations);
         if (result.success) {
             setErrors({});
             onNext();

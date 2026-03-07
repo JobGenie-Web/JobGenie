@@ -249,20 +249,49 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         setError(null);
 
         try {
+            // Strip out any incomplete education rows before submission (safety net)
+            // They must have BOTH institution and degree/qualification
+            const cleanedEducations = educations.filter(
+                (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+            );
+
+            const cleanedFinanceAcademic = financeAcademicEducation.filter(
+                (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+            );
+
+            const cleanedFinanceProf = financeProfessionalEducation.filter(
+                (edu) => edu.institution.trim() !== "" && edu.professionalQualification.trim() !== ""
+            );
+
+            const cleanedBankingAcademic = bankingAcademicEducation.filter(
+                (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+            );
+
+            const cleanedBankingProf = bankingProfessionalEducation.filter(
+                (edu) => edu.institution.trim() !== "" && edu.professionalQualification.trim() !== ""
+            );
+
+            const cleanedBankingSpecial = bankingSpecializedTraining.filter(
+                (edu) => edu.issuingAuthority.trim() !== "" && edu.certificateName.trim() !== ""
+            );
+
+            // If not IT/Other industry, standard educations shouldn't be submitted
+            const finalEducations = (isFinanceIndustry || isBankingIndustry) ? [] : cleanedEducations;
+
             const profileData: CompleteProfileData = {
                 industry: industry as CompleteProfileData["industry"],
                 basicInfo,
                 professionalSummary,
                 workExperiences,
-                educations,
+                educations: finalEducations,
                 awards,
                 projects: isITIndustry ? projects : undefined,
                 certificates: isITIndustry ? certificates : undefined,
-                financeAcademicEducation: isFinanceIndustry ? financeAcademicEducation : undefined,
-                financeProfessionalEducation: isFinanceIndustry ? financeProfessionalEducation : undefined,
-                bankingAcademicEducation: isBankingIndustry ? bankingAcademicEducation : undefined,
-                bankingProfessionalEducation: isBankingIndustry ? bankingProfessionalEducation : undefined,
-                bankingSpecializedTraining: isBankingIndustry ? bankingSpecializedTraining : undefined,
+                financeAcademicEducation: isFinanceIndustry ? cleanedFinanceAcademic : undefined,
+                financeProfessionalEducation: isFinanceIndustry ? cleanedFinanceProf : undefined,
+                bankingAcademicEducation: isBankingIndustry ? cleanedBankingAcademic : undefined,
+                bankingProfessionalEducation: isBankingIndustry ? cleanedBankingProf : undefined,
+                bankingSpecializedTraining: isBankingIndustry ? cleanedBankingSpecial : undefined,
             };
 
             const formData = new FormData();

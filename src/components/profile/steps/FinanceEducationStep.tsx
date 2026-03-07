@@ -83,8 +83,23 @@ export function FinanceEducationStep({
     const [professionalErrors, setProfessionalErrors] = useState<Record<string, string>>({});
 
     const handleNextStep = () => {
-        const academicResult = z.array(financeAcademicEducationSchema).safeParse(academicEducation);
-        const professionalResult = z.array(financeProfessionalEducationSchema).safeParse(professionalEducation);
+        // Filter out incomplete entries
+        const nonEmptyAcademic = academicEducation.filter(
+            (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+        );
+        const nonEmptyProfessional = professionalEducation.filter(
+            (edu) => edu.institution.trim() !== "" && edu.professionalQualification.trim() !== ""
+        );
+
+        if (nonEmptyAcademic.length !== academicEducation.length) {
+            onAcademicChange(nonEmptyAcademic);
+        }
+        if (nonEmptyProfessional.length !== professionalEducation.length) {
+            onProfessionalChange(nonEmptyProfessional);
+        }
+
+        const academicResult = z.array(financeAcademicEducationSchema).safeParse(nonEmptyAcademic);
+        const professionalResult = z.array(financeProfessionalEducationSchema).safeParse(nonEmptyProfessional);
 
         if (academicResult.success && professionalResult.success) {
             setAcademicErrors({});

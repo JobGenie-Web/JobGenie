@@ -113,9 +113,30 @@ export function BankingEducationStep({
     const [specializedErrors, setSpecializedErrors] = useState<Record<string, string>>({});
 
     const handleNextStep = () => {
-        const academicResult = z.array(bankingAcademicEducationSchema).safeParse(academicEducation);
-        const professionalResult = z.array(bankingProfessionalEducationSchema).safeParse(professionalEducation);
-        const specializedResult = z.array(bankingSpecializedTrainingSchema).safeParse(specializedTraining);
+        // Filter out incomplete entries
+        const nonEmptyAcademic = academicEducation.filter(
+            (edu) => edu.institution.trim() !== "" && edu.degreeDiploma.trim() !== ""
+        );
+        const nonEmptyProfessional = professionalEducation.filter(
+            (edu) => edu.institution.trim() !== "" && edu.professionalQualification.trim() !== ""
+        );
+        const nonEmptySpecialized = specializedTraining.filter(
+            (edu) => edu.issuingAuthority.trim() !== "" && edu.certificateName.trim() !== ""
+        );
+
+        if (nonEmptyAcademic.length !== academicEducation.length) {
+            onAcademicChange(nonEmptyAcademic);
+        }
+        if (nonEmptyProfessional.length !== professionalEducation.length) {
+            onProfessionalChange(nonEmptyProfessional);
+        }
+        if (nonEmptySpecialized.length !== specializedTraining.length) {
+            onSpecializedChange(nonEmptySpecialized);
+        }
+
+        const academicResult = z.array(bankingAcademicEducationSchema).safeParse(nonEmptyAcademic);
+        const professionalResult = z.array(bankingProfessionalEducationSchema).safeParse(nonEmptyProfessional);
+        const specializedResult = z.array(bankingSpecializedTrainingSchema).safeParse(nonEmptySpecialized);
 
         if (academicResult.success && professionalResult.success && specializedResult.success) {
             setAcademicErrors({});
