@@ -18,11 +18,10 @@ interface Candidate {
 async function getCandidates() {
     const supabase = await createClient();
 
-    // Fetch only completed profiles for approval - optimized query
+    // Fetch all candidates for approval regardless of profile_completed status
     const { data: candidates, error } = await supabase
         .from('candidates')
         .select('id, first_name, last_name, email, industry, current_position, years_of_experience, approval_status, created_at')
-        .eq('profile_completed', true)
         .order('created_at', { ascending: false });
 
     if (error) {

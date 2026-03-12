@@ -31,8 +31,8 @@ async function getApprovedCandidates() {
     const { data: candidates, error } = await supabase
         .from('candidates')
         .select('id, first_name, last_name, industry, current_position, years_of_experience, experience_level, employment_type, availability_status, qualifications, expected_positions')
-        .eq('approval_status', 'approved')
-        .eq('profile_completed', true)
+        // .eq('approval_status', 'approved')
+        // .eq('profile_completed', true)
         .order('years_of_experience', { ascending: false });
 
     if (error) {
