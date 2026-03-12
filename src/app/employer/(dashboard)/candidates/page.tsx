@@ -20,6 +20,7 @@ interface CandidateForTable {
     employment_type: string | null;
     availability_status: string | null;
     qualifications: string[];
+    expected_positions: string[];  // Positions the candidate is targeting
     invited: boolean;  // NEW: Track if candidate has been invited
 }
 
@@ -29,7 +30,7 @@ async function getApprovedCandidates() {
     // Fetch only MIS approved candidates
     const { data: candidates, error } = await supabase
         .from('candidates')
-        .select('id, first_name, last_name, industry, current_position, years_of_experience, experience_level, employment_type, availability_status, qualifications')
+        .select('id, first_name, last_name, industry, current_position, years_of_experience, experience_level, employment_type, availability_status, qualifications, expected_positions')
         .eq('approval_status', 'approved')
         .eq('profile_completed', true)
         .order('years_of_experience', { ascending: false });

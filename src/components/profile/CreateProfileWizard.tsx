@@ -79,6 +79,7 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
         availabilityStatus: "available",
         noticePeriod: "immediate",
         employmentType: "full_time",
+        expectedPositions: [],
     });
     const [professionalSummary, setProfessionalSummary] = useState("");
     const [workExperiences, setWorkExperiences] = useState<WorkExperienceData[]>([]);

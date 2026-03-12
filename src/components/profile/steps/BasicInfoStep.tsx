@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -446,6 +446,93 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                             />
                         </FormField>
                     </div>
+
+                    {/* Expected Job Positions */}
+                    <FormField
+                        label={
+                            <>
+                                Expected Job Positions
+                                <span className="text-xs text-muted-foreground font-normal ml-1">
+                                    (Up to 3)
+                                </span>
+                            </>
+                        }
+                        id="expectedPositions"
+                        required
+                        error={errors["expectedPositions"]}
+                    >
+                        <div className="space-y-2">
+                            {/* Selected position tags */}
+                            {(data.expectedPositions ?? []).length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {(data.expectedPositions ?? []).map((pos, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                                        >
+                                            {pos}
+                                            <button
+                                                type="button"
+                                                aria-label={`Remove ${pos}`}
+                                                onClick={() => {
+                                                    const updated = (data.expectedPositions ?? []).filter((_, i) => i !== idx);
+                                                    updateField("expectedPositions", updated);
+                                                }}
+                                                className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Combobox to add positions */}
+                            {(data.expectedPositions ?? []).length >= 3 ? (
+                                <p className="text-xs text-muted-foreground py-2">
+                                    Maximum of 3 positions reached. Remove one to add another.
+                                </p>
+                            ) : loadingDesignations ? (
+                                <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading job designations...
+                                </div>
+                            ) : designationsError ? (
+                                <Input
+                                    id="expectedPositions"
+                                    placeholder="Type a position and press Enter"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const val = (e.target as HTMLInputElement).value.trim();
+                                            if (val && !(data.expectedPositions ?? []).includes(val)) {
+                                                updateField("expectedPositions", [...(data.expectedPositions ?? []), val]);
+                                                (e.target as HTMLInputElement).value = "";
+                                            }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <Combobox
+                                    options={jobDesignations
+                                        .filter(d => !(data.expectedPositions ?? []).includes(d.designation_name))
+                                        .map((designation) => ({
+                                            value: designation.designation_name,
+                                            label: `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`,
+                                        }))}
+                                    value=""
+                                    onValueChange={(value) => {
+                                        if (value && !(data.expectedPositions ?? []).includes(value)) {
+                                            updateField("expectedPositions", [...(data.expectedPositions ?? []), value]);
+                                        }
+                                    }}
+                                    placeholder="Search and select a position"
+                                    searchPlaceholder="Search job designations..."
+                                    emptyMessage="No job designation found."
+                                />
+                            )}
+                        </div>
+                    </FormField>
                 </div>
             </FormSection>
 

@@ -218,6 +218,10 @@ export const basicInfoSchema = z.object({
     employmentType: employmentTypeSchema.default("full_time"),
     highestQualification: professionalQualificationSchema.optional(),
     profileImageUrl: z.string().optional(),
+    expectedPositions: z
+        .array(z.string().min(1).max(200))
+        .min(1, "At least one expected position is required")
+        .max(3, "You can add a maximum of 3 expected positions"),
 });
 
 export type BasicInfoData = z.infer<typeof basicInfoSchema>;

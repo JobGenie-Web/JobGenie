@@ -32,6 +32,7 @@ interface Candidate {
     employment_type: string | null;
     availability_status: string | null;
     qualifications: string[];
+    expected_positions: string[];  // Positions the candidate is targeting
     invited: boolean;  // Track if candidate has been invited
 }
 
@@ -146,14 +147,16 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
         setSelectedDesignation(""); // Reset designation when industry changes
     };
 
-    // Only filter and show candidates if both industry and designation are selected
-    // Map the candidate's industry enum value to the display name for comparison
+    // Filter candidates by industry + expected_positions only.
+    // Candidates appear in results only if the searched designation
+    // is listed in their expected_positions array.
     const filteredCandidates = (selectedIndustryName && selectedDesignation)
         ? candidates.filter(candidate => {
-            // Map candidate's enum industry value to display name
             const candidateIndustryName = industryEnumToNameMap[candidate.industry] || candidate.industry;
-            return candidateIndustryName === selectedIndustryName &&
-                candidate.current_position === selectedDesignation;
+            return (
+                candidateIndustryName === selectedIndustryName &&
+                (candidate.expected_positions ?? []).includes(selectedDesignation)
+            );
         })
         : [];
 
@@ -167,7 +170,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                     <div>
                         <h2 className="text-lg font-semibold mb-1">Search Candidates</h2>
                         <p className="text-sm text-muted-foreground">
-                            First select an industry, then choose a job designation to find matching approved candidates
+                            Select an industry and job designation to find candidates who are targeting that role
                         </p>
                     </div>
 
@@ -262,7 +265,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
 
                         {filteredCandidates.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
-                                No candidates found with "{selectedDesignation}" designation.
+                                No candidates are targeting the &ldquo;{selectedDesignation}&rdquo; position.
                             </div>
                         ) : (
                             <div className="rounded-md border overflow-x-auto">

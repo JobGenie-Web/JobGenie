@@ -118,6 +118,10 @@ export const basicInfoSchema = z.object({
     current_position: z.string().min(1, "Current position is required").max(200),
     highest_qualification: professionalQualificationEnum.optional(),
     profile_image_url: z.string().optional(),
+    expected_positions: z
+        .array(z.string().min(1).max(200))
+        .min(1, "At least one expected position is required")
+        .max(3, "Maximum 3 positions allowed"),
 });
 
 // About Section Schema

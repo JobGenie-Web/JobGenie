@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Briefcase, Calendar, FileText, Pencil, GraduationCap } from "lucide-react";
+import { Mail, Phone, MapPin, Briefcase, Calendar, FileText, Pencil, GraduationCap, TrendingUp } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -93,6 +93,18 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                             <Briefcase className="h-4 w-4" />
                             {profile.current_position}
                         </p>
+
+                        {(profile.expected_positions ?? []).length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap mt-1">
+                                <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm text-muted-foreground">Targeting:</span>
+                                {(profile.expected_positions ?? []).map((pos, i) => (
+                                    <Badge key={i} variant="outline" className="text-xs">
+                                        {pos}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
 
                         {profile.resume_url && (
                             <div className="mt-3">

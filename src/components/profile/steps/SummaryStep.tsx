@@ -151,6 +151,14 @@ export function SummaryStep({
                             <p>{basicInfo.email} • {basicInfo.phone}</p>
                             <p>{basicInfo.currentPosition} • {basicInfo.yearsOfExperience} years experience</p>
                             <p>Industry: <Badge variant="secondary">{industryLabel}</Badge></p>
+                            {(basicInfo.expectedPositions ?? []).length > 0 && (
+                                <div className="flex flex-wrap items-center gap-1">
+                                    <span className="text-foreground font-medium">Expected Positions:</span>
+                                    {(basicInfo.expectedPositions ?? []).map((pos, i) => (
+                                        <Badge key={i} variant="outline" className="text-xs">{pos}</Badge>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 

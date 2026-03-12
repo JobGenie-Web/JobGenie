@@ -29,7 +29,7 @@ import { basicInfoSchema, type BasicInfoFormData } from "@/lib/validations/profi
 import { updateBasicInfo } from "@/app/actions/profile-mutations";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateProfile } from "@/types/profile-types";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, X } from "lucide-react";
 import { useJobDesignations } from "@/hooks/useJobDesignations";
 import { Combobox } from "@/components/ui/combobox";
 
@@ -45,6 +45,7 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [expectedPositions, setExpectedPositions] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Map industry string to industry ID for filtering
@@ -92,7 +93,9 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                 current_position: profile.current_position || "",
                 highest_qualification: profile.highest_qualification || undefined,
                 profile_image_url: profile.profile_image_url || "",
+                expected_positions: profile.expected_positions ?? [],
             });
+            setExpectedPositions(profile.expected_positions ?? []);
             setPreviewImage(profile.profile_image_url);
         }
     }, [open, profile, form]);
@@ -179,6 +182,7 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                 country: data.country && data.country.trim() !== ""
                     ? data.country
                     : undefined,
+                expected_positions: expectedPositions,
             };
 
             const result = await updateBasicInfo(formattedData);
@@ -382,6 +386,70 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                                 </FormItem>
                             )}
                         />
+
+                        {/* Expected Job Positions */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                Expected Job Positions *
+                                <span className="text-xs text-muted-foreground font-normal ml-1">(Up to 3)</span>
+                            </label>
+
+                            {/* Selected pills */}
+                            {expectedPositions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {expectedPositions.map((pos, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                                        >
+                                            {pos}
+                                            <button
+                                                type="button"
+                                                aria-label={`Remove ${pos}`}
+                                                onClick={() => setExpectedPositions(prev => prev.filter((_, i) => i !== idx))}
+                                                className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Combobox / limit message */}
+                            {expectedPositions.length >= 3 ? (
+                                <p className="text-xs text-muted-foreground py-1">
+                                    Maximum of 3 positions reached. Remove one to add another.
+                                </p>
+                            ) : loadingDesignations ? (
+                                <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground border rounded-md">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading job designations...
+                                </div>
+                            ) : (
+                                <Combobox
+                                    options={jobDesignations
+                                        .filter(d => !expectedPositions.includes(d.designation_name))
+                                        .map(d => ({
+                                            value: d.designation_name,
+                                            label: `${d.designation_name} (${d.industries.industry_name} - ${d.seniority_levels.level_name})`,
+                                        }))}
+                                    value=""
+                                    onValueChange={(value) => {
+                                        if (value && !expectedPositions.includes(value)) {
+                                            setExpectedPositions(prev => [...prev, value]);
+                                        }
+                                    }}
+                                    placeholder="Search and select a position"
+                                    searchPlaceholder="Search job designations..."
+                                    emptyMessage="No job designation found."
+                                />
+                            )}
+                            {/* Show validation error if submitted with empty */}
+                            {expectedPositions.length === 0 && (
+                                <p className="text-xs text-destructive">At least one expected position is required</p>
+                            )}
+                        </div>
 
                         <FormField
                             control={form.control}
