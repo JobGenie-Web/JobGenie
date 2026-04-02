@@ -14,6 +14,8 @@ import {
     sendVerificationEmail,
 } from "@/lib/email";
 import crypto from "crypto";
+import { insertCandidateRegistrationDirect } from "@/lib/db/candidate-registration-direct";
+import { verifyEmailCodeDirect } from "@/lib/db/verify-email-direct";
 import { generateMembershipNumber } from "@/lib/utils/membership";
 import { logAuth, logError, getRequestInfo } from "@/lib/logger";
 
@@ -65,8 +67,8 @@ export async function registerCandidate(
     const data: CandidateRegistrationData = validationResult.data;
 
     try {
-        // Create Supabase client
         const supabase = await createClient();
+        const adminClient = createAdminClient();
 
         const { ipAddress } = await getRequestInfo();
 
@@ -103,61 +105,81 @@ export async function registerCandidate(
         const verificationCode = generateVerificationCode();
         const verificationExpiry = getVerificationExpiry();
 
-
-
         // Hash the password before storing
         const hashedPassword = await bcrypt.hash(data.password, 12);
 
-        // First, create entry in the users table (required for foreign key)
-        // Store expiry as local ISO string for PostgreSQL timestamp without timezone
-        const { error: userError } = await supabase.from("users").insert({
-            id: authData.user.id,
+        // Prefer direct Postgres (DATABASE_URL): avoids PostgREST PGRST002 / schema-cache failures.
+        const direct = await insertCandidateRegistrationDirect({
+            userId: authData.user.id,
             email: data.email,
-            password: hashedPassword,
-            role: "candidate",
-            status: "pending_verification",
-            email_verified: false,
-            email_verification_token: verificationCode,
-            verification_token_expires_at: verificationExpiry.isoString,
-            created_at: now,
-            updated_at: now,
+            hashedPassword,
+            verificationCode,
+            verificationExpiresAt: new Date(verificationExpiry.isoString),
+            firstName: data.firstName,
+            lastName: data.lastName,
+            nicPassport: data.nicPassport,
+            gender: data.gender,
+            dateOfBirth: data.dateOfBirth,
+            address: data.address,
+            contactNo: data.contactNo,
         });
 
-        if (userError) {
-            console.error("User table insert error:", userError);
+        if (direct.ok) {
+            // done
+        } else if (direct.reason === "no_database_url") {
+            const { error: userError } = await adminClient.from("users").insert({
+                id: authData.user.id,
+                email: data.email,
+                password: hashedPassword,
+                role: "candidate",
+                status: "pending_verification",
+                email_verified: false,
+                email_verification_token: verificationCode,
+                verification_token_expires_at: verificationExpiry.isoString,
+                created_at: now,
+                updated_at: now,
+            });
+
+            if (userError) {
+                console.error("User table insert error:", userError);
+                return {
+                    success: false,
+                    message: "Account created but user setup failed. Please contact support.",
+                };
+            }
+
+            const membershipNumber = await generateMembershipNumber();
+
+            const { error: profileError } = await adminClient.from("candidates").insert({
+                user_id: authData.user.id,
+                first_name: data.firstName,
+                last_name: data.lastName,
+                nicPassport: data.nicPassport,
+                gender: data.gender,
+                dob: data.dateOfBirth,
+                address: data.address,
+                contact_no: data.contactNo,
+                phone: data.contactNo,
+                email: data.email,
+                current_position: "",
+                industry: "",
+                membership_no: membershipNumber,
+                created_at: now,
+                updated_at: now,
+            });
+
+            if (profileError) {
+                console.error("Profile creation error:", profileError);
+                return {
+                    success: false,
+                    message: "Account created but profile setup failed. Please contact support.",
+                };
+            }
+        } else {
+            console.error("Candidate registration (direct DB) failed:", direct.message);
             return {
                 success: false,
                 message: "Account created but user setup failed. Please contact support.",
-            };
-        }
-
-        // Generate unique membership number
-        const membershipNumber = await generateMembershipNumber();
-
-        // Store additional candidate profile data
-        const { error: profileError } = await supabase.from("candidates").insert({
-            user_id: authData.user.id,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            nicPassport: data.nicPassport,
-            gender: data.gender,
-            dob: data.dateOfBirth,
-            address: data.address,
-            contact_no: data.contactNo,
-            phone: data.contactNo,
-            email: data.email,
-            current_position: "",
-            industry: "",
-            membership_no: membershipNumber,
-            created_at: now,
-            updated_at: now,
-        });
-
-        if (profileError) {
-            console.error("Profile creation error:", profileError);
-            return {
-                success: false,
-                message: "Account created but profile setup failed. Please contact support.",
             };
         }
 
@@ -211,21 +233,94 @@ export async function verifyEmail(
         };
     }
 
+    const emailNorm = email.trim();
+
     try {
-        // Use admin client to bypass RLS for verification operations
+        // Bypass PostgREST when possible: same PGRST002/schema-cache failures as signup
+        // were returning a misleading "User not found" because any findError used that branch.
+        const direct = await verifyEmailCodeDirect(emailNorm, code);
+        if (direct.ok) {
+            const supabase = await createClient();
+            await supabase.auth.signOut();
+            const { ipAddress } = await getRequestInfo();
+            await logAuth(
+                "email_verified",
+                direct.userId,
+                undefined,
+                { email: emailNorm },
+                ipAddress || undefined
+            );
+            return {
+                success: true,
+                message: "Email verified successfully! You can now log in.",
+                redirectTo: "/login",
+            };
+        }
+
+        if (direct.reason !== "no_database_url") {
+            if (direct.reason === "not_found") {
+                return {
+                    success: false,
+                    message: "User not found. Please register again.",
+                };
+            }
+            if (direct.reason === "already_verified") {
+                return {
+                    success: true,
+                    message: "Email already verified. You can log in.",
+                    redirectTo: "/login",
+                };
+            }
+            if (direct.reason === "invalid_code") {
+                return {
+                    success: false,
+                    message: "Invalid verification code. Please try again.",
+                };
+            }
+            if (direct.reason === "expired") {
+                return {
+                    success: false,
+                    message: "Verification code has expired. Please request a new one.",
+                };
+            }
+            console.error("verifyEmailCodeDirect:", direct.message);
+            return {
+                success: false,
+                message: "Failed to verify email. Please try again.",
+            };
+        }
+
         const adminClient = createAdminClient();
 
-        // Find user by email
         const { data: user, error: findError } = await adminClient
             .from("users")
             .select("id, email_verification_token, verification_token_expires_at, email_verified")
-            .eq("email", email)
+            .eq("email", emailNorm)
             .single();
 
         if (findError || !user) {
+            if (findError?.code === "PGRST116") {
+                return {
+                    success: false,
+                    message: "User not found. Please register again.",
+                };
+            }
+            if (
+                findError?.code === "PGRST002" ||
+                (typeof findError?.message === "string" &&
+                    findError.message.includes("schema cache"))
+            ) {
+                console.error("verifyEmail lookup (PostgREST / schema cache):", findError);
+                return {
+                    success: false,
+                    message:
+                        "Verification is temporarily unavailable. Please try again in a minute.",
+                };
+            }
+            console.error("verifyEmail lookup:", findError);
             return {
                 success: false,
-                message: "User not found. Please register again.",
+                message: "Could not verify right now. Please try again.",
             };
         }
 
@@ -237,9 +332,9 @@ export async function verifyEmail(
             };
         }
 
-        // Check if code matches using timing-safe comparison
-        const storedToken = user.email_verification_token || '';
-        const isCodeValid = storedToken.length === code.length &&
+        const storedToken = user.email_verification_token || "";
+        const isCodeValid =
+            storedToken.length === code.length &&
             crypto.timingSafeEqual(Buffer.from(storedToken), Buffer.from(code));
 
         if (!isCodeValid) {
@@ -249,24 +344,21 @@ export async function verifyEmail(
             };
         }
 
-        // Check if code is expired
-        // Parse the stored timestamp and compare with current time
-        // The timestamp is stored as local time (no 'Z' suffix)
         const storedExpiry = user.verification_token_expires_at;
-        const expiresAtDate = new Date(storedExpiry);
         const nowDate = new Date();
+        const nowLocalString =
+            nowDate.getFullYear() +
+            "-" +
+            String(nowDate.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(nowDate.getDate()).padStart(2, "0") +
+            "T" +
+            String(nowDate.getHours()).padStart(2, "0") +
+            ":" +
+            String(nowDate.getMinutes()).padStart(2, "0") +
+            ":" +
+            String(nowDate.getSeconds()).padStart(2, "0");
 
-        // Format current time as local ISO string for comparison
-        const nowLocalString = nowDate.getFullYear() + '-' +
-            String(nowDate.getMonth() + 1).padStart(2, '0') + '-' +
-            String(nowDate.getDate()).padStart(2, '0') + 'T' +
-            String(nowDate.getHours()).padStart(2, '0') + ':' +
-            String(nowDate.getMinutes()).padStart(2, '0') + ':' +
-            String(nowDate.getSeconds()).padStart(2, '0');
-
-
-
-        // Compare as strings - this works because ISO format is chronologically sortable
         if (storedExpiry < nowLocalString) {
             return {
                 success: false,
@@ -274,7 +366,6 @@ export async function verifyEmail(
             };
         }
 
-        // Update user as verified
         const { error: updateError } = await adminClient
             .from("users")
             .update({
@@ -294,13 +385,11 @@ export async function verifyEmail(
             };
         }
 
-        // Sign out the user to ensure they go to login page
-        // This prevents middleware from redirecting authenticated users to dashboard
         const supabase = await createClient();
         await supabase.auth.signOut();
 
         const { ipAddress } = await getRequestInfo();
-        await logAuth("email_verified", user.id, undefined, { email }, ipAddress || undefined);
+        await logAuth("email_verified", user.id, undefined, { email: emailNorm }, ipAddress || undefined);
         return {
             success: true,
             message: "Email verified successfully! You can now log in.",

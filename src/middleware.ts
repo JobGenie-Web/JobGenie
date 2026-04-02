@@ -3,6 +3,43 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { logApiRequest } from '@/lib/logger';
 
+// PostgREST returns 503 + PGRST002 during schema-cache reloads (triggered by
+// DDL changes like RLS policy updates). Retry the request with exponential
+// back-off so the middleware never causes a redirect loop due to a transient
+// database unavailability. Mirrors the same helper in src/lib/supabase/admin.ts.
+const MIDDLEWARE_POSTGREST_ATTEMPTS = 5;
+const MIDDLEWARE_POSTGREST_BASE_MS = 300;
+
+async function fetchWithTransientRetry(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+): Promise<Response> {
+    let last: Response | undefined;
+    for (let attempt = 1; attempt <= MIDDLEWARE_POSTGREST_ATTEMPTS; attempt++) {
+        last = await fetch(input, init);
+        if (last.ok) return last;
+
+        let body = '';
+        try { body = await last.clone().text(); } catch { /* ignore */ }
+
+        const isTransient =
+            last.status === 503 ||
+            body.includes('PGRST002') ||
+            /\bschema cache\b/i.test(body);
+
+        if (!isTransient || attempt === MIDDLEWARE_POSTGREST_ATTEMPTS) {
+            return new Response(body, {
+                status: last.status,
+                statusText: last.statusText,
+                headers: last.headers,
+            });
+        }
+
+        await new Promise(r => setTimeout(r, MIDDLEWARE_POSTGREST_BASE_MS * attempt));
+    }
+    return last!;
+}
+
 // Role-based route configuration
 const roleRoutes: Record<string, string[]> = {
     candidate: [
@@ -109,7 +146,10 @@ export async function middleware(request: NextRequest) {
         },
     });
 
-    // Create Supabase client with cookie handling
+    // Create Supabase client with cookie handling.
+    // The custom fetch adds retry logic for PostgREST 503 / schema-cache
+    // reload errors so that transient DDL-triggered unavailability never
+    // results in an infinite redirect loop.
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -124,6 +164,9 @@ export async function middleware(request: NextRequest) {
                         response.cookies.set(name, value, options);
                     });
                 },
+            },
+            global: {
+                fetch: fetchWithTransientRetry,
             },
         }
     );
@@ -147,8 +190,23 @@ export async function middleware(request: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        // If user data couldn't be fetched, redirect to login
-        if (userError || !userData) {
+        // If user data couldn't be fetched, distinguish transient vs real errors.
+        // A real "no data" (PGRST116 / no rows) means the user record is missing →
+        // redirect to login. A transient error (503 / network) after all retries
+        // means we pass through and let the page handle it; redirecting to /login
+        // here would cause an infinite loop because the login page also queries
+        // the users table and would fail the same way.
+        if (!userData) {
+            const isTransientError =
+                userError?.code === 'PGRST002' ||
+                (userError as any)?.status === 503 ||
+                userError?.message?.toLowerCase().includes('schema cache');
+
+            if (isTransientError) {
+                // PostgREST still reloading — pass through rather than loop.
+                return response;
+            }
+
             const loginUrl = new URL('/login', request.url);
             return NextResponse.redirect(loginUrl);
         }

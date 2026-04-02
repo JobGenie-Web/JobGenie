@@ -566,6 +566,8 @@ model JobInvitation {
   employer  Employer  @relation(fields: [employer_id], references: [id], onDelete: Cascade)
   company   Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
+  interview_rounds InterviewRound[]
+
   // Ensure no duplicate invitations for same candidate from same employer
   @@unique([candidate_id, employer_id])
   @@index([candidate_id, status])
@@ -574,6 +576,15 @@ model JobInvitation {
   @@index([sent_at])
   @@index([job_id])
   @@map("job_invitations")
+}
+
+model InterviewRound {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invitation_id String        @db.Uuid
+  invitation    JobInvitation @relation(fields: [invitation_id], references: [id], onDelete: Cascade)
+
+  @@index([invitation_id])
+  @@map("interview_rounds")
 }
 
 // ============================================
