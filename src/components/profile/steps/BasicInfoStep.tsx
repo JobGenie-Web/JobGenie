@@ -10,7 +10,7 @@ import { FormSection } from "../shared/FormSection";
 import { StepNavigation } from "../shared/StepNavigation";
 import type { BasicInfoData } from "@/lib/validations/profile-schema";
 import { basicInfoSchema } from "@/lib/validations/profile-schema";
-import { useJobDesignations } from "@/hooks/useJobDesignations";
+import { useJobDesignations, uniqueDesignationsByName } from "@/hooks/useJobDesignations";
 import { useState } from "react";
 
 interface BasicInfoStepProps {
@@ -89,22 +89,12 @@ function FormField({
 }
 
 export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelect, industry }: BasicInfoStepProps) {
-    // Map industry string to industry ID for filtering
-    // Industry IDs: 1=Banking, 2=Finance & Investment, 3=Information Technology
-    const getIndustryId = (industryName?: string): number | null => {
-        if (!industryName) return null;
-        const industryMap: Record<string, number> = {
-            "banking": 1,
-            "finance_investment": 2,
-            "it_software": 3,
-        };
-        return industryMap[industryName] || null;
-    };
+    const canLoadDesignations = Boolean(industry);
 
-    const industryId = getIndustryId(industry);
+    // Job titles match the industry chosen on the previous step (resolved server-side from `industries`)
+    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industry);
 
-    // Fetch job designations from the database, filtered by industry if available
-    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industryId);
+    const designationOptions = uniqueDesignationsByName(jobDesignations);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -282,7 +272,19 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
             >
                 <div className="space-y-4">
                     <FormField label="Current Position" id="currentPosition" required error={errors.currentPosition}>
-                        {loadingDesignations ? (
+                        {!canLoadDesignations ? (
+                            <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground">
+                                    Select your industry in the previous step (Industry &amp; CV) to see job titles for that sector.
+                                </p>
+                                <Input
+                                    id="currentPosition"
+                                    value={data.currentPosition}
+                                    onChange={(e) => updateField("currentPosition", e.target.value)}
+                                    placeholder="e.g., Software Engineer"
+                                />
+                            </div>
+                        ) : loadingDesignations ? (
                             <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 Loading job designations...
@@ -301,18 +303,15 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                             </div>
                         ) : (
                             <Combobox
-                                options={jobDesignations.map((designation) => {
-                                    const fullLabel = `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`;
-                                    return {
-                                        value: designation.designation_name,
-                                        label: fullLabel
-                                    };
-                                })}
+                                options={designationOptions.map((designation) => ({
+                                    value: designation.designation_name,
+                                    label: designation.designation_name,
+                                }))}
                                 value={data.currentPosition}
                                 onValueChange={(value) => updateField("currentPosition", value)}
                                 placeholder="Select your current position"
-                                searchPlaceholder="Search job designations..."
-                                emptyMessage="No job designation found."
+                                searchPlaceholder="Search job titles..."
+                                emptyMessage="No job title found for your industry."
                             />
                         )}
                     </FormField>
@@ -492,6 +491,21 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 <p className="text-xs text-muted-foreground py-2">
                                     Maximum of 3 positions reached. Remove one to add another.
                                 </p>
+                            ) : !canLoadDesignations ? (
+                                <Input
+                                    id="expectedPositions"
+                                    placeholder="Type a position and press Enter"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const val = (e.target as HTMLInputElement).value.trim();
+                                            if (val && !(data.expectedPositions ?? []).includes(val)) {
+                                                updateField("expectedPositions", [...(data.expectedPositions ?? []), val]);
+                                                (e.target as HTMLInputElement).value = "";
+                                            }
+                                        }
+                                    }}
+                                />
                             ) : loadingDesignations ? (
                                 <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -514,11 +528,11 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                 />
                             ) : (
                                 <Combobox
-                                    options={jobDesignations
-                                        .filter(d => !(data.expectedPositions ?? []).includes(d.designation_name))
+                                    options={designationOptions
+                                        .filter((d) => !(data.expectedPositions ?? []).includes(d.designation_name))
                                         .map((designation) => ({
                                             value: designation.designation_name,
-                                            label: `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`,
+                                            label: designation.designation_name,
                                         }))}
                                     value=""
                                     onValueChange={(value) => {
@@ -527,8 +541,8 @@ export function BasicInfoStep({ data, onChange, onNext, onPrevious, onImageSelec
                                         }
                                     }}
                                     placeholder="Search and select a position"
-                                    searchPlaceholder="Search job designations..."
-                                    emptyMessage="No job designation found."
+                                    searchPlaceholder="Search job titles..."
+                                    emptyMessage="No job title found for your industry."
                                 />
                             )}
                         </div>

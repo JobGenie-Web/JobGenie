@@ -6,6 +6,7 @@ import {
     candidateRegistrationSchema,
     type CandidateRegistrationData,
 } from "@/lib/validations/candidate-schema";
+import { employerRegistrationSchema } from "@/lib/validations/employer-schema";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import {
@@ -1273,9 +1274,6 @@ export async function registerEmployer(
             confirmPassword: formData.get("confirmPassword") as string,
             jobTitle: formData.get("jobTitle") as string,
         };
-
-        // Import validation schemas
-        const { employerRegistrationSchema } = await import("@/lib/validations/employer-schema");
 
         // Validate with Zod
         const validationResult = employerRegistrationSchema.safeParse({

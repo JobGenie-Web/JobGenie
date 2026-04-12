@@ -12,9 +12,10 @@ import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface ProfileHeaderProps {
     profile: CandidateProfile;
+    onProfileUpdated?: () => void;
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const initials = `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
 
@@ -157,6 +158,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 profile={profile}
+                onProfileUpdated={onProfileUpdated}
             />
         </>
     );

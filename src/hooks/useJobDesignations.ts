@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export interface JobDesignation {
     designation_id: number;
@@ -23,22 +23,39 @@ interface UseJobDesignationsReturn {
     refetch: () => void;
 }
 
-export function useJobDesignations(industryId?: number | null): UseJobDesignationsReturn {
+/** One row per title (same name can exist for multiple seniority rows in DB). */
+export function uniqueDesignationsByName(designations: JobDesignation[]): JobDesignation[] {
+    const byName = new Map<string, JobDesignation>();
+    for (const d of designations) {
+        if (!byName.has(d.designation_name)) byName.set(d.designation_name, d);
+    }
+    return Array.from(byName.values()).sort((a, b) =>
+        a.designation_name.localeCompare(b.designation_name)
+    );
+}
+
+/**
+ * @param profileIndustry - Candidate profile industry key: it_software | banking | finance_investment
+ */
+export function useJobDesignations(profileIndustry?: string | null): UseJobDesignationsReturn {
     const [jobDesignations, setJobDesignations] = useState<JobDesignation[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => profileIndustry != null && profileIndustry !== "");
     const [error, setError] = useState<string | null>(null);
 
-    const fetchJobDesignations = async () => {
+    const fetchJobDesignations = useCallback(async () => {
+        if (profileIndustry == null || profileIndustry === "") {
+            setJobDesignations([]);
+            setLoading(false);
+            setError(null);
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
 
-            // Build URL with optional industry filter
-            const url = industryId
-                ? `/api/job-designations?industryId=${industryId}`
-                : "/api/job-designations";
-
-            const response = await fetch(url);
+            const response = await fetch(
+                `/api/job-designations?profileIndustry=${encodeURIComponent(profileIndustry)}`
+            );
             const result = await response.json();
 
             if (!response.ok || !result.success) {
@@ -52,11 +69,17 @@ export function useJobDesignations(industryId?: number | null): UseJobDesignatio
         } finally {
             setLoading(false);
         }
-    };
+    }, [profileIndustry]);
 
     useEffect(() => {
+        if (profileIndustry == null || profileIndustry === "") {
+            setJobDesignations([]);
+            setLoading(false);
+            setError(null);
+            return;
+        }
         fetchJobDesignations();
-    }, [industryId]);
+    }, [profileIndustry, fetchJobDesignations]);
 
     return { jobDesignations, loading, error, refetch: fetchJobDesignations };
 }

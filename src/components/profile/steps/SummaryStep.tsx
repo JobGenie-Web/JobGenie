@@ -69,6 +69,43 @@ export function SummaryStep({
 
     const industryLabel = INDUSTRY_OPTIONS.find((i) => i.value === industry)?.label || industry;
 
+    const experienceLevelLabels: Record<string, string> = {
+        entry: "Entry",
+        junior: "Junior",
+        mid: "Mid",
+        senior: "Senior",
+        lead: "Lead",
+        principal: "Principal",
+    };
+
+    const availabilityLabels: Record<string, string> = {
+        available: "Available",
+        open_to_opportunities: "Open to opportunities",
+        not_looking: "Not looking",
+    };
+
+    const employmentTypeLabels: Record<string, string> = {
+        full_time: "Full time",
+        part_time: "Part time",
+        contract: "Contract",
+        internship: "Internship",
+        freelance: "Freelance",
+        volunteer: "Volunteer",
+    };
+
+    const qualificationLabels: Record<string, string> = {
+        bachelors_degree: "Bachelor's Degree",
+        masters_degree: "Master's Degree",
+        doctorate_phd: "Doctorate / PhD",
+        undergraduate: "Undergraduate",
+        post_graduate: "Post Graduate",
+        diploma: "Diploma",
+        certificate: "Certificate",
+        professional_certification: "Professional Certification",
+        vocational_training: "Vocational Training",
+        no_formal_education: "No Formal Education",
+    };
+
     const handleGenerateSummary = async () => {
         setIsGenerating(true);
         setGenerationError(null);
@@ -148,9 +185,25 @@ export function SummaryStep({
                         <h4 className="font-medium mb-2">Personal Information</h4>
                         <div className="grid gap-2 text-sm text-muted-foreground">
                             <p><span className="font-medium text-foreground">{basicInfo.firstName} {basicInfo.lastName}</span></p>
-                            <p>{basicInfo.email} • {basicInfo.phone}</p>
+                            <p>{basicInfo.email} • {basicInfo.phone}{basicInfo.alternativePhone ? ` • ${basicInfo.alternativePhone}` : ""}</p>
                             <p>{basicInfo.currentPosition} • {basicInfo.yearsOfExperience} years experience</p>
+                            {basicInfo.address && <p>{basicInfo.address}</p>}
+                            {basicInfo.country && <p>{basicInfo.country}</p>}
                             <p>Industry: <Badge variant="secondary">{industryLabel}</Badge></p>
+                            <p>
+                                Experience level: {experienceLevelLabels[basicInfo.experienceLevel] || basicInfo.experienceLevel}
+                                {basicInfo.employmentType ? ` • ${employmentTypeLabels[basicInfo.employmentType] || basicInfo.employmentType}` : ""}
+                            </p>
+                            {basicInfo.expectedMonthlySalary != null && (
+                                <p>Expected salary: {basicInfo.expectedMonthlySalary.toLocaleString()} / month</p>
+                            )}
+                            <p>
+                                Availability: {availabilityLabels[basicInfo.availabilityStatus] || basicInfo.availabilityStatus}
+                                {basicInfo.noticePeriod ? ` • Notice period: ${basicInfo.noticePeriod}` : ""}
+                            </p>
+                            {basicInfo.highestQualification && (
+                                <p>Highest qualification: {qualificationLabels[basicInfo.highestQualification] || basicInfo.highestQualification}</p>
+                            )}
                             {(basicInfo.expectedPositions ?? []).length > 0 && (
                                 <div className="flex flex-wrap items-center gap-1">
                                     <span className="text-foreground font-medium">Expected Positions:</span>
@@ -166,12 +219,16 @@ export function SummaryStep({
                     {validWorkExperiences.length > 0 && (
                         <div>
                             <h4 className="font-medium mb-2">Experience ({validWorkExperiences.length})</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
+                            <ul className="text-sm text-muted-foreground space-y-3">
                                 {validWorkExperiences.map((exp, i) => (
                                     <li key={i}>
-                                        • {exp.jobTitle} {exp.company ? `at ${exp.company}` : ''}
-                                        {exp.startDate ? ` (${exp.startDate} to ${exp.isCurrent ? 'Present' : exp.endDate || '...'})` : ''}
-                                        {exp.location ? ` - ${exp.location}` : ''}
+                                        <div className="font-medium text-foreground">• {exp.jobTitle}{exp.company ? ` at ${exp.company}` : ''}</div>
+                                        <div>
+                                            {exp.startDate ? `${exp.startDate} to ${exp.isCurrent ? 'Present' : exp.endDate || '...'}` : 'Date not specified'}
+                                            {exp.location ? ` • ${exp.location}` : ''}
+                                            {exp.employmentType ? ` • ${employmentTypeLabels[exp.employmentType] || exp.employmentType}` : ''}
+                                        </div>
+                                        {exp.description && <div className="text-sm text-muted-foreground">{exp.description}</div>}
                                     </li>
                                 ))}
                             </ul>
@@ -182,10 +239,14 @@ export function SummaryStep({
                     {validEducations.length > 0 && industry !== "finance_investment" && industry !== "banking" && (
                         <div>
                             <h4 className="font-medium mb-2">Education ({validEducations.length})</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
+                            <ul className="text-sm text-muted-foreground space-y-3">
                                 {validEducations.map((edu, i) => (
                                     <li key={i}>
-                                        • {edu.degreeDiploma} {edu.institution ? `- ${edu.institution}` : ''} {edu.status ? `(${edu.status})` : ''}
+                                        <div className="font-medium text-foreground">• {edu.degreeDiploma}</div>
+                                        <div>
+                                            {edu.institution ? ` ${edu.institution}` : ''}
+                                            {edu.status ? ` • ${edu.status}` : ''}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
@@ -196,10 +257,14 @@ export function SummaryStep({
                     {validAwards.length > 0 && (
                         <div>
                             <h4 className="font-medium mb-2">Awards ({validAwards.length})</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
+                            <ul className="text-sm text-muted-foreground space-y-3">
                                 {validAwards.map((award, i) => (
                                     <li key={i}>
-                                        • {award.natureOfAward} {award.offeredBy ? `- ${award.offeredBy}` : ''}
+                                        <div className="font-medium text-foreground">• {award.natureOfAward}</div>
+                                        <div>
+                                            {award.offeredBy ? `Awarded by ${award.offeredBy}` : ''}
+                                        </div>
+                                        {award.description && <div className="text-sm text-muted-foreground">{award.description}</div>}
                                     </li>
                                 ))}
                             </ul>
@@ -210,10 +275,12 @@ export function SummaryStep({
                     {validProjects.length > 0 && (
                         <div>
                             <h4 className="font-medium mb-2">Projects ({validProjects.length})</h4>
-                            <ul className="text-sm text-muted-foreground space-y-1">
+                            <ul className="text-sm text-muted-foreground space-y-3">
                                 {validProjects.map((proj, i) => (
                                     <li key={i}>
-                                        • {proj.projectName} {proj.demoUrl ? `- ${proj.demoUrl}` : ''}
+                                        <div className="font-medium text-foreground">• {proj.projectName}</div>
+                                        {proj.demoUrl && <div>Demo: {proj.demoUrl}</div>}
+                                        {proj.description && <div className="text-sm text-muted-foreground">{proj.description}</div>}
                                     </li>
                                 ))}
                             </ul>
@@ -223,13 +290,20 @@ export function SummaryStep({
                     {validCertificates.length > 0 && IT_INDUSTRIES.includes(industry as any) && (
                         <div>
                             <h4 className="font-medium mb-2">Certificates ({validCertificates.length})</h4>
-                            <div className="flex flex-wrap gap-1">
+                            <ul className="text-sm text-muted-foreground space-y-3">
                                 {validCertificates.map((cert, i) => (
-                                    <Badge key={i} variant="outline">
-                                        {cert.certificateName} {cert.issueDate ? `(${cert.issueDate})` : ''}
-                                    </Badge>
+                                    <li key={i}>
+                                        <div className="font-medium text-foreground">• {cert.certificateName}</div>
+                                        <div>
+                                            {cert.issuingAuthority ? `Issued by ${cert.issuingAuthority}` : ''}
+                                            {cert.issueDate ? ` • ${cert.issueDate}` : ''}
+                                            {cert.expiryDate ? ` • Expires ${cert.expiryDate}` : ''}
+                                        </div>
+                                        {cert.credentialUrl && <div className="text-sm text-muted-foreground">Credential: {cert.credentialUrl}</div>}
+                                        {cert.description && <div className="text-sm text-muted-foreground">{cert.description}</div>}
+                                    </li>
                                 ))}
-                            </div>
+                            </ul>
                         </div>
                     )}
 
@@ -273,7 +347,12 @@ export function SummaryStep({
                             <ul className="text-sm text-muted-foreground space-y-1">
                                 {validBankingSpecialized.map((training, i) => (
                                     <li key={i}>
-                                        • {training.certificateName} {training.issuingAuthority ? `- ${training.issuingAuthority}` : ''} {training.certificateIssueMonth ? `(${training.certificateIssueMonth})` : ''}
+                                        <div className="font-medium text-foreground">• {training.certificateName}</div>
+                                        <div>
+                                            {training.issuingAuthority ? `Issued by ${training.issuingAuthority}` : ''}
+                                            {training.certificateIssueMonth ? ` • ${training.certificateIssueMonth}` : ''}
+                                            {training.status ? ` • ${training.status}` : ''}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

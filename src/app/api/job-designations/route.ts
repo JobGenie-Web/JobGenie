@@ -1,12 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
+import { resolveIndustryIdsForProfile } from "@/lib/job-designations-resolve";
 
 export async function GET(request: Request) {
     try {
         const supabase = await createClient();
         const { searchParams } = new URL(request.url);
-        const industryId = searchParams.get("industryId");
+        const industryIdParam = searchParams.get("industryId");
+        const profileIndustry = searchParams.get("profileIndustry");
+
+        let filterIds: number[] | null = null;
+
+        if (profileIndustry) {
+            const { data: industriesRows, error: industriesError } = await supabase
+                .from("industries")
+                .select("industry_id, industry_name");
+
+            if (industriesError) {
+                console.error("Error fetching industries:", industriesError);
+                return NextResponse.json(
+                    { success: false, error: "Failed to resolve industry for job designations" },
+                    { status: 500 }
+                );
+            }
+
+            filterIds = resolveIndustryIdsForProfile(profileIndustry, industriesRows ?? []);
+            if (filterIds.length === 0) {
+                return NextResponse.json({ success: true, data: [] });
+            }
+        } else if (industryIdParam) {
+            const id = parseInt(industryIdParam, 10);
+            if (!Number.isNaN(id)) {
+                filterIds = [id];
+            }
+        }
 
         // Build query to fetch job designations with related industry and seniority level
         let query = supabase
@@ -28,9 +56,10 @@ export async function GET(request: Request) {
             `)
             .order("designation_name", { ascending: true });
 
-        // Filter by industry if provided
-        if (industryId) {
-            query = query.eq("industry_id", parseInt(industryId));
+        if (filterIds && filterIds.length === 1) {
+            query = query.eq("industry_id", filterIds[0]);
+        } else if (filterIds && filterIds.length > 1) {
+            query = query.in("industry_id", filterIds);
         }
 
         const { data: jobDesignations, error } = await query;

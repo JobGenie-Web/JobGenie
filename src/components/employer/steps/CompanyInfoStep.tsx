@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2 } from "lucide-react";
 import { BRCertificateUpload } from "../BRCertificateUpload";
-import { INDUSTRIES } from "@/lib/validations/employer-schema";
+import { useIndustries } from "@/hooks/useIndustries";
 
 interface CompanyInfoStepProps {
     data: {
@@ -35,6 +35,7 @@ export function CompanyInfoStep({
     isVerified,
 }: CompanyInfoStepProps) {
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const { industries, loading: industriesLoading, error: industriesError } = useIndustries();
 
     const handleChange = (field: keyof typeof data, value: string) => {
         onChange({ ...data, [field]: value });
@@ -131,18 +132,35 @@ export function CompanyInfoStep({
                         <Label htmlFor="industry">
                             Industry <span className="text-destructive">*</span>
                         </Label>
-                        <Select value={data.industry} onValueChange={(value) => handleChange("industry", value)}>
+                        <Select
+                            value={data.industry}
+                            onValueChange={(value) => handleChange("industry", value)}
+                            disabled={industriesLoading || industries.length === 0}
+                        >
                             <SelectTrigger className={errors.industry ? "border-destructive" : ""}>
-                                <SelectValue placeholder="Select industry" />
+                                <SelectValue placeholder={industriesLoading ? "Loading industries..." : "Select industry"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {INDUSTRIES.map((industry) => (
-                                    <SelectItem key={industry} value={industry}>
-                                        {industry}
+                                {industriesLoading && (
+                                    <SelectItem value="loading" disabled>
+                                        Loading industries...
+                                    </SelectItem>
+                                )}
+                                {!industriesLoading && industries.length === 0 && (
+                                    <SelectItem value="no-industries" disabled>
+                                        No industries available
+                                    </SelectItem>
+                                )}
+                                {industries.map((industry) => (
+                                    <SelectItem key={industry.industry_id} value={industry.industry_name}>
+                                        {industry.industry_name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
+                        {industriesError && (
+                            <p className="text-sm text-destructive">{industriesError}</p>
+                        )}
                         {errors.industry && (
                             <p className="text-sm text-destructive">{errors.industry}</p>
                         )}

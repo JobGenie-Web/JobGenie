@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { uploadFile } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 
 // Per-role bucket allowlist.
@@ -83,30 +84,34 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Upload to Supabase Storage using admin client (after all auth/authz checks)
-        const { error } = await adminClient.storage
-            .from(bucket)
-            .upload(filePath, buffer, {
-                contentType: file.type,
-                upsert: false,
-            });
-
-        if (error) {
-            console.error("Storage upload error:", error);
-            return NextResponse.json(
-                { error: "Failed to upload file" },
-                { status: 500 }
-            );
+        // Determine allowed MIME types based on bucket
+        let allowedMimeTypes: string[] = [];
+        switch (bucket) {
+            case "resume":
+            case "resume_copy":
+                allowedMimeTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+                break;
+            case "profile-images":
+                allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+                break;
+            case "br-certificates":
+                allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp"];
+                break;
+            case "company-logos":
+                allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+                break;
+            case "uploads":
+            default:
+                allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+                break;
         }
 
-        // Get public URL
-        const { data: urlData } = adminClient.storage
-            .from(bucket)
-            .getPublicUrl(filePath);
+        // Upload using StorageService (which handles bucket creation)
+        const url = await uploadFile(bucket, filePath, buffer, file.type, allowedMimeTypes);
 
         return NextResponse.json({
             success: true,
-            url: urlData.publicUrl,
+            url,
             fileName: filePath,
         });
     } catch (error) {

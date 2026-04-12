@@ -30,16 +30,17 @@ import { updateBasicInfo } from "@/app/actions/profile-mutations";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateProfile } from "@/types/profile-types";
 import { Upload, Loader2, X } from "lucide-react";
-import { useJobDesignations } from "@/hooks/useJobDesignations";
+import { useJobDesignations, uniqueDesignationsByName } from "@/hooks/useJobDesignations";
 import { Combobox } from "@/components/ui/combobox";
 
 interface BasicInfoDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     profile: CandidateProfile;
+    onProfileUpdated?: () => void;
 }
 
-export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialogProps) {
+export function BasicInfoDialog({ open, onOpenChange, profile, onProfileUpdated }: BasicInfoDialogProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,22 +49,12 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
     const [expectedPositions, setExpectedPositions] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Map industry string to industry ID for filtering
-    // Industry IDs: 1=Banking, 2=Finance & Investment, 3=Information Technology
-    const getIndustryId = (industryName?: string): number | null => {
-        if (!industryName) return null;
-        const industryMap: Record<string, number> = {
-            "banking": 1,
-            "finance_investment": 2,
-            "it_software": 3,
-        };
-        return industryMap[industryName] || null;
-    };
+    const canLoadDesignations = Boolean(profile?.industry);
 
-    const industryId = getIndustryId(profile?.industry);
-
-    // Fetch job designations from the database, filtered by industry if available
-    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(industryId);
+    const { jobDesignations, loading: loadingDesignations, error: designationsError } = useJobDesignations(
+        profile?.industry
+    );
+    const designationOptions = uniqueDesignationsByName(jobDesignations);
 
     const form = useForm<BasicInfoFormData>({
         resolver: zodResolver(basicInfoSchema),
@@ -194,6 +185,7 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                 });
                 onOpenChange(false);
                 router.refresh();
+                onProfileUpdated?.();
             } else {
                 toast({
                     title: "Error",
@@ -350,7 +342,16 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Current Position *</FormLabel>
-                                    {loadingDesignations ? (
+                                    {!canLoadDesignations ? (
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-muted-foreground">
+                                                Set your industry on your profile to see suggested job titles, or type your position below.
+                                            </p>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Senior Software Engineer" {...field} />
+                                            </FormControl>
+                                        </div>
+                                    ) : loadingDesignations ? (
                                         <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground border rounded-md">
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                             Loading job designations...
@@ -367,18 +368,15 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                                     ) : (
                                         <FormControl>
                                             <Combobox
-                                                options={jobDesignations.map((designation) => {
-                                                    const fullLabel = `${designation.designation_name} (${designation.industries.industry_name} - ${designation.seniority_levels.level_name})`;
-                                                    return {
-                                                        value: designation.designation_name,
-                                                        label: fullLabel
-                                                    };
-                                                })}
+                                                options={designationOptions.map((designation) => ({
+                                                    value: designation.designation_name,
+                                                    label: designation.designation_name,
+                                                }))}
                                                 value={field.value}
                                                 onValueChange={field.onChange}
                                                 placeholder="Select your current position"
-                                                searchPlaceholder="Search job designations..."
-                                                emptyMessage="No job designation found."
+                                                searchPlaceholder="Search job titles..."
+                                                emptyMessage="No job title found for your industry."
                                             />
                                         </FormControl>
                                     )}
@@ -421,28 +419,56 @@ export function BasicInfoDialog({ open, onOpenChange, profile }: BasicInfoDialog
                                 <p className="text-xs text-muted-foreground py-1">
                                     Maximum of 3 positions reached. Remove one to add another.
                                 </p>
+                            ) : !canLoadDesignations ? (
+                                <Input
+                                    placeholder="Type a position and press Enter"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const val = (e.target as HTMLInputElement).value.trim();
+                                            if (val && !expectedPositions.includes(val)) {
+                                                setExpectedPositions((prev) => [...prev, val]);
+                                                (e.target as HTMLInputElement).value = "";
+                                            }
+                                        }
+                                    }}
+                                />
                             ) : loadingDesignations ? (
                                 <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground border rounded-md">
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                     Loading job designations...
                                 </div>
+                            ) : designationsError ? (
+                                <Input
+                                    placeholder="Type a position and press Enter"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            const val = (e.target as HTMLInputElement).value.trim();
+                                            if (val && !expectedPositions.includes(val)) {
+                                                setExpectedPositions((prev) => [...prev, val]);
+                                                (e.target as HTMLInputElement).value = "";
+                                            }
+                                        }
+                                    }}
+                                />
                             ) : (
                                 <Combobox
-                                    options={jobDesignations
-                                        .filter(d => !expectedPositions.includes(d.designation_name))
-                                        .map(d => ({
+                                    options={designationOptions
+                                        .filter((d) => !expectedPositions.includes(d.designation_name))
+                                        .map((d) => ({
                                             value: d.designation_name,
-                                            label: `${d.designation_name} (${d.industries.industry_name} - ${d.seniority_levels.level_name})`,
+                                            label: d.designation_name,
                                         }))}
                                     value=""
                                     onValueChange={(value) => {
                                         if (value && !expectedPositions.includes(value)) {
-                                            setExpectedPositions(prev => [...prev, value]);
+                                            setExpectedPositions((prev) => [...prev, value]);
                                         }
                                     }}
                                     placeholder="Search and select a position"
-                                    searchPlaceholder="Search job designations..."
-                                    emptyMessage="No job designation found."
+                                    searchPlaceholder="Search job titles..."
+                                    emptyMessage="No job title found for your industry."
                                 />
                             )}
                             {/* Show validation error if submitted with empty */}

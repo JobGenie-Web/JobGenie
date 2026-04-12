@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Mail, Loader2, AlertCircle, CheckCircle, XCircle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface TimeSlot {
     date: string;
@@ -35,6 +37,32 @@ interface Invitation {
         headoffice_location: string | null;
     };
 }
+
+const statusConfig: Record<
+    string,
+    { label: string; icon: React.ElementType; classes: string }
+> = {
+    pending: {
+        label: "Pending",
+        icon: AlertCircle,
+        classes: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    },
+    accepted: {
+        label: "Accepted",
+        icon: CheckCircle,
+        classes: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    },
+    declined: {
+        label: "Declined",
+        icon: XCircle,
+        classes: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    },
+    canceled: {
+        label: "Canceled",
+        icon: Ban,
+        classes: "bg-muted text-muted-foreground",
+    },
+};
 
 // Helper function to format date relative to today
 function formatInvitationDate(sentAt: string): string {
@@ -112,7 +140,7 @@ export default function InvitationsClient() {
                     <Mail className="h-10 w-10 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No Invitations Yet</h3>
                     <p className="text-sm text-muted-foreground text-center max-w-md">
-                        You haven't received any interview invitations yet. Keep your profile updated and apply to jobs to increase your chances!
+                        You haven&apos;t received any interview invitations yet. Keep your profile updated and apply to jobs to increase your chances!
                     </p>
                 </CardContent>
             </Card>
@@ -153,55 +181,58 @@ export default function InvitationsClient() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {filteredInvitations.map((invitation) => (
-                    <Card
-                        key={invitation.id}
-                        className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all"
-                        onClick={() => handleCardClick(invitation.id)}
-                    >
-                        <CardContent className="px-3">
-                            <div className="flex gap-2 flex items-center">
-                                {/* Company Logo */}
-                                <div className="h-12 w-12 rounded bg-white border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    {invitation.company.logo_url ? (
-                                        <img
-                                            src={invitation.company.logo_url}
-                                            alt={invitation.company.company_name}
-                                            className="h-12 w-12 object-contain"
-                                        />
-                                    ) : (
-                                        <Mail className="h-12 w-12 text-muted-foreground" />
-                                    )}
-                                </div>
+                {filteredInvitations.map((invitation) => {
+                    const effectiveStatus = invitation.invitation_canceled ? "canceled" : invitation.status;
+                    const config = statusConfig[effectiveStatus] || statusConfig.pending;
 
-                                {/* Info */}
-                                <div className="flex-1 min-w-0">
-                                    {/* Job Position */}
-                                    <h3 className="font-semibold text-base text-primary line-clamp-1">
-                                        {invitation.job_designation}
-                                    </h3>
-
-                                    {/* Company Name */}
-                                    <p className="text-xs text-foreground line-clamp-1">
-                                        {invitation.company.company_name}
-                                    </p>
-
-                                    {/* Location */}
+                    return (
+                        <Card
+                            key={invitation.id}
+                            className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all"
+                            onClick={() => handleCardClick(invitation.id)}
+                        >
+                            <CardContent className="px-3 py-1">
+                                <div className="flex gap-3 items-start">
+                                    <div className="h-12 w-12 rounded bg-white border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {invitation.company.logo_url ? (
+                                            <img
+                                                src={invitation.company.logo_url}
+                                                alt={invitation.company.company_name}
+                                                className="h-12 w-12 object-contain"
+                                            />
+                                        ) : (
+                                            <Mail className="h-6 w-6 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <h3 className="font-semibold text-sm text-primary line-clamp-1">
+                                                    {invitation.job_designation}
+                                                </h3>
+                                                <p className="text-[11px] text-muted-foreground line-clamp-1">
+                                                    {invitation.company.company_name}
+                                                </p>
+                                            </div>
+                                            <Badge className={cn("text-[10px] px-2 py-0.5 w-fit", config.classes)}>
+                                                {config.label}
+                                            </Badge>
+                                        </div>
                                     {invitation.company.headoffice_location && (
-                                        <p className="text-xs text-muted-foreground line-clamp-1">
+                                        <p className="text-[11px] text-muted-foreground line-clamp-1">
                                             {invitation.company.headoffice_location}
                                         </p>
                                     )}
 
-                                    {/* Invited Date */}
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-[10px] text-muted-foreground ">
                                         {formatInvitationDate(invitation.sent_at)}
                                     </p>
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
-                ))}
+                        </Card>
+                    );
+                })}
             </div>
         </div>
     );

@@ -67,6 +67,9 @@ export function ProfileContent() {
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refreshIndex, setRefreshIndex] = useState(0);
+
+    const refreshProfile = () => setRefreshIndex((prev) => prev + 1);
 
     useEffect(() => {
         async function fetchProfile() {
@@ -86,7 +89,7 @@ export function ProfileContent() {
                 } else {
                     throw new Error(data.error || "Invalid response format");
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error("Error fetching profile:", err);
                 setError(err instanceof Error ? err.message : "An unexpected error occurred");
             } finally {
@@ -95,7 +98,7 @@ export function ProfileContent() {
         }
 
         fetchProfile();
-    }, [pathname, searchParams]); // Refetch when route changes (triggered by router.refresh())
+    }, [pathname, searchParams, refreshIndex]); // Refetch when route changes or a refresh is requested
 
     if (isLoading) {
         return <ProfileSkeleton />;
@@ -108,7 +111,7 @@ export function ProfileContent() {
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             {/* Profile Header */}
-            <ProfileHeader profile={profile} />
+            <ProfileHeader profile={profile} onProfileUpdated={refreshProfile} />
 
             {/* About Section */}
             <AboutSection profile={profile} />
@@ -128,12 +131,12 @@ export function ProfileContent() {
             />
 
             {/* Projects Section - IT Industry Only */}
-            {IT_INDUSTRIES.includes(profile.industry as any) && (
+            {profile.industry && IT_INDUSTRIES.includes(profile.industry) && (
                 <ProjectsSection projects={profile.projects || []} />
             )}
 
             {/* Certifications Section - IT Industry Only */}
-            {IT_INDUSTRIES.includes(profile.industry as any) && (
+            {profile.industry && IT_INDUSTRIES.includes(profile.industry) && (
                 <CertificationsSection certificates={profile.certificates || []} />
             )}
 

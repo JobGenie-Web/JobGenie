@@ -101,10 +101,35 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // Ensure the company-logos bucket exists before uploading
+        const bucketName = "company-logos";
+        const { data: buckets, error: listError } = await adminClient.storage.listBuckets();
+        if (listError) {
+            console.error("Error listing storage buckets:", listError);
+        }
+
+        const bucketExists = buckets?.find((b) => b.name === bucketName);
+        if (!bucketExists) {
+            const { error: createError } = await adminClient.storage.createBucket(bucketName, {
+                public: true,
+                fileSizeLimit: MAX_FILE_SIZE,
+                allowedMimeTypes: ALLOWED_FILE_TYPES,
+            });
+
+            if (createError) {
+                console.error(`Failed to create bucket '${bucketName}':`, createError);
+                return NextResponse.json(
+                    { success: false, error: `Failed to create storage bucket '${bucketName}'` },
+                    { status: 500 }
+                );
+            }
+            console.log(`Created storage bucket: ${bucketName}`);
+        }
+
         // Upload to Supabase Storage using admin client (bypasses RLS)
         console.log("Uploading new logo:", filePath);
         const { data: uploadData, error: uploadError } = await adminClient.storage
-            .from("company-logos")
+            .from(bucketName)
             .upload(filePath, buffer, {
                 contentType: file.type,
                 upsert: true,

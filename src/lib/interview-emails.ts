@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { getBaseUrl } from "./email";
+import { formatUTCDate } from "./date-utils";
 
 function createTransporter() {
     return nodemailer.createTransport({
@@ -50,7 +51,7 @@ export async function sendInterviewInvitationEmail(
         const timeSlotsHTML = timeSlots.map((slot, idx) => `
             <div style="display:flex;align-items:center;gap:8px;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:8px;">
                 <span style="font-weight:600;color:#22c55e;min-width:30px;">${idx + 1}.</span>
-                <span style="color:#1f2937;">${new Date(slot.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${slot.time}</span>
+                <span style="color:#1f2937;">${formatUTCDate(slot.date, "EEEE, MMMM d, yyyy")} at ${slot.time}</span>
             </div>
         `).join('');
 

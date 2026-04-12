@@ -6,6 +6,51 @@ import { logActivity, logError } from "@/lib/logger";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MAX_RETRIES = 4;
+const GEMINI_BASE_DELAY_MS = 1000;
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableGeminiError(error: unknown): boolean {
+    if (error && typeof error === "object" && "status" in error) {
+        const status = (error as { status?: number }).status;
+        if (status === 503 || status === 429) return true;
+    }
+    const msg = error instanceof Error ? error.message : String(error);
+    return (
+        msg.includes('"code":503') ||
+        msg.includes('"code":429') ||
+        msg.includes("UNAVAILABLE") ||
+        msg.includes("RESOURCE_EXHAUSTED") ||
+        msg.includes("Too Many Requests")
+    );
+}
+
+async function generateContentWithRetry(
+    contents: Parameters<GoogleGenAI["models"]["generateContent"]>[0]["contents"]
+): Promise<Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < GEMINI_MAX_RETRIES; attempt++) {
+        try {
+            return await genAI.models.generateContent({
+                model: GEMINI_MODEL,
+                contents,
+            });
+        } catch (error) {
+            lastError = error;
+            if (!isRetryableGeminiError(error) || attempt === GEMINI_MAX_RETRIES - 1) {
+                throw error;
+            }
+            const delay = GEMINI_BASE_DELAY_MS * 2 ** attempt;
+            await sleep(delay);
+        }
+    }
+    throw lastError;
+}
+
 export type CVExtractionState = {
     success: boolean;
     message: string;
@@ -108,10 +153,7 @@ export async function extractCVData(
             parts.push({ text: EXTRACTION_PROMPT + textContent });
         }
 
-        const result = await genAI.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: parts as any[] }],
-        });
+        const result = await generateContentWithRetry([{ role: "user", parts: parts as any[] }]);
         const text = result.text || "";
 
         // Clean the response (remove markdown code blocks if present)
@@ -155,9 +197,14 @@ export async function extractCVData(
     } catch (error) {
         console.error("CV extraction error:", error);
         await logError({ source: "extract-cv.ts:extractCVData", errorType: "CVExtractionError", message: error instanceof Error ? error.message : String(error) });
+        const isOverload =
+            isRetryableGeminiError(error) ||
+            (error instanceof Error && error.message.includes("high demand"));
         return {
             success: false,
-            message: "Failed to extract CV data. Please try again or enter manually.",
+            message: isOverload
+                ? "The AI service is busy right now. Please wait a moment and try again, or enter your details manually."
+                : "Failed to extract CV data. Please try again or enter manually.",
             error: error instanceof Error ? error.message : "Unknown error",
         };
     }
@@ -195,10 +242,7 @@ ${experienceText}
 
 Write a compelling professional summary that would be suitable for a CV/resume. Return ONLY the summary text, no quotes or formatting.`;
 
-        const result = await genAI.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-        });
+        const result = await generateContentWithRetry([{ role: "user", parts: [{ text: prompt }] }]);
         const summary = result.text?.trim() || "";
 
         return {

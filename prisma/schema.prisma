@@ -568,8 +568,7 @@ model JobInvitation {
 
   interview_rounds InterviewRound[]
 
-  // Ensure no duplicate invitations for same candidate from same employer
-  @@unique([candidate_id, employer_id])
+  // Removed unique constraint to allow re-inviting candidates when previous invitations are cancelled or completed
   @@index([candidate_id, status])
   @@index([employer_id])
   @@index([company_id])

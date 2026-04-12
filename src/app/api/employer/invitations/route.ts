@@ -182,18 +182,19 @@ export async function POST(request: Request) {
             );
         }
 
-        // Check for existing active invitation (exclude canceled)
+        // Check for existing active invitation (exclude canceled and completed interviews)
         const { data: existingInvitation } = await supabase
             .from('job_invitations')
-            .select('id')
+            .select('id, status, invitation_canceled')
             .eq('candidate_id', candidateId)
             .eq('employer_id', employer.id)
-            .eq('invitation_canceled', false)  // Only check active invitations
+            .neq('invitation_canceled', true)  // Not cancelled
+            .not('status', 'in', '(accepted,declined,expired)')  // Not in final status
             .maybeSingle();
 
         if (existingInvitation) {
             return NextResponse.json(
-                { success: false, error: "You have already sent an invitation to this candidate" },
+                { success: false, error: "You have already sent an active invitation to this candidate. Wait for their response or cancel the existing invitation first." },
                 { status: 409 }
             );
         }

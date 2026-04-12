@@ -18,8 +18,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { CandidateDetailModal } from "./CandidateDetailModal";
 import { cn, formatIndustry } from "@/lib/utils";
+import { resolveIndustryIdsForProfile } from "@/lib/job-designations-resolve";
 
 interface Candidate {
     id: string;
@@ -127,15 +129,6 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
         }
     }, [selectedIndustryId]);
 
-    // Map industry enum values to industry table names
-    // Candidates store: "it_software", "banking", "finance_investment"
-    // Industries table has: "Information Technology", "Banking", "Finance"
-    const industryEnumToNameMap: Record<string, string> = {
-        "it_software": "Information Technology",
-        "banking": "Banking",
-        "finance_investment": "Finance"
-    };
-
     // Get the selected industry name for filtering candidates
     const selectedIndustryName = industries.find(
         ind => ind.industry_id.toString() === selectedIndustryId
@@ -150,11 +143,11 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
     // Filter candidates by industry + expected_positions only.
     // Candidates appear in results only if the searched designation
     // is listed in their expected_positions array.
-    const filteredCandidates = (selectedIndustryName && selectedDesignation)
+    const filteredCandidates = (selectedIndustryId && selectedDesignation)
         ? candidates.filter(candidate => {
-            const candidateIndustryName = industryEnumToNameMap[candidate.industry] || candidate.industry;
+            const candidateIndustryIds = resolveIndustryIdsForProfile(candidate.industry, industries);
             return (
-                candidateIndustryName === selectedIndustryName &&
+                candidateIndustryIds.includes(parseInt(selectedIndustryId, 10)) &&
                 (candidate.expected_positions ?? []).includes(selectedDesignation)
             );
         })
@@ -204,28 +197,29 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                             </label>
                             <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <Select
-                                    value={selectedDesignation}
-                                    onValueChange={setSelectedDesignation}
-                                    disabled={!selectedIndustryId || loadingDesignations}
-                                >
-                                    <SelectTrigger id="designation-filter" className="w-full" suppressHydrationWarning>
-                                        <SelectValue placeholder={
-                                            loadingDesignations
-                                                ? "Loading designations..."
-                                                : selectedIndustryId
-                                                    ? "Choose a job designation..."
-                                                    : "Select industry first..."
-                                        } />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {jobDesignations.map((designation) => (
-                                            <SelectItem key={designation.designation_id} value={designation.designation_name}>
-                                                {designation.designation_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="w-full" id="designation-filter">
+                                    <Combobox
+                                        options={jobDesignations.map((designation) => ({
+                                            value: designation.designation_name,
+                                            label: designation.designation_name,
+                                        }))}
+                                        value={selectedDesignation}
+                                        onValueChange={setSelectedDesignation}
+                                        placeholder={
+                                            selectedIndustryId
+                                                ? "Choose a job designation..."
+                                                : "Select industry first..."
+                                        }
+                                        searchPlaceholder="Search designations..."
+                                        emptyMessage={
+                                            selectedIndustryId
+                                                ? "No designations found."
+                                                : "Select an industry to load designations."
+                                        }
+                                        disabled={!selectedIndustryId || loadingDesignations}
+                                        className="w-full"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

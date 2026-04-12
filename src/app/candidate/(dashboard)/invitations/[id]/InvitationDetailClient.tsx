@@ -11,9 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Clock, Building2, MapPin, Loader2, User, Phone, Globe, Briefcase, Check, Mail, Video, MapPinned, Copy, ExternalLink, X, AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import Link from "next/link";
-import { formatUTCTime } from "@/lib/date-utils";
+import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface TimeSlot {
@@ -447,7 +446,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 <h3 className="font-semibold text-red-900 dark:text-red-100 mb-1">You declined this invitation</h3>
                                 {invitation.responded_at && (
                                     <p className="text-sm text-red-700 dark:text-red-300 mb-1">
-                                        Declined on {format(new Date(invitation.responded_at + (invitation.responded_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}
+                                        Declined on {formatTimestamp(invitation.responded_at, "MMMM d, yyyy 'at' h:mm a")}
                                     </p>
                                 )}
                                 <p className="text-sm text-red-600 dark:text-red-400 mb-4">
@@ -503,7 +502,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
                                         <div>
                                             <p className="text-sm text-muted-foreground">Date</p>
-                                            <p className="font-semibold">{format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}</p>
+                                            <p className="font-semibold">{formatUTCDate(invitation.selected_time_slot.date, "EEEE, MMMM d, yyyy")}</p>
                                         </div>
                                     </div>
 
@@ -602,7 +601,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         </Badge>
                                         {invitation.mis_rescheduled_at && (
                                             <span className="text-xs text-muted-foreground">
-                                                on {format(new Date(invitation.mis_rescheduled_at), "MMM d, yyyy")}
+                                                on {formatTimestamp(invitation.mis_rescheduled_at, "MMM d, yyyy")}
                                             </span>
                                         )}
                                     </div>
@@ -615,7 +614,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             <Calendar className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                                             <div>
                                                 <p className="text-xs text-green-700 dark:text-green-300">New Date</p>
-                                                <p className="font-semibold">{format(new Date(invitation.mis_reschedule_data.date), "EEEE, MMMM d, yyyy")}</p>
+                                                <p className="font-semibold">{formatUTCDate(invitation.mis_reschedule_data.date, "EEEE, MMMM d, yyyy")}</p>
                                             </div>
                                         </div>
 
@@ -742,11 +741,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Selected Date</p>
-                                    <p className="font-semibold">{format(new Date(invitation.selected_time_slot.date), "EEEE, MMMM d, yyyy")}</p>
+                                    <p className="font-semibold">{formatUTCDate(invitation.selected_time_slot.date, "EEEE, MMMM d, yyyy")}</p>
                                 </div>
                             </div>
-
-                            <Separator />
 
                             <div className="flex items-center gap-3">
                                 <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
@@ -794,240 +791,198 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 </Card>
             )}
 
-            {/* SELECTION FLOW - STEP BY STEP */}
+            {/* SELECTION FLOW */}
             {isPending && (
-                <div className="space-y-6 py-6">
-                    {/* Progress Indicator */}
-                    <Card>
-                        <CardContent className="">
-                            <h3 className="font-semibold mb-4">Complete the following steps to accept this invitation</h3>
-                            <div className="flex items-center gap-2">
-                                {/* Step 1 */}
-                                <div className="flex items-center gap-2 flex-1">
-                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${isModeSelected ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                        {isModeSelected ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-sm font-semibold">1</span>}
-                                    </div>
-                                    <span className={`text-sm font-medium ${isModeSelected ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                        Interview Mode
-                                    </span>
-                                </div>
-
-                                <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-
-                                {/* Step 2 */}
-                                <div className="flex items-center gap-2 flex-1">
-                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${isSlotSelected ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                        {isSlotSelected ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-sm font-semibold">2</span>}
-                                    </div>
-                                    <span className={`text-sm font-medium ${isSlotSelected ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                        Time Slot
-                                    </span>
-                                </div>
-
-                                <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-
-                                {/* Step 3 */}
-                                <div className="flex items-center gap-2 flex-1">
-                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${canProceed ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                        <span className="text-sm font-semibold">3</span>
-                                    </div>
-                                    <span className={`text-sm font-medium ${canProceed ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                        Confirm
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* STEP 1: Interview Mode Selection */}
-                    <Card className={isModeSelected ? 'border-green-200' : ''}>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isModeSelected ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'
-                                    }`}>
-                                    {isModeSelected ? <Check className="h-4 w-4" /> : '1'}
-                                </div>
-                                <CardTitle className="text-lg">Select Interview Mode</CardTitle>
-                            </div>
-                            <CardDescription>Choose how you'd like to attend this interview</CardDescription>
-                        </CardHeader>
+                <div className="space-y-4 py-4">
+                    <Card className="border-primary/20 bg-primary/5">
                         <CardContent>
-                            <div className="grid gap-3 md:grid-cols-2">
-                                <button
-                                    onClick={() => setSelectedMode('online')}
-                                    className={`relative p-5 rounded-lg border-2 transition-all text-left ${selectedMode === 'online'
-                                        ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
-                                        : 'border-border hover:border-green-300 hover:bg-green-50/20'
-                                        }`}
-                                >
-                                    {selectedMode === 'online' && (
-                                        <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                            <Check className="h-4 w-4" />
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-4">
-                                        <div className={`h-14 w-14 rounded-full flex items-center justify-center ${selectedMode === 'online' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'
-                                            }`}>
-                                            <Video className={`h-7 w-7 ${selectedMode === 'online' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
-                                                }`} />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-base">Online Interview</p>
-                                            <p className="text-sm text-muted-foreground">Via video call platform</p>
-                                        </div>
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">Action required</p>
+                                    <h3 className="text-lg font-semibold mt-2">Review and confirm your interview</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Choose how you'd like to attend, pick a time slot, then accept or decline the invitation.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div className="rounded-xl bg-white p-2 text-center shadow-sm">
+                                        <div className="text-sm font-semibold text-primary">1</div>
+                                        <div className="mt-1 text-muted-foreground">Mode</div>
                                     </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setSelectedMode('physical')}
-                                    className={`relative p-5 rounded-lg border-2 transition-all text-left ${selectedMode === 'physical'
-                                        ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
-                                        : 'border-border hover:border-green-300 hover:bg-green-50/20'
-                                        }`}
-                                >
-                                    {selectedMode === 'physical' && (
-                                        <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                            <Check className="h-4 w-4" />
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-4">
-                                        <div className={`h-14 w-14 rounded-full flex items-center justify-center ${selectedMode === 'physical' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'
-                                            }`}>
-                                            <MapPinned className={`h-7 w-7 ${selectedMode === 'physical' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
-                                                }`} />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-base">Physical Interview</p>
-                                            <p className="text-sm text-muted-foreground">In-person at company</p>
-                                        </div>
+                                    <div className="rounded-xl bg-white p-2 text-center shadow-sm">
+                                        <div className="text-sm font-semibold text-primary">2</div>
+                                        <div className="mt-1 text-muted-foreground">Time</div>
                                     </div>
-                                </button>
+                                    <div className="rounded-xl bg-white p-2 text-center shadow-sm">
+                                        <div className="text-sm font-semibold text-primary">3</div>
+                                        <div className="mt-1 text-muted-foreground">Confirm</div>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* STEP 2: Time Slot Selection */}
-                    <Card className={isSlotSelected ? 'border-green-200' : !isModeSelected ? 'opacity-60 pointer-events-none' : ''}>
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isSlotSelected ? 'bg-green-500 text-white' : isModeSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
-                                    {isSlotSelected ? <Check className="h-4 w-4" /> : '2'}
-                                </div>
-                                <CardTitle className="text-lg">Select Time Slot</CardTitle>
-                            </div>
-                            <CardDescription>
-                                {isModeSelected ? 'Choose your preferred interview time' : 'Complete step 1 to continue'}
-                            </CardDescription>
-                        </CardHeader>
-                        {isModeSelected && (
-                            <CardContent className="space-y-6">
-                                {/* Proposed Time Slots */}
-                                {invitation.given_time_slots && invitation.given_time_slots.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium text-sm mb-3">Proposed Time Slots</h4>
-                                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                                            {invitation.given_time_slots.map((slot, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => setSelectedSlot(slot)}
-                                                    className={`relative p-4 rounded-lg border-2 transition-all text-left ${selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && !selectedSlot?.is_alternative
-                                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                                        : 'border-border hover:border-primary/50 hover:bg-primary/5'
-                                                        }`}
-                                                >
-                                                    {selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && !selectedSlot?.is_alternative && (
-                                                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                                                            <Check className="h-3 w-3" />
-                                                        </div>
-                                                    )}
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <Calendar className="h-4 w-4 text-primary" />
-                                                        <Badge variant="outline" className="text-xs">Option {slot.order}</Badge>
-                                                    </div>
-                                                    <p className="font-semibold text-sm mb-1">
-                                                        {format(new Date(slot.date), "EEE, MMM d, yyyy")}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Clock className="h-3 w-3" />
-                                                        {formatUTCTime(slot.date, slot.time)}
-                                                    </p>
-                                                </button>
-                                            ))}
-                                        </div>
+                    <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                        <Card className={isModeSelected ? 'border-green-200' : ''}>
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isModeSelected ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+                                        {isModeSelected ? <Check className="h-4 w-4" /> : '1'}
                                     </div>
-                                )}
-
-                                {/* Alternative Dates */}
-                                {invitation.alternative_dates && invitation.alternative_dates.length > 0 && (
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h4 className="font-medium text-sm">Alternative Dates</h4>
-                                            <Badge variant="secondary" className="text-xs">If proposed times don't work</Badge>
+                                    <CardTitle className="text-lg">How would you like to attend?</CardTitle>
+                                </div>
+                                <CardDescription>Select the interview mode that works best for you.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid gap-2 md:grid-cols-2">
+                                    <button
+                                        onClick={() => setSelectedMode('online')}
+                                        className={`relative p-4 rounded-xl border transition-all text-left ${selectedMode === 'online'
+                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
+                                            : 'border-border hover:border-primary hover:bg-primary/5'
+                                            }`}>
+                                        {selectedMode === 'online' && (
+                                            <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-4">
+                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${selectedMode === 'online' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'}`}>
+                                                <Video className={`h-6 w-6 ${selectedMode === 'online' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-base">Online Interview</p>
+                                                <p className="text-sm text-muted-foreground">Attend via video call</p>
+                                            </div>
                                         </div>
-                                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                                            {invitation.alternative_dates.map((slot, index) => {
-                                                const altSlot = { ...slot, is_alternative: true };
-                                                return (
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedMode('physical')}
+                                        className={`relative p-4 rounded-xl border transition-all text-left ${selectedMode === 'physical'
+                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
+                                            : 'border-border hover:border-primary hover:bg-primary/5'
+                                            }`}>
+                                        {selectedMode === 'physical' && (
+                                            <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-4">
+                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${selectedMode === 'physical' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'}`}>
+                                                <MapPinned className={`h-6 w-6 ${selectedMode === 'physical' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-base">Physical Interview</p>
+                                                <p className="text-sm text-muted-foreground">Attend in-person at the company</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className={isSlotSelected ? 'border-green-200' : !isModeSelected ? 'opacity-60 pointer-events-none' : ''}>
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isSlotSelected ? 'bg-green-500 text-white' : isModeSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                        {isSlotSelected ? <Check className="h-4 w-4" /> : '2'}
+                                    </div>
+                                    <CardTitle className="text-lg">Choose a time slot</CardTitle>
+                                </div>
+                                <CardDescription>{isModeSelected ? 'Pick one of the employer proposed times below.' : 'Select an interview mode first.'}</CardDescription>
+                            </CardHeader>
+                            {isModeSelected && (
+                                <CardContent className="space-y-6">
+                                    {invitation.given_time_slots.length > 0 ? (
+                                        <div className="space-y-3">
+                                            <h4 className="font-semibold text-sm">Available times</h4>
+                                            <div className="grid gap-2">
+                                                {invitation.given_time_slots.map((slot, index) => (
                                                     <button
                                                         key={index}
-                                                        onClick={() => setSelectedSlot(altSlot)}
-                                                        className={`relative p-4 rounded-lg border-2 transition-all text-left ${selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && selectedSlot?.is_alternative
-                                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
-                                                            : 'border-border hover:border-green-300 hover:bg-green-50/20'
-                                                            }`}
-                                                    >
-                                                        {selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && selectedSlot?.is_alternative && (
-                                                            <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                                        onClick={() => setSelectedSlot(slot)}
+                                                        className={`relative w-full rounded-2xl border-2 p-4 text-left transition-all ${selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && !selectedSlot?.is_alternative
+                                                            ? 'border-primary bg-primary/5 shadow-sm'
+                                                            : 'border-border hover:border-primary hover:bg-primary/5'
+                                                            }`}>
+                                                        {selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && !selectedSlot?.is_alternative && (
+                                                            <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
                                                                 <Check className="h-3 w-3" />
                                                             </div>
                                                         )}
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                            <Badge variant="outline" className="text-xs border-green-500 text-green-700 dark:text-green-300">Alternative</Badge>
+                                                        <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                                                            <Calendar className="h-4 w-4" />
+                                                            <Badge variant="outline" className="text-xs">Option {slot.order}</Badge>
                                                         </div>
-                                                        <p className="font-semibold text-sm mb-1">
-                                                            {format(new Date(slot.date), "EEE, MMM d, yyyy")}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            {formatUTCTime(slot.date, slot.time)}
-                                                        </p>
+                                                        <p className="font-semibold">{formatUTCDate(slot.date, "EEE, MMM d, yyyy")}</p>
+                                                        <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1"><Clock className="h-3 w-3" />{formatUTCTime(slot.date, slot.time)}</p>
                                                     </button>
-                                                );
-                                            })}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </CardContent>
-                        )}
-                    </Card>
+                                    ) : (
+                                        <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                                            No proposed time slots were provided. Please contact the employer for alternatives.
+                                        </div>
+                                    )}
+                                    {invitation.alternative_dates.length > 0 && (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-semibold text-sm">Alternative dates</h4>
+                                                <Badge variant="secondary" className="text-xs">If the above times don’t work</Badge>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                {invitation.alternative_dates.map((slot, index) => {
+                                                    const altSlot = { ...slot, is_alternative: true };
+                                                    return (
+                                                        <button
+                                                            key={index}
+                                                            onClick={() => setSelectedSlot(altSlot)}
+                                                            className={`relative w-full rounded-2xl border-2 p-4 text-left transition-all ${selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && selectedSlot?.is_alternative
+                                                                ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
+                                                                : 'border-border hover:border-green-300 hover:bg-green-50/20'
+                                                                }`}>
+                                                            {selectedSlot?.date === slot.date && selectedSlot?.time === slot.time && selectedSlot?.is_alternative && (
+                                                                <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                                                    <Check className="h-3 w-3" />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                                                                <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                                <Badge variant="outline" className="text-xs border-green-500 text-green-700 dark:text-green-300">Alternative</Badge>
+                                                            </div>
+                                                            <p className="font-semibold">{formatUTCDate(slot.date, "EEE, MMM d, yyyy")}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">Time is set by the employer</p>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            )}
+                        </Card>
+                    </div>
 
-                    {/* STEP 3: Confirm and Submit */}
                     <Card className={canProceed ? 'border-green-200 bg-green-50/30 dark:bg-green-950/10' : 'opacity-60'}>
                         <CardHeader>
                             <div className="flex items-center gap-2">
-                                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${canProceed ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${canProceed ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}`}>
                                     3
                                 </div>
-                                <CardTitle className="text-lg">Review & Confirm</CardTitle>
+                                <CardTitle className="text-lg">Review and confirm</CardTitle>
                             </div>
                             {canProceed && (
-                                <CardDescription>You're all set! Review your selection and confirm.</CardDescription>
+                                <CardDescription>Confirm your selection or decline if you aren’t available.</CardDescription>
                             )}
                         </CardHeader>
                         <CardContent>
-                            {canProceed && (
+                            {canProceed ? (
                                 <div className="space-y-4">
-                                    {/* Summary */}
-                                    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground">Interview Mode:</span>
-                                            <span className="font-semibold flex items-center gap-2">
+                                    <div className="rounded-xl bg-white dark:bg-gray-900 border p-3 space-y-3">
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>Interview Mode</span>
+                                            <span className="font-semibold text-foreground flex items-center gap-2">
                                                 {selectedMode === 'online' ? (
                                                     <><Video className="h-4 w-4 text-blue-600" /> Online</>
                                                 ) : (
@@ -1036,31 +991,27 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             </span>
                                         </div>
                                         <Separator />
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground">Selected Date:</span>
-                                            <span className="font-semibold">{selectedSlot && format(new Date(selectedSlot.date), "MMM d, yyyy")}</span>
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>Interview Date</span>
+                                            <span className="font-semibold">{selectedSlot && formatUTCDate(selectedSlot.date)}</span>
                                         </div>
                                         <Separator />
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground">Selected Time:</span>
+                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>Interview Time</span>
                                             <span className="font-semibold">{selectedSlot && formatUTCTime(selectedSlot.date, selectedSlot.time)}</span>
                                         </div>
                                         {selectedSlot?.is_alternative && (
                                             <>
                                                 <Separator />
-                                                <div className="flex items-center justify-center">
-                                                    <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-300">
-                                                        Alternative Date Selected
-                                                    </Badge>
-                                                </div>
+                                                <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-300">
+                                                    Alternative Date Selected
+                                                </Badge>
                                             </>
                                         )}
                                     </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex flex-col sm:flex-row gap-3">
+                                    <div className="grid gap-2 sm:grid-cols-2">
                                         <Button
-                                            className="flex-1"
+                                            className="w-full"
                                             size="lg"
                                             onClick={handleAccept}
                                             disabled={isSubmitting}
@@ -1080,20 +1031,19 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         <Button
                                             variant="outline"
                                             size="lg"
-                                            className="sm:w-auto border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                            className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                                             onClick={handleDecline}
                                             disabled={isSubmitting}
                                         >
                                             <X className="h-5 w-5 mr-2" />
-                                            Decline
+                                            Decline Invitation
                                         </Button>
                                     </div>
                                 </div>
-                            )}
-                            {!canProceed && (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                    Complete steps 1 and 2 to proceed
-                                </p>
+                            ) : (
+                                <div className="rounded-xl bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+                                    Select an interview mode and a time slot to enable confirmation.
+                                </div>
                             )}
                         </CardContent>
                     </Card>
@@ -1114,7 +1064,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 {invitation.canceled_by && (
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                         Canceled by {invitation.canceled_by}
-                                        {invitation.canceled_at && ` on ${format(new Date(invitation.canceled_at + (invitation.canceled_at.endsWith('Z') ? '' : 'Z')), "MMMM d, yyyy 'at' h:mm a")}`}
+                                        {invitation.canceled_at && ` on ${formatTimestamp(invitation.canceled_at, "MMMM d, yyyy 'at' h:mm a")}`}
                                     </p>
                                 )}
                                 <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border text-sm">
@@ -1128,7 +1078,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
             {/* Footer - Received Date */}
             <div className="text-center text-xs text-muted-foreground pb-4">
-                Invitation received on {format(new Date(invitation.sent_at), "MMMM d, yyyy 'at' h:mm a")}
+                Invitation received on {formatTimestamp(invitation.sent_at, "MMMM d, yyyy 'at' h:mm a")}
             </div>
 
             {/* Cancellation Dialog */}

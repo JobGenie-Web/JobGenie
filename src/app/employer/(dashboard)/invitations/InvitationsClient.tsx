@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -24,7 +23,7 @@ interface TimeSlot {
     is_alternative?: boolean;
 }
 
-import { formatUTCTime } from "@/lib/date-utils";
+import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 
 interface Invitation {
@@ -355,7 +354,7 @@ export default function InvitationsClient() {
                                             </p>
                                             <div className="flex items-center justify-between mt-1.5">
                                                 <p className="text-xs text-muted-foreground">
-                                                    {format(new Date(invitation.sent_at), "MMM d")}
+                                                    {formatTimestamp(invitation.sent_at, "MMM d")}
                                                 </p>
                                                 <Badge {...getStatusBadge(invitation.status, invitation)} className="text-xs px-2 py-0">
                                                     {invitation.mis_rescheduled ? 'Rescheduled' : invitation.status}
@@ -443,7 +442,7 @@ export default function InvitationsClient() {
                                                         <div>
                                                             <p className="text-xs text-muted-foreground">Date</p>
                                                             <p className="font-semibold text-sm text-green-700 dark:text-green-300">
-                                                                {format(new Date(selectedInvitation.selected_time_slot.date), "MMM d, yyyy")}
+                                                                {formatUTCDate(selectedInvitation.selected_time_slot.date)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -487,7 +486,7 @@ export default function InvitationsClient() {
                                                         </Badge>
                                                         {selectedInvitation.mis_rescheduled_at && (
                                                             <span className="text-xs text-muted-foreground">
-                                                                on {format(new Date(selectedInvitation.mis_rescheduled_at), "MMM d, yyyy")}
+                                                                on {formatTimestamp(selectedInvitation.mis_rescheduled_at, "MMM d, yyyy")}
                                                             </span>
                                                         )}
                                                     </div>
@@ -498,7 +497,7 @@ export default function InvitationsClient() {
                                                             <Calendar className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                                                             <div>
                                                                 <p className="text-xs text-green-700 dark:text-green-300">New Date</p>
-                                                                <p className="font-semibold text-sm">{format(new Date(selectedInvitation.mis_reschedule_data.date), "EEEE, MMMM d, yyyy")}</p>
+                                                                <p className="font-semibold text-sm">{formatUTCDate(selectedInvitation.mis_reschedule_data.date, "EEEE, MMMM d, yyyy")}</p>
                                                             </div>
                                                         </div>
 
@@ -605,7 +604,7 @@ export default function InvitationsClient() {
                                                                 <div className="flex items-center gap-2 text-xs">
                                                                     <Calendar className="h-3 w-3 text-muted-foreground" />
                                                                     <span className="text-muted-foreground">Date:</span>
-                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot && format(new Date(selectedInvitation.selected_time_slot.date), "MMM d, yyyy")}</span>
+                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot && formatUTCDate(selectedInvitation.selected_time_slot.date)}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-xs">
                                                                     <Clock className="h-3 w-3 text-muted-foreground" />
@@ -827,7 +826,7 @@ export default function InvitationsClient() {
 
                                                                     {selectedInvitation.confirmed_at && (
                                                                         <p className="text-xs text-muted-foreground pt-2 border-t">
-                                                                            Confirmed on {format(new Date(selectedInvitation.confirmed_at), "MMM d, yyyy 'at' h:mm a")}
+                                                                            Confirmed on {formatTimestamp(selectedInvitation.confirmed_at)}
                                                                         </p>
                                                                     )}
                                                                 </div>
@@ -894,7 +893,7 @@ export default function InvitationsClient() {
                                                                 <div>
                                                                     <p className="text-xs text-muted-foreground">Canceled On</p>
                                                                     <p className="font-semibold">
-                                                                        {format(new Date(selectedInvitation.canceled_at + (selectedInvitation.canceled_at.endsWith('Z') ? '' : 'Z')), "MMM d, yyyy 'at' h:mm a")}
+                                                                        {formatTimestamp(selectedInvitation.canceled_at)}
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -918,7 +917,7 @@ export default function InvitationsClient() {
                                                     {selectedInvitation.given_time_slots.map((slot, idx) => (
                                                         <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md text-xs">
                                                             <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                                            <span>{format(new Date(slot.date), "MMM d, yyyy")} at {slot.time}</span>
+                                                            <span>{formatUTCDate(slot.date)} at {formatUTCTime(slot.date, slot.time)}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -928,12 +927,12 @@ export default function InvitationsClient() {
                                         {/* Metadata */}
                                         <div className="pt-3 border-t text-xs text-muted-foreground space-y-0.5 items-end flex flex-col justify-end">
                                             <p>Sent by: {selectedInvitation.employer.first_name} {selectedInvitation.employer.last_name}</p>
-                                            <p>Sent: {format(new Date(selectedInvitation.sent_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                                            <p>Sent: {formatTimestamp(selectedInvitation.sent_at)}</p>
                                             {selectedInvitation.viewed_at && (
-                                                <p>Viewed: {format(new Date(selectedInvitation.viewed_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                                                <p>Viewed: {formatTimestamp(selectedInvitation.viewed_at)}</p>
                                             )}
                                             {selectedInvitation.responded_at && (
-                                                <p>Responded: {format(new Date(selectedInvitation.responded_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                                                <p>Responded: {formatTimestamp(selectedInvitation.responded_at)}</p>
                                             )}
                                         </div>
                                     </CardContent>

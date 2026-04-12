@@ -6,6 +6,7 @@ import path from "path";
 const RESUME_BUCKET = "resume";
 const RESUME_COPY_BUCKET = "resume_copy";
 const PROFILE_IMAGE_BUCKET = "profile-images";
+const BR_CERTIFICATES_BUCKET = "br-certificates";
 
 /**
  * Watermarks a PDF file with the company logo.
@@ -197,5 +198,34 @@ export const StorageService = {
     },
     deleteProfileImage: async (filePath: string) => {
         await deleteFile(PROFILE_IMAGE_BUCKET, filePath);
+    },
+    uploadBRCertificate: async (file: File) => {
+        const buffer = await file.arrayBuffer();
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2, 15);
+        const fileExt = file.name.split(".").pop();
+        const filePath = `presignup/${timestamp}-${randomString}.${fileExt}`;
+
+        const allowedMimeTypes = [
+            "application/pdf",
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        ];
+
+        // Validate file type
+        if (!allowedMimeTypes.includes(file.type)) {
+            throw new Error("Only PDF and image files are accepted for BR certificates.");
+        }
+
+        // Validate file size (10MB limit)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+        if (file.size > MAX_FILE_SIZE) {
+            throw new Error("File size must be less than 10 MB.");
+        }
+
+        const url = await uploadFile(BR_CERTIFICATES_BUCKET, filePath, buffer, file.type, allowedMimeTypes);
+        return { url, filePath };
     }
 };

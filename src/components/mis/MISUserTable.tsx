@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { formatTimestamp } from "@/lib/date-utils";
 import { Users } from "lucide-react";
 import {
     Table,
@@ -99,7 +99,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                                     {user.email}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
-                                    {format(new Date(user.created_at), "MMM dd, yyyy")}
+                                    {formatTimestamp(user.created_at, "MMM dd, yyyy")}
                                 </TableCell>
                             </TableRow>
                         ))}

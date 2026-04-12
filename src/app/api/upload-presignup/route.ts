@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { StorageService } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 
 // This endpoint is intentionally unauthenticated.
@@ -20,7 +20,6 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const BUCKET = "br-certificates";
 
 export async function POST(request: NextRequest) {
     try {
@@ -50,39 +49,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate a unique file path
-        const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(2, 15);
-        const fileExt = file.name.split(".").pop();
-        const filePath = `presignup/${timestamp}-${randomString}.${fileExt}`;
-
-        // Convert to buffer and upload via admin client
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        const adminClient = createAdminClient();
-        const { error: uploadError } = await adminClient.storage
-            .from(BUCKET)
-            .upload(filePath, buffer, {
-                contentType: file.type,
-                upsert: false,
-            });
-
-        if (uploadError) {
-            console.error("BR certificate presignup upload error:", uploadError);
-            return NextResponse.json(
-                { error: "Failed to upload file. Please try again." },
-                { status: 500 }
-            );
-        }
-
-        const { data: urlData } = adminClient.storage
-            .from(BUCKET)
-            .getPublicUrl(filePath);
+        // Upload file using StorageService (which handles bucket creation)
+        const { url, filePath } = await StorageService.uploadBRCertificate(file);
 
         return NextResponse.json({
             success: true,
-            url: urlData.publicUrl,
+            url,
             fileName: filePath,
         });
     } catch (error) {

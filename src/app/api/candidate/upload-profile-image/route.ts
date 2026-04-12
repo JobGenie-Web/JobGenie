@@ -1,3 +1,4 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
@@ -69,9 +70,36 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("profile-images")
+        const adminClient = createAdminClient();
+        const bucketName = "profile-images";
+
+        // Ensure profile-images bucket exists before uploading
+        const { data: buckets, error: listError } = await adminClient.storage.listBuckets();
+        if (listError) {
+            console.error("Error listing storage buckets:", listError);
+        }
+
+        const bucketExists = buckets?.find((b) => b.name === bucketName);
+        if (!bucketExists) {
+            const { error: createError } = await adminClient.storage.createBucket(bucketName, {
+                public: true,
+                fileSizeLimit: MAX_FILE_SIZE,
+                allowedMimeTypes: ALLOWED_FILE_TYPES,
+            });
+
+            if (createError) {
+                console.error(`Failed to create bucket '${bucketName}':`, createError);
+                return NextResponse.json(
+                    { success: false, error: `Failed to create storage bucket '${bucketName}'` },
+                    { status: 500 }
+                );
+            }
+            console.log(`Created storage bucket: ${bucketName}`);
+        }
+
+        // Upload to Supabase Storage using admin client
+        const { data: uploadData, error: uploadError } = await adminClient.storage
+            .from(bucketName)
             .upload(filePath, buffer, {
                 contentType: file.type,
                 upsert: true,
@@ -86,8 +114,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Get public URL
-        const { data: urlData } = supabase.storage
-            .from("profile-images")
+        const { data: urlData } = adminClient.storage
+            .from(bucketName)
             .getPublicUrl(filePath);
 
         if (!urlData?.publicUrl) {
