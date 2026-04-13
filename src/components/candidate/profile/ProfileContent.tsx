@@ -131,12 +131,12 @@ export function ProfileContent() {
             />
 
             {/* Projects Section - IT Industry Only */}
-            {profile.industry && IT_INDUSTRIES.includes(profile.industry) && (
+            {profile.industry && IT_INDUSTRIES.includes(profile.industry as typeof IT_INDUSTRIES[number]) && (
                 <ProjectsSection projects={profile.projects || []} />
             )}
 
             {/* Certifications Section - IT Industry Only */}
-            {profile.industry && IT_INDUSTRIES.includes(profile.industry) && (
+            {profile.industry && IT_INDUSTRIES.includes(profile.industry as typeof IT_INDUSTRIES[number]) && (
                 <CertificationsSection certificates={profile.certificates || []} />
             )}
 
