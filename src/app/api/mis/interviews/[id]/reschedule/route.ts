@@ -6,6 +6,8 @@ import {
     sendMISRescheduleNotificationToEmployer
 } from "@/lib/interview-emails";
 import { logAudit, logError } from "@/lib/logger";
+import { getUserTimezone, getUserTimezoneByEmail } from "@/lib/user-timezone";
+import { formatInTimeZone } from "date-fns-tz";
 
 export async function POST(
     request: NextRequest,
@@ -69,12 +71,12 @@ export async function POST(
             );
         }
 
-        // Validate date is in the future
-        const selectedDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (selectedDate < today) {
+        // Validate date is in the future. Compare calendar dates in the MIS
+        // user's timezone so a user picking "today" locally is never rejected
+        // because the UTC server has already rolled over to tomorrow (or vice versa).
+        const misUserTz = await getUserTimezone(user.id);
+        const todayInUserTz = formatInTimeZone(new Date(), misUserTz, "yyyy-MM-dd");
+        if (date < todayInUserTz) {
             return NextResponse.json(
                 { error: "Interview date must be in the future" },
                 { status: 400 }
@@ -184,6 +186,11 @@ export async function POST(
         const companyData = updatedInterview.company as any;
         const meetingLinkOrAddress = interview_mode === 'online' ? meeting_link : interview_address;
 
+        const [candidateTz, employerTz] = await Promise.all([
+            getUserTimezoneByEmail(candidateData.email),
+            getUserTimezoneByEmail(employerData.email),
+        ]);
+
         // Send to candidate
         await sendMISRescheduleNotificationToCandidate(
             candidateData.email,
@@ -195,10 +202,11 @@ export async function POST(
             interview_mode,
             meetingLinkOrAddress || '',
             id,
-            notes || ''
+            notes || '',
+            candidateTz
         );
 
-        // Send to employer  
+        // Send to employer
         await sendMISRescheduleNotificationToEmployer(
             employerData.email,
             employerData.first_name,
@@ -209,7 +217,8 @@ export async function POST(
             interview_mode,
             meetingLinkOrAddress || '',
             id,
-            notes || ''
+            notes || '',
+            employerTz
         );
 
         await logAudit("interview_rescheduled_by_mis", user.id, "mis", "job_invitation", id, { date, time, interview_mode });

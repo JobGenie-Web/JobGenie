@@ -12,6 +12,7 @@ import { CertificationDialog } from "./dialogs/CertificationDialog";
 import { DeleteConfirmDialog } from "./dialogs/DeleteConfirmDialog";
 import { deleteCertification } from "@/app/actions/profile-mutations";
 import { useToast } from "@/hooks/use-toast";
+import { formatUTCDate } from "@/lib/date-utils";
 
 interface CertificationsSectionProps {
     certificates: Certificate[];
@@ -61,13 +62,13 @@ export function CertificationsSection({ certificates }: CertificationsSectionPro
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return null;
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        return formatUTCDate(dateString, "MMM yyyy") || null;
     };
 
     const isExpired = (expiryDate: string | null) => {
         if (!expiryDate) return false;
-        return new Date(expiryDate) < new Date();
+        const ms = new Date(expiryDate).getTime();
+        return Number.isFinite(ms) && ms < Date.now();
     };
 
     const toggleDescription = (id: string) => {

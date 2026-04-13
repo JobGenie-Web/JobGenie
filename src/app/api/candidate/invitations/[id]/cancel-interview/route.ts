@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { sendCandidateCancellationEmail } from '@/lib/interview-emails';
 import { logBusiness, logError } from '@/lib/logger';
+import { getUserTimezoneByEmail } from '@/lib/user-timezone';
 
 // POST /api/candidate/invitations/:id/cancel-interview
 export async function POST(
@@ -117,14 +118,17 @@ export async function POST(
                 ? fullInvitation.confirmed_time
                 : timeSlot?.time || '';
 
-            sendCandidateCancellationEmail(
-                employer.email,
-                employer.first_name,
-                candidate.first_name,
-                fullInvitation.job_designation,
-                timeSlot?.date || '',
-                finalTime,
-                cancellation_reason
+            getUserTimezoneByEmail(employer.email).then(recipientTz =>
+                sendCandidateCancellationEmail(
+                    employer.email,
+                    employer.first_name,
+                    candidate.first_name,
+                    fullInvitation.job_designation,
+                    timeSlot?.date || '',
+                    finalTime,
+                    cancellation_reason,
+                    recipientTz
+                )
             ).catch(err => console.error('Email send error:', err));
         }
 

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logger";
+import { getUserTimezone } from "@/lib/user-timezone";
+import { monthBoundsUTC } from "@/lib/date-utils";
+import { formatInTimeZone } from "date-fns-tz";
 
 export async function GET(request: NextRequest) {
     try {
@@ -34,9 +37,15 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Get current date for monthly stats
+        // Compute month boundaries in the viewer's timezone (so "this month" matches
+        // what the MIS user sees on their calendar, not the server's wall clock).
+        const viewerTz = await getUserTimezone(user.id);
         const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const viewerYearStr = formatInTimeZone(now, viewerTz, "yyyy");
+        const viewerMonthStr = formatInTimeZone(now, viewerTz, "M");
+        const viewerYear = parseInt(viewerYearStr, 10);
+        const viewerMonthIndex = parseInt(viewerMonthStr, 10) - 1;
+        const { start: firstDayOfMonth } = monthBoundsUTC(viewerYear, viewerMonthIndex, viewerTz);
 
         // Fetch all accepted invitations (interviews)
         const { data: allInterviews, error: allError } = await adminClient
@@ -88,15 +97,18 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        // Monthly trend (last 6 months)
+        // Monthly trend (last 6 months) — bucketed by the viewer's calendar months.
         const monthlyTrend: Array<{ month: string; count: number }> = [];
         for (let i = 5; i >= 0; i--) {
-            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-            const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const targetMonthIndex = viewerMonthIndex - i;
+            const yearOffset = Math.floor(targetMonthIndex / 12);
+            const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+            const targetYear = viewerYear + yearOffset;
+            const { start, end } = monthBoundsUTC(targetYear, normalizedMonth, viewerTz);
+            const monthName = formatInTimeZone(start, viewerTz, "MMM yyyy");
             const count = interviews.filter(interview => {
                 const sentDate = new Date(interview.sent_at);
-                return sentDate >= date && sentDate < nextMonth;
+                return sentDate >= start && sentDate < end;
             }).length;
             monthlyTrend.push({ month: monthName, count });
         }

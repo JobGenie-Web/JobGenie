@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendInterviewConfirmedEmail } from "@/lib/interview-emails";
 import { logBusiness, logError } from "@/lib/logger";
+import { getUserTimezoneByEmail } from "@/lib/user-timezone";
 
 // POST /api/employer/invitations/[id]/confirm
 export async function POST(
@@ -150,16 +151,19 @@ export async function POST(
                 ? meeting_link
                 : interview_address;
 
-            sendInterviewConfirmedEmail(
-                candidate.email,
-                candidate.first_name,
-                company.company_name,
-                fullInvitation.job_designation,
-                timeSlot?.date || '',
-                finalTime,
-                fullInvitation.interview_mode,
-                locationInfo,
-                id
+            getUserTimezoneByEmail(candidate.email).then(recipientTz =>
+                sendInterviewConfirmedEmail(
+                    candidate.email,
+                    candidate.first_name,
+                    company.company_name,
+                    fullInvitation.job_designation,
+                    timeSlot?.date || '',
+                    finalTime,
+                    fullInvitation.interview_mode,
+                    locationInfo,
+                    id,
+                    recipientTz
+                )
             ).catch(err => console.error('Email send error:', err));
         }
 

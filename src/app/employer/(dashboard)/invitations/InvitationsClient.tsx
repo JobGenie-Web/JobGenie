@@ -157,11 +157,15 @@ export default function InvitationsClient() {
     const filteredInvitations = invitations.filter(inv => {
         if (filter === "all") return true;
         if (filter === "cancelled") return inv.invitation_canceled;
+        if (inv.invitation_canceled) return false;
         return inv.status === filter;
     });
 
     const getStatusBadge = (status: string, invitation?: Invitation) => {
-        // Check for MIS reschedule first
+        if (invitation?.invitation_canceled) {
+            return { variant: "destructive" as any, className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" };
+        }
+
         if (invitation?.mis_rescheduled) {
             return { variant: "default" as any, className: "bg-green-600 text-white" };
         }
@@ -177,10 +181,10 @@ export default function InvitationsClient() {
 
     const statusCounts = {
         all: invitations.length,
-        pending: invitations.filter(i => i.status === 'pending').length,
-        viewed: invitations.filter(i => i.status === 'viewed').length,
-        accepted: invitations.filter(i => i.status === 'accepted').length,
-        declined: invitations.filter(i => i.status === 'declined').length,
+        pending: invitations.filter(i => !i.invitation_canceled && i.status === 'pending').length,
+        viewed: invitations.filter(i => !i.invitation_canceled && i.status === 'viewed').length,
+        accepted: invitations.filter(i => !i.invitation_canceled && i.status === 'accepted').length,
+        declined: invitations.filter(i => !i.invitation_canceled && i.status === 'declined').length,
         cancelled: invitations.filter(i => i.invitation_canceled).length,
     };
 
@@ -208,6 +212,9 @@ export default function InvitationsClient() {
 
         setIsConfirming(true);
         try {
+            // Store confirmed_time as the wall-clock HH:mm the employer entered,
+            // matching the format of given_time_slots.time. Display code is
+            // responsible for rendering in the viewer's timezone.
             const response = await fetch(`/api/employer/invitations/${selectedInvitation.id}/confirm`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -357,7 +364,7 @@ export default function InvitationsClient() {
                                                     {formatTimestamp(invitation.sent_at, "MMM d")}
                                                 </p>
                                                 <Badge {...getStatusBadge(invitation.status, invitation)} className="text-xs px-2 py-0">
-                                                    {invitation.mis_rescheduled ? 'Rescheduled' : invitation.status}
+                                                    {invitation.invitation_canceled ? 'Cancelled' : invitation.mis_rescheduled ? 'Rescheduled' : invitation.status}
                                                 </Badge>
                                             </div>
                                         </div>
@@ -402,7 +409,7 @@ export default function InvitationsClient() {
                                                 </div>
                                             </div>
                                             <Badge {...getStatusBadge(selectedInvitation.status, selectedInvitation)} className="flex-shrink-0">
-                                                {selectedInvitation.mis_rescheduled ? 'Rescheduled' : selectedInvitation.status}
+                                                {selectedInvitation.invitation_canceled ? 'Cancelled' : selectedInvitation.mis_rescheduled ? 'Rescheduled' : selectedInvitation.status}
                                             </Badge>
                                         </div>
                                     </CardHeader>
@@ -431,7 +438,7 @@ export default function InvitationsClient() {
                                         )}
 
                                         {/* Accepted - Show Selected Time and Mode */}
-                                        {selectedInvitation.status === 'accepted' && selectedInvitation.selected_time_slot && (
+                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && (
                                             <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md p-3">
                                                 <h4 className="font-semibold text-sm text-green-900 dark:text-green-100 mb-2">
                                                     Interview Scheduled
@@ -446,15 +453,17 @@ export default function InvitationsClient() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Time</p>
-                                                            <p className="font-semibold text-sm text-green-700 dark:text-green-300">
-                                                                {formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time)}
-                                                            </p>
+                                                    {!((selectedInvitation.selected_time_slot as any)?.is_alternative && !selectedInvitation.selected_time_slot.time) && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground">Time</p>
+                                                                <p className="font-semibold text-sm text-green-700 dark:text-green-300">
+                                                                    {selectedInvitation.selected_time_slot.time ? formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time) : 'Employer will set the time'}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                     {selectedInvitation.interview_mode && (
                                                         <div className="flex items-center gap-2 md:col-span-2">
                                                             {selectedInvitation.interview_mode === 'online' ? (
@@ -611,7 +620,12 @@ export default function InvitationsClient() {
                                                                     <span className="text-muted-foreground">Time:</span>
                                                                     <span className="font-medium">
                                                                         {selectedInvitation.selected_time_slot
-                                                                            ? formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time)
+                                                                            ? formatUTCTime(
+                                                                                selectedInvitation.selected_time_slot.date,
+                                                                                ((selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time)
+                                                                                    ? selectedInvitation.confirmed_time
+                                                                                    : selectedInvitation.selected_time_slot.time
+                                                                            )
                                                                             : (selectedInvitation.confirmed_time && selectedInvitation.confirmed_at
                                                                                 ? formatUTCTime(selectedInvitation.confirmed_at, selectedInvitation.confirmed_time)
                                                                                 : selectedInvitation.confirmed_time)
@@ -637,7 +651,7 @@ export default function InvitationsClient() {
                                         )}
 
                                         {/* Confirmation Section - Only for Accepted Invitations */}
-                                        {selectedInvitation.status === 'accepted' && selectedInvitation.selected_time_slot && (
+                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && (
                                             <div>
                                                 {!selectedInvitation.interview_confirmed ? (
                                                     /* Confirmation Form */
@@ -767,9 +781,7 @@ export default function InvitationsClient() {
                                                                         <div>
                                                                             <p className="text-xs text-muted-foreground">Confirmed Time</p>
                                                                             <p className="font-semibold">
-                                                                                {selectedInvitation.confirmed_at
-                                                                                    ? formatUTCTime(selectedInvitation.confirmed_at, selectedInvitation.confirmed_time)
-                                                                                    : selectedInvitation.confirmed_time}
+                                                                                {formatUTCTime(selectedInvitation.selected_time_slot?.date || "", selectedInvitation.confirmed_time)}
                                                                             </p>
                                                                         </div>
                                                                     )}

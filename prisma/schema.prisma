@@ -25,18 +25,22 @@ model User {
   // Security & verification
   email_verified                Boolean   @default(false)
   email_verification_token      String?   @db.VarChar(255)
-  verification_token_expires_at DateTime?
+  verification_token_expires_at DateTime? @db.Timestamptz(6)
   password_reset_token          String?   @db.VarChar(255)
-  password_reset_expires_at     DateTime?
+  password_reset_expires_at     DateTime? @db.Timestamptz(6)
   invitation_token              String?   @unique
-  invitation_token_expires_at   DateTime?
+  invitation_token_expires_at   DateTime? @db.Timestamptz(6)
   invited_by                    String?
 
+  // User's IANA timezone (e.g., "Asia/Colombo"). Used for server-side formatting
+  // (emails, stats). All timestamps are stored as UTC and converted on display.
+  timezone String @default("UTC") @db.VarChar(64)
+
   // Metadata
-  last_login_at DateTime?
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
-  deleted_at    DateTime?
+  last_login_at DateTime? @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamptz(6)
 
   // Relations
   candidate Candidate?
@@ -96,14 +100,14 @@ model Candidate {
 
   // Approval workflow tracking
   approval_status_message_seen Boolean   @default(false)
-  approved_at                  DateTime?
-  rejected_at                  DateTime?
+  approved_at                  DateTime? @db.Timestamptz(6)
+  rejected_at                  DateTime? @db.Timestamptz(6)
   reviewed_by                  String?   @db.Uuid
   rejection_reason             String?   @db.Text
 
   // Metadata
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   // Relations
   user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -155,8 +159,8 @@ model WorkExperience {
   description String?   @db.Text
   is_current  Boolean?  @default(false)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -180,8 +184,8 @@ model Education {
   institution                String?         @db.VarChar(200)
   status                     String          @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -202,8 +206,8 @@ model Award {
   offered_by      String? @db.VarChar(200)
   description     String? @db.Text
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -224,8 +228,8 @@ model Project {
   demo_url     String? @db.VarChar(500) // Demo/Github URL
   is_current   Boolean @default(false)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -250,8 +254,8 @@ model Certificate {
   credential_url    String?   @db.VarChar(500)
   description       String?   @db.Text
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -273,8 +277,8 @@ model FinanceAcademicEducation {
   institution    String                 @db.VarChar(200)
   status         String                 @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -290,8 +294,8 @@ model FinanceProfessionalEducation {
   institution                String                 @db.VarChar(200)
   status                     String                 @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -311,8 +315,8 @@ model BankingAcademicEducation {
   institution    String                 @db.VarChar(200)
   status         String                 @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -328,8 +332,8 @@ model BankingProfessionalEducation {
   institution                String                 @db.VarChar(200)
   status                     String                 @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -346,8 +350,8 @@ model BankingSpecializedTraining {
   certificate_issue_month DateTime?              @db.Date // Certificate Issue Month/training completion month
   status                  String                 @default("incomplete") @db.VarChar(100)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -369,8 +373,8 @@ model IndustrySpecialization {
   description      String?      @db.Text
   years_experience Int?         @default(0)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
 
@@ -407,13 +411,13 @@ model Company {
 
   // Approval workflow tracking
   approval_status_message_seen Boolean   @default(false)
-  approved_at                  DateTime?
-  rejected_at                  DateTime?
+  approved_at                  DateTime? @db.Timestamptz(6)
+  rejected_at                  DateTime? @db.Timestamptz(6)
   reviewed_by                  String?   @db.Uuid
   rejection_reason             String?   @db.Text
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   // Relations
   employers       Employer[]
@@ -443,8 +447,8 @@ model Employer {
   profile_completed Boolean @default(false)
   profile_image_url String? @db.VarChar(255)
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   company         Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
@@ -465,8 +469,8 @@ model MisUser {
   first_name          String      @db.VarChar(100)
   last_name           String      @db.VarChar(100)
   email               String      @unique @db.VarChar(255)
-  created_at          DateTime    @default(now())
-  updated_at          DateTime    @updatedAt
+  created_at          DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime    @updatedAt @db.Timestamptz(6)
   user                User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   reviewed_candidates Candidate[]
 
@@ -493,9 +497,9 @@ model Job {
   description String?   @db.Text
   status      JobStatus @default(draft)
 
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  published_at DateTime?
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @updatedAt @db.Timestamptz(6)
+  published_at DateTime? @db.Timestamptz(6)
 
   employer        Employer        @relation(fields: [employer_id], references: [id], onDelete: Cascade)
   company         Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
@@ -541,24 +545,24 @@ model JobInvitation {
   meeting_link        String?   @db.Text // For online interviews
   interview_address   String?   @db.Text // For physical interviews
   map_link            String?   @db.Text // Map link for physical location
-  confirmed_at        DateTime? // When employer confirmed
+  confirmed_at        DateTime? @db.Timestamptz(6) // When employer confirmed
 
   // Interview cancellation tracking
   invitation_canceled Boolean     @default(false) // True if interview was cancelled
   canceled_by         CanceledBy? // Who canceled: candidate or employer
   cancellation_reason String?     @db.Text // Reason for cancellation
-  canceled_at         DateTime? // When the interview was cancelled
+  canceled_at         DateTime? @db.Timestamptz(6) // When the interview was cancelled
 
   // MIS Reschedule tracking (for rescheduling cancelled confirmed interviews)
   mis_rescheduled     Boolean   @default(false) // True if MIS rescheduled the interview
-  mis_rescheduled_at  DateTime? // When MIS rescheduled the interview
+  mis_rescheduled_at  DateTime? @db.Timestamptz(6) // When MIS rescheduled the interview
   mis_rescheduled_by  String?   @db.Uuid // MIS user who rescheduled
   mis_reschedule_data Json? // New interview details (date, time, mode, link/address)
 
   // Tracking
-  sent_at      DateTime  @default(now())
-  viewed_at    DateTime?
-  responded_at DateTime?
+  sent_at      DateTime  @default(now()) @db.Timestamptz(6)
+  viewed_at    DateTime? @db.Timestamptz(6)
+  responded_at DateTime? @db.Timestamptz(6)
 
   // Relations
   job       Job?      @relation(fields: [job_id], references: [id], onDelete: Cascade)
@@ -774,7 +778,7 @@ model EventLog {
   ip_address String? @db.VarChar(45)
   user_agent String? @db.Text
 
-  created_at DateTime @default(now())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([user_id])
   @@index([category])
@@ -799,7 +803,7 @@ model ApiRequestLog {
   user_agent String? @db.Text
   error      String? @db.Text
 
-  created_at DateTime @default(now())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([user_id])
   @@index([path])
@@ -819,10 +823,10 @@ model ErrorLog {
   metadata   Json?
 
   resolved   Boolean @default(false)
-  resolved_at DateTime?
+  resolved_at DateTime? @db.Timestamptz(6)
   resolved_by String? @db.Uuid
 
-  created_at DateTime @default(now())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([source])
   @@index([error_type])

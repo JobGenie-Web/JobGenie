@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { getBaseUrl } from "./email";
-import { formatUTCDate } from "./date-utils";
+import { formatUTCDate, formatUTCTime } from "./date-utils";
 
 function createTransporter() {
     return nodemailer.createTransport({
@@ -23,7 +23,8 @@ export async function sendInterviewInvitationEmail(
     companyName: string,
     jobDesignation: string,
     timeSlots: Array<{ date: string; time: string }>,
-    invitationId: string
+    invitationId: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -51,7 +52,7 @@ export async function sendInterviewInvitationEmail(
         const timeSlotsHTML = timeSlots.map((slot, idx) => `
             <div style="display:flex;align-items:center;gap:8px;padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:8px;">
                 <span style="font-weight:600;color:#22c55e;min-width:30px;">${idx + 1}.</span>
-                <span style="color:#1f2937;">${formatUTCDate(slot.date, "EEEE, MMMM d, yyyy")} at ${slot.time}</span>
+                <span style="color:#1f2937;">${formatUTCDate(slot.date, "EEEE, MMMM d, yyyy", recipientTimezone)} at ${formatUTCTime(slot.date, slot.time, "HH:mm", recipientTimezone)}</span>
             </div>
         `).join('');
 
@@ -115,7 +116,8 @@ export async function sendInterviewConfirmedEmail(
     interviewTime: string,
     interviewMode: string,
     meetingLinkOrAddress: string,
-    invitationId: string
+    invitationId: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -163,8 +165,8 @@ export async function sendInterviewConfirmedEmail(
 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Your interview with <strong>${companyName}</strong> for the <strong>${jobDesignation}</strong> position has been confirmed!</p>
 <div style="background-color:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#166534;">📅 Interview Details:</p>
-<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Date:</strong> ${new Date(interviewDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-<p style="margin:0 0 16px;font-size:14px;color:#166534;"><strong>Time:</strong> ${interviewTime}</p>
+<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Date:</strong> ${formatUTCDate(interviewDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#166534;"><strong>Time:</strong> ${formatUTCTime(interviewDate, interviewTime, "HH:mm", recipientTimezone)}</p>
 ${locationHTML}
 </div>
 <div style="background-color:#dbeafe;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:16px 20px;margin:24px 0;">
@@ -206,7 +208,8 @@ export async function sendCandidateCancellationEmail(
     jobDesignation: string,
     interviewDate: string,
     interviewTime: string,
-    cancellationReason: string
+    cancellationReason: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -244,8 +247,8 @@ export async function sendCandidateCancellationEmail(
 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;"><strong>${candidateName}</strong> has canceled the scheduled interview for the <strong>${jobDesignation}</strong> position.</p>
 <div style="background-color:#fee2e2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#991b1b;">Interview Details:</p>
-<p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Date:</strong> ${new Date(interviewDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-<p style="margin:0;font-size:14px;color:#991b1b;"><strong>Time:</strong> ${interviewTime}</p>
+<p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Date:</strong> ${formatUTCDate(interviewDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0;font-size:14px;color:#991b1b;"><strong>Time:</strong> ${formatUTCTime(interviewDate, interviewTime, "HH:mm", recipientTimezone)}</p>
 </div>
 <div style="background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">Cancellation Reason:</p>
@@ -287,7 +290,8 @@ export async function sendEmployerCancellationEmail(
     jobDesignation: string,
     interviewDate: string,
     interviewTime: string,
-    cancellationReason: string
+    cancellationReason: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -325,8 +329,8 @@ export async function sendEmployerCancellationEmail(
 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">We're sorry to inform you that <strong>${companyName}</strong> has canceled the scheduled interview for the <strong>${jobDesignation}</strong> position.</p>
 <div style="background-color:#fee2e2;border-left:4px solid #ef4444;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#991b1b;">Interview Details:</p>
-<p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Date:</strong> ${new Date(interviewDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-<p style="margin:0;font-size:14px;color:#991b1b;"><strong>Time:</strong> ${interviewTime}</p>
+<p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Date:</strong> ${formatUTCDate(interviewDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0;font-size:14px;color:#991b1b;"><strong>Time:</strong> ${formatUTCTime(interviewDate, interviewTime, "HH:mm", recipientTimezone)}</p>
 </div>
 <div style="background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">Reason:</p>
@@ -374,7 +378,8 @@ export async function sendMISRescheduleNotificationToCandidate(
     interviewMode: string,
     meetingLinkOrAddress: string,
     invitationId: string,
-    notes: string
+    notes: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -429,8 +434,8 @@ export async function sendMISRescheduleNotificationToCandidate(
 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Your interview with <strong>${companyName}</strong> for the <strong>${jobDesignation}</strong> position has been rescheduled by our MIS team.</p>
 <div style="background-color:#dbeafe;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#1e40af;">📅 New Interview Details:</p>
-<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${new Date(newDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${newTime}</p>
+<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${formatUTCDate(newDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${formatUTCTime(newDate, newTime, "HH:mm", recipientTimezone)}</p>
 ${locationHTML}
 </div>
 ${notesHTML}
@@ -476,7 +481,8 @@ export async function sendMISRescheduleNotificationToEmployer(
     interviewMode: string,
     meetingLinkOrAddress: string,
     invitationId: string,
-    notes: string
+    notes: string,
+    recipientTimezone?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const baseUrl = getBaseUrl();
@@ -531,8 +537,8 @@ export async function sendMISRescheduleNotificationToEmployer(
 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">The interview with <strong>${candidateName}</strong> for the <strong>${jobDesignation}</strong> position has been rescheduled by our MIS team.</p>
 <div style="background-color:#dbeafe;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#1e40af;">📅 New Interview Details:</p>
-<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${new Date(newDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${newTime}</p>
+<p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Date:</strong> ${formatUTCDate(newDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#1e40af;"><strong>Time:</strong> ${formatUTCTime(newDate, newTime, "HH:mm", recipientTimezone)}</p>
 ${locationHTML}
 </div>
 ${notesHTML}

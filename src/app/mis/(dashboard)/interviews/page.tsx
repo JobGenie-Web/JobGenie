@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import { InterviewsClient } from './InterviewsClient';
+import { getUserTimezone } from '@/lib/user-timezone';
+import { monthBoundsUTC } from '@/lib/date-utils';
+import { formatInTimeZone } from 'date-fns-tz';
 
 async function getInterviews() {
     try {
@@ -74,13 +77,18 @@ async function getInterviews() {
     }
 }
 
-async function getStats() {
+async function getStats(viewerTz: string) {
     try {
         const adminClient = createAdminClient();
 
-        // Get current date for monthly stats
+        // Compute the first day of the viewer's calendar month, expressed as a
+        // UTC instant. Using `new Date(y, m, 1)` would use the server's tz
+        // (UTC on Vercel), which can bucket edge-of-month records into the
+        // wrong month for non-UTC viewers.
         const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const viewerYear = parseInt(formatInTimeZone(now, viewerTz, "yyyy"), 10);
+        const viewerMonthIndex = parseInt(formatInTimeZone(now, viewerTz, "M"), 10) - 1;
+        const { start: firstDayOfMonth } = monthBoundsUTC(viewerYear, viewerMonthIndex, viewerTz);
 
         // Fetch all accepted invitations (interviews)
         const { data: allInterviews, error } = await adminClient
@@ -156,10 +164,11 @@ export default async function InterviewsPage() {
         redirect('/mis/login');
     }
 
-    // Fetch data server-side
+    // Fetch data server-side (stats bucketed in viewer's timezone)
+    const viewerTz = await getUserTimezone(user.id);
     const [interviewsResult, statsResult] = await Promise.all([
         getInterviews(),
-        getStats()
+        getStats(viewerTz)
     ]);
 
     return (

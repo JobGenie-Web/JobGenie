@@ -418,20 +418,6 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
 
 
-            {/* Employer Message */}
-            {invitation.message && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Message from Employer</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="rounded-lg bg-muted/50 p-4 border">
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{invitation.message}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
             {/* Status-Specific Sections */}
 
             {/* DECLINED STATUS */}
@@ -446,7 +432,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 <h3 className="font-semibold text-red-900 dark:text-red-100 mb-1">You declined this invitation</h3>
                                 {invitation.responded_at && (
                                     <p className="text-sm text-red-700 dark:text-red-300 mb-1">
-                                        Declined on {formatTimestamp(invitation.responded_at, "MMMM d, yyyy 'at' h:mm a")}
+                                        Declined on {formatTimestamp(invitation.responded_at, "MMMM d, yyyy 'at' HH:mm")}
                                     </p>
                                 )}
                                 <p className="text-sm text-red-600 dark:text-red-400 mb-4">
@@ -512,7 +498,12 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         <Clock className="h-5 w-5 text-primary flex-shrink-0" />
                                         <div>
                                             <p className="text-sm text-muted-foreground">Time</p>
-                                            <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
+                                            <p className="font-semibold">
+                                                {formatUTCTime(
+                                                    invitation.selected_time_slot.date,
+                                                    invitation.confirmed_time || invitation.selected_time_slot.time
+                                                )}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -585,6 +576,19 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             </div>
                                         </>
                                     )}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Employer Message */}
+                        {invitation.message && (
+                            <>
+                                <Separator className="my-4" />
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Message from Employer</h4>
+                                    <div className="rounded-lg bg-muted/50 p-4 border">
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{invitation.message}</p>
+                                    </div>
                                 </div>
                             </>
                         )}
@@ -998,13 +1002,17 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         <Separator />
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                                             <span>Interview Time</span>
-                                            <span className="font-semibold">{selectedSlot && formatUTCTime(selectedSlot.date, selectedSlot.time)}</span>
+                                            <span className="font-semibold">
+                                                {selectedSlot ? (
+                                                    selectedSlot?.is_alternative ? "Employer will set the time" : (selectedSlot?.time ? formatUTCTime(selectedSlot.date, selectedSlot.time) : "-")
+                                                ) : "-"}
+                                            </span>
                                         </div>
                                         {selectedSlot?.is_alternative && (
                                             <>
                                                 <Separator />
                                                 <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-300">
-                                                    Alternative Date Selected
+                                                    Alternative Date Selected - Time will be set by employer upon confirmation
                                                 </Badge>
                                             </>
                                         )}
@@ -1064,7 +1072,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                 {invitation.canceled_by && (
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                         Canceled by {invitation.canceled_by}
-                                        {invitation.canceled_at && ` on ${formatTimestamp(invitation.canceled_at, "MMMM d, yyyy 'at' h:mm a")}`}
+                                        {invitation.canceled_at && ` on ${formatTimestamp(invitation.canceled_at, "MMMM d, yyyy 'at' HH:mm")}`}
                                     </p>
                                 )}
                                 <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border text-sm">
@@ -1078,7 +1086,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
             {/* Footer - Received Date */}
             <div className="text-center text-xs text-muted-foreground pb-4">
-                Invitation received on {formatTimestamp(invitation.sent_at, "MMMM d, yyyy 'at' h:mm a")}
+                Invitation received on {formatTimestamp(invitation.sent_at, "MMMM d, yyyy 'at' HH:mm")}
             </div>
 
             {/* Cancellation Dialog */}

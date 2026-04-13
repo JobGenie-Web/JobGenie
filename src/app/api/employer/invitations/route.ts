@@ -1,28 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
+import { getUserTimezoneByEmail } from "@/lib/user-timezone";
 import { logBusiness, logError } from "@/lib/logger";
 
-// Helper to calculate alternative dates (3 working days)
-function calculateAlternativeDates(date: Date): Date[] {
-    const alternatives: Date[] = [];
-    let currentDate = new Date(date);
-    let workingDaysAdded = 0;
-
-    while (workingDaysAdded < 3) {
-        currentDate = new Date(currentDate);
-        currentDate.setDate(currentDate.getDate() + 1);
-        const dayOfWeek = currentDate.getDay();
-
-        // Skip weekends (0 = Sunday, 6 = Saturday)
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            alternatives.push(new Date(currentDate));
-            workingDaysAdded++;
-        }
-    }
-
-    return alternatives;
-}
+// (calendar-date helpers moved to bottom — see calculateAlternativeDatesArray)
 
 // GET /api/employer/invitations - Fetch all invitations for the company
 export async function GET(request: Request) {
@@ -238,13 +220,15 @@ export async function POST(request: Request) {
             .single();
 
         if (candidateData && companyData) {
+            const recipientTz = await getUserTimezoneByEmail(candidateData.email);
             sendInterviewInvitationEmail(
                 candidateData.email,
                 candidateData.first_name,
                 companyData.company_name,
                 jobDesignation,
                 timeSlots,
-                invitation.id
+                invitation.id,
+                recipientTz
             ).catch(err => console.error('Email send error:', err));
         }
 
@@ -269,25 +253,29 @@ export async function POST(request: Request) {
     }
 }
 
-// Helper function to calculate alternative dates
+// Calculate 3 working days after the latest time slot. Operates on the
+// "YYYY-MM-DD" calendar-date strings with UTC methods so the result is
+// independent of the server's timezone (Vercel = UTC, local dev may differ).
 function calculateAlternativeDatesArray(timeSlots: any[]): any[] {
     if (!timeSlots || timeSlots.length === 0) return [];
 
-    const latestDate = new Date(Math.max(...timeSlots.map((s: any) => new Date(s.date).getTime())));
+    // Parse "YYYY-MM-DD" at UTC midnight; Math.max chooses latest calendar date.
+    const latestMs = Math.max(
+        ...timeSlots.map((s: any) => Date.parse(`${s.date}T00:00:00Z`))
+    );
+    const cursor = new Date(latestMs);
     const alternatives: any[] = [];
-    let currentDate = new Date(latestDate);
     let workingDaysAdded = 0;
 
     while (workingDaysAdded < 3) {
-        currentDate = new Date(currentDate);
-        currentDate.setDate(currentDate.getDate() + 1);
-        const dayOfWeek = currentDate.getDay();
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+        const dayOfWeek = cursor.getUTCDay();
 
         // Skip weekends (0 = Sunday, 6 = Saturday)
         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
             alternatives.push({
-                date: currentDate.toISOString().split('T')[0],
-                time: "09:00",
+                date: cursor.toISOString().split('T')[0],
+                time: null,
                 order: timeSlots.length + workingDaysAdded + 1,
                 is_alternative: true
             });

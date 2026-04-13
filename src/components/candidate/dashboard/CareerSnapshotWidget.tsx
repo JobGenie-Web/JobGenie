@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Briefcase, GraduationCap, ChevronRight, CalendarDays } from "lucide-react";
 import { cn, sortEducations } from "@/lib/utils";
 import type { WorkExperienceSnap, EducationSnap } from "@/app/actions/candidate-dashboard-data";
+import { formatUTCDate } from "@/lib/date-utils";
 
 interface CareerSnapshotWidgetProps {
     experiences: WorkExperienceSnap[];
@@ -11,12 +12,10 @@ interface CareerSnapshotWidgetProps {
 }
 
 function formatDateRange(start: string, end: string | null, isCurrent: boolean): string {
-    const startDate = new Date(start);
-    const startStr = startDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    const startStr = formatUTCDate(start, "MMM yyyy");
     if (isCurrent) return `${startStr} – Present`;
     if (!end) return startStr;
-    const endDate = new Date(end);
-    const endStr = endDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    const endStr = formatUTCDate(end, "MMM yyyy");
     return `${startStr} – ${endStr}`;
 }
 

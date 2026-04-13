@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { InviteCandidateButton } from "@/components/employer/InviteCandidateButton";
 import { formatIndustry, sortEducations, formatPhoneNumber } from "@/lib/utils";
+import { formatUTCDate } from "@/lib/date-utils";
 
 interface CandidateData {
     id: string;
@@ -293,8 +294,8 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                                     <p className="font-medium">{exp.job_title}</p>
                                                     <p className="text-muted-foreground">{exp.company}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">
-                                                        {new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} -{' '}
-                                                        {exp.is_current ? 'Present' : new Date(exp.end_date!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                        {formatUTCDate(exp.start_date, "MMM yyyy")} -{' '}
+                                                        {exp.is_current ? 'Present' : formatUTCDate(exp.end_date!, "MMM yyyy")}
                                                     </p>
                                                     {exp.description && (
                                                         <p className="text-xs text-muted-foreground mt-1">{exp.description}</p>

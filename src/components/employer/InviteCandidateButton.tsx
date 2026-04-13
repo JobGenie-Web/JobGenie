@@ -63,14 +63,16 @@ function generateTimeOptions(): string[] {
     return times;
 }
 
-// Calculate 3 working days from a date (excluding weekends)
+// Calculate 3 working days from a date (excluding weekends). Uses UTC methods
+// so the result is identical regardless of the browser's timezone — must match
+// the server-side calc in src/app/api/employer/invitations/route.ts.
 function calculateAlternativeDate(date: Date): Date {
     let workingDaysAdded = 0;
     const currentDate = new Date(date);
 
     while (workingDaysAdded < 3) {
-        currentDate.setDate(currentDate.getDate() + 1);
-        const dayOfWeek = currentDate.getDay();
+        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+        const dayOfWeek = currentDate.getUTCDay();
 
         // Skip weekends (0 = Sunday, 6 = Saturday)
         if (dayOfWeek !== 0 && dayOfWeek !== 6) {

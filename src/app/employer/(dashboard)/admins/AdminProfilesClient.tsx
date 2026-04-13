@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, Shield, Briefcase, Phone, Building } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatPhoneNumber } from "@/lib/utils";
+import { formatTimestamp, formatUTCDate } from "@/lib/date-utils";
 
 interface CompanyAdmin {
     id: string;
@@ -55,11 +56,10 @@ export function AdminProfilesClient({ admins }: AdminProfilesClientProps) {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        const hasTimePart = typeof dateString === "string" && dateString.includes("T");
+        return hasTimePart
+            ? formatTimestamp(dateString, "MMMM d, yyyy")
+            : formatUTCDate(dateString, "MMMM d, yyyy");
     };
 
     if (admins.length === 0) {

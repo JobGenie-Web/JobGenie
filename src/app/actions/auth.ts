@@ -346,21 +346,7 @@ export async function verifyEmail(
         }
 
         const storedExpiry = user.verification_token_expires_at;
-        const nowDate = new Date();
-        const nowLocalString =
-            nowDate.getFullYear() +
-            "-" +
-            String(nowDate.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(nowDate.getDate()).padStart(2, "0") +
-            "T" +
-            String(nowDate.getHours()).padStart(2, "0") +
-            ":" +
-            String(nowDate.getMinutes()).padStart(2, "0") +
-            ":" +
-            String(nowDate.getSeconds()).padStart(2, "0");
-
-        if (storedExpiry < nowLocalString) {
+        if (!storedExpiry || new Date(storedExpiry).getTime() < Date.now()) {
             return {
                 success: false,
                 message: "Verification code has expired. Please request a new one.",
@@ -1636,18 +1622,7 @@ export async function requestPasswordReset(
         // Generate a cryptographically secure token (64-char hex = 32 bytes)
         const rawToken = crypto.randomBytes(32).toString("hex");
 
-        // Store the token expiry as LOCAL machine time (no 'Z' suffix) to match
-        // the PostgreSQL 'timestamp without timezone' column type — same pattern
-        // as getVerificationExpiry() in email.ts. Storing UTC+Z into this column
-        // type strips the 'Z', and JS then re-reads it as local time, causing the
-        // token to appear expired immediately for non-UTC servers (e.g. UTC+5:30).
-        const expiryDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
-        const expiresAt = expiryDate.getFullYear() + '-' +
-            String(expiryDate.getMonth() + 1).padStart(2, '0') + '-' +
-            String(expiryDate.getDate()).padStart(2, '0') + 'T' +
-            String(expiryDate.getHours()).padStart(2, '0') + ':' +
-            String(expiryDate.getMinutes()).padStart(2, '0') + ':' +
-            String(expiryDate.getSeconds()).padStart(2, '0');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
         const { error: updateError } = await adminClient
             .from("users")

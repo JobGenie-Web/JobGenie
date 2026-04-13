@@ -15,31 +15,21 @@ export type VerifyEmailDirectResult =
           message?: string;
       };
 
-function localIsoString(d: Date): string {
-    return (
-        d.getFullYear() +
-        "-" +
-        String(d.getMonth() + 1).padStart(2, "0") +
-        "-" +
-        String(d.getDate()).padStart(2, "0") +
-        "T" +
-        String(d.getHours()).padStart(2, "0") +
-        ":" +
-        String(d.getMinutes()).padStart(2, "0") +
-        ":" +
-        String(d.getSeconds()).padStart(2, "0")
-    );
-}
-
 function verificationExpired(storedExpiry: string | Date | null): boolean {
     if (storedExpiry == null) return true;
-    const nowDate = new Date();
-    const nowLocalString = localIsoString(nowDate);
-    const storedStr =
-        typeof storedExpiry === "string"
-            ? storedExpiry
-            : localIsoString(storedExpiry);
-    return storedStr < nowLocalString;
+
+    let storedDate: Date;
+    if (storedExpiry instanceof Date) {
+        storedDate = storedExpiry;
+    } else {
+        const ts = storedExpiry.toString().trim();
+        const utcTs =
+            ts.endsWith("Z") || /[+-]\d{2}:\d{2}$/.test(ts) ? ts : ts + "Z";
+        storedDate = new Date(utcTs);
+    }
+
+    if (Number.isNaN(storedDate.getTime())) return true;
+    return storedDate.getTime() < Date.now();
 }
 
 /**

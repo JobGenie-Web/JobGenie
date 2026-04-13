@@ -8,23 +8,13 @@ export function generateVerificationCode(): string {
 }
 
 /**
- * Generate verification code expiry time (15 minutes from now)
- * Returns both local ISO string (for storage) and milliseconds (for comparison)
+ * Generate verification code expiry time (15 minutes from now) as a UTC ISO string.
  */
 export function getVerificationExpiry(): { isoString: string; timestamp: number } {
-    const expiryDate = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
-
-    // Format as local time string (without 'Z' suffix) for PostgreSQL timestamp without timezone
-    const localISOString = expiryDate.getFullYear() + '-' +
-        String(expiryDate.getMonth() + 1).padStart(2, '0') + '-' +
-        String(expiryDate.getDate()).padStart(2, '0') + 'T' +
-        String(expiryDate.getHours()).padStart(2, '0') + ':' +
-        String(expiryDate.getMinutes()).padStart(2, '0') + ':' +
-        String(expiryDate.getSeconds()).padStart(2, '0');
-
+    const expiryDate = new Date(Date.now() + 15 * 60 * 1000);
     return {
-        isoString: localISOString,
-        timestamp: expiryDate.getTime()
+        isoString: expiryDate.toISOString(),
+        timestamp: expiryDate.getTime(),
     };
 }
 
@@ -201,24 +191,15 @@ export function maskEmail(email: string): string {
 // ============================================
 
 /**
- * Generate invitation token expiry time (7 days from now)
- * Returns both local ISO string (for storage) and timestamp (for comparison)
+ * Generate invitation token expiry (N days from now) as a UTC ISO string.
+ * Column is timestamptz — always store UTC; compare with `new Date(stored).getTime() < Date.now()`.
  */
 export function getInvitationExpiry(): { isoString: string; timestamp: number } {
     const expiryDays = parseInt(process.env.MIS_INVITATION_EXPIRY_DAYS || "7");
     const expiryDate = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
-
-    // Format as local time string (without 'Z' suffix) for PostgreSQL timestamp without timezone
-    const localISOString = expiryDate.getFullYear() + '-' +
-        String(expiryDate.getMonth() + 1).padStart(2, '0') + '-' +
-        String(expiryDate.getDate()).padStart(2, '0') + 'T' +
-        String(expiryDate.getHours()).padStart(2, '0') + ':' +
-        String(expiryDate.getMinutes()).padStart(2, '0') + ':' +
-        String(expiryDate.getSeconds()).padStart(2, '0');
-
     return {
-        isoString: localISOString,
-        timestamp: expiryDate.getTime()
+        isoString: expiryDate.toISOString(),
+        timestamp: expiryDate.getTime(),
     };
 }
 

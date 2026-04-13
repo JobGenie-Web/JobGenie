@@ -20,6 +20,7 @@ import { approveCandidateProfile, rejectCandidateProfile, revokeCandidateApprova
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatIndustry, sortEducations } from "@/lib/utils";
+import { formatUTCDate } from "@/lib/date-utils";
 
 interface CandidateData {
     id: string;
@@ -298,8 +299,8 @@ export function CandidateProfileView({ candidateId, onClose }: CandidateProfileV
                                                         <p className="font-medium">{exp.job_title}</p>
                                                         <p className="text-muted-foreground">{exp.company}</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} -{' '}
-                                                            {exp.is_current ? 'Present' : new Date(exp.end_date!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                            {formatUTCDate(exp.start_date, "MMM yyyy")} -{' '}
+                                                            {exp.is_current ? 'Present' : formatUTCDate(exp.end_date!, "MMM yyyy")}
                                                         </p>
                                                     </div>
                                                 ))}

@@ -12,6 +12,7 @@ import { ExperienceDialog } from "./dialogs/ExperienceDialog";
 import { DeleteConfirmDialog } from "./dialogs/DeleteConfirmDialog";
 import { deleteExperience } from "@/app/actions/profile-mutations";
 import { useToast } from "@/hooks/use-toast";
+import { formatUTCDate } from "@/lib/date-utils";
 
 interface ExperienceSectionProps {
     experiences: WorkExperience[];
@@ -91,8 +92,7 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return "";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        return formatUTCDate(dateString, "MMM yyyy");
     };
 
     const formatEmploymentType = (type: string | null) => {

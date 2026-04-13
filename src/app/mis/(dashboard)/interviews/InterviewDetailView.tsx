@@ -335,7 +335,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                         <div className="flex-1">
                                             <p className="text-sm font-medium">Invitation Sent</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {formatDate(interview.sent_at, "MMM d, yyyy h:mm a")}
+                                                {formatDate(interview.sent_at, "MMM d, yyyy HH:mm")}
                                             </p>
                                         </div>
                                     </div>
@@ -345,7 +345,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Invitation Viewed</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatDate(interview.viewed_at, "MMM d, yyyy h:mm a")}
+                                                    {formatDate(interview.viewed_at, "MMM d, yyyy HH:mm")}
                                                 </p>
                                             </div>
                                         </div>
@@ -356,7 +356,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Candidate Responded</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatDate(interview.responded_at, "MMM d, yyyy h:mm a")}
+                                                    {formatDate(interview.responded_at, "MMM d, yyyy HH:mm")}
                                                 </p>
                                             </div>
                                         </div>
@@ -367,7 +367,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Interview Confirmed</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatDate(interview.confirmed_at, "MMM d, yyyy h:mm a")}
+                                                    {formatDate(interview.confirmed_at, "MMM d, yyyy HH:mm")}
                                                 </p>
                                             </div>
                                         </div>
