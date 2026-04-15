@@ -6,7 +6,7 @@ import { logActivity, logError } from "@/lib/logger";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
 const GEMINI_MAX_RETRIES = 4;
 const GEMINI_BASE_DELAY_MS = 1000;
 
