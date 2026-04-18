@@ -63,6 +63,7 @@ const EXTRACTION_PROMPT = `You are an expert CV/Resume parser. Extract the follo
 IMPORTANT: 
 - Return ONLY valid JSON, no markdown formatting or code blocks
 - For dates, use format "YYYY-MM-DD" or "YYYY-MM" if day is not available
+- For work experience startDate and endDate ONLY, use "YYYY-MM" (year and month, e.g. 2024-09) so they match month-only fields; never include a day component for those two fields
 - If information is not found, omit the field or use null
 - For isCurrent in work experience, set to true if it says "Present" or "Current" in end date
 
@@ -80,8 +81,8 @@ Extract this structure:
         {
             "jobTitle": "string",
             "company": "string",
-            "startDate": "YYYY-MM-DD",
-            "endDate": "YYYY-MM-DD or null if current",
+            "startDate": "YYYY-MM",
+            "endDate": "YYYY-MM or null if current",
             "description": "string",
             "isCurrent": boolean
         }

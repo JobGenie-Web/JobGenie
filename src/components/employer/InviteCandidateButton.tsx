@@ -63,26 +63,6 @@ function generateTimeOptions(): string[] {
     return times;
 }
 
-// Calculate 3 working days from a date (excluding weekends). Uses UTC methods
-// so the result is identical regardless of the browser's timezone — must match
-// the server-side calc in src/app/api/employer/invitations/route.ts.
-function calculateAlternativeDate(date: Date): Date {
-    let workingDaysAdded = 0;
-    const currentDate = new Date(date);
-
-    while (workingDaysAdded < 3) {
-        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-        const dayOfWeek = currentDate.getUTCDay();
-
-        // Skip weekends (0 = Sunday, 6 = Saturday)
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            workingDaysAdded++;
-        }
-    }
-
-    return currentDate;
-}
-
 export function InviteCandidateButton({
     candidateId,
     suggestedIndustry,
@@ -96,7 +76,8 @@ export function InviteCandidateButton({
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
     const [sending, setSending] = useState(false);
     const [cancelling, setCancelling] = useState(false);
-    const [alternativeDate, setAlternativeDate] = useState<Date | null>(null);
+    /** Latest calendar date among completed slots (UTC midnight), matches server anchor. */
+    const [lastSelectedSlotDate, setLastSelectedSlotDate] = useState<Date | null>(null);
 
     // Initialize with one empty time slot when dialog opens
     useEffect(() => {
@@ -105,20 +86,21 @@ export function InviteCandidateButton({
         }
     }, [isOpen, isInvited]);
 
-    // Calculate alternative date when slots change
+    // Track latest selected slot date for copy (same UTC parsing as api/employer/invitations)
     useEffect(() => {
-        if (timeSlots.length > 0) {
-            const validSlots = timeSlots.filter(s => s.date && s.time);
-            if (validSlots.length > 0) {
-                const latestDate = new Date(Math.max(...validSlots.map(s => new Date(s.date).getTime())));
-                const altDate = calculateAlternativeDate(latestDate);
-                setAlternativeDate(altDate);
-            } else {
-                setAlternativeDate(null);
-            }
-        } else {
-            setAlternativeDate(null);
+        if (timeSlots.length === 0) {
+            setLastSelectedSlotDate(null);
+            return;
         }
+        const validSlots = timeSlots.filter(s => s.date && s.time);
+        if (validSlots.length === 0) {
+            setLastSelectedSlotDate(null);
+            return;
+        }
+        const latestMs = Math.max(
+            ...validSlots.map((s) => Date.parse(`${s.date}T00:00:00Z`))
+        );
+        setLastSelectedSlotDate(new Date(latestMs));
     }, [timeSlots]);
 
     const addTimeSlot = () => {
@@ -381,10 +363,10 @@ export function InviteCandidateButton({
                         </p>
 
                         {/* Alternative Date Info */}
-                        {alternativeDate && (
+                        {lastSelectedSlotDate && (
                             <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm dark:border-green-800 dark:bg-green-900/20">
                                 <p className="text-green-900 dark:text-green-200">
-                                    Up to 3 working days from the last selected date ({alternativeDate.toLocaleDateString()}) will be selected as alternative dates.
+                                    Up to 3 working days after your latest selected date ({lastSelectedSlotDate.toLocaleDateString()}) will be offered as alternative dates.
                                 </p>
                             </div>
                         )}

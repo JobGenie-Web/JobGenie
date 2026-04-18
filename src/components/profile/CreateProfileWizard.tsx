@@ -47,6 +47,13 @@ interface CreateProfileWizardProps {
     };
 }
 
+/** Gemini may return YYYY-MM-DD; <input type="month"> only accepts YYYY-MM. */
+function cvExtractedDateToMonthValue(value: string | null | undefined): string {
+    if (!value) return "";
+    const m = String(value).trim().match(/^(\d{4})-(\d{2})(?:-\d{2})?/);
+    return m ? `${m[1]}-${m[2]}` : "";
+}
+
 type Step = {
     id: string;
     title: string;
@@ -137,8 +144,8 @@ export function CreateProfileWizard({ userId, initialData }: CreateProfileWizard
                     company: exp.company || "",
                     employmentType: "full_time" as const,
                     locationType: "onsite" as const,
-                    startDate: exp.startDate || "",
-                    endDate: exp.endDate || null,
+                    startDate: cvExtractedDateToMonthValue(exp.startDate),
+                    endDate: exp.endDate ? cvExtractedDateToMonthValue(exp.endDate) || null : null,
                     description: exp.description || "",
                     isCurrent: exp.isCurrent || false,
                 }))
