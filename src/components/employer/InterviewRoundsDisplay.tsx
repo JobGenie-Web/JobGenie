@@ -24,6 +24,7 @@ import { formatUTCDate, formatUTCTime, formatTimestamp } from "@/lib/date-utils"
 import { InterviewFeedbackDialog } from "./InterviewFeedbackDialog";
 import { NextRoundDialog } from "./NextRoundDialog";
 import { JobOfferDialog } from "./JobOfferDialog";
+import { RoundConfirmDialog } from "./RoundConfirmDialog";
 
 interface InterviewRound {
     id: string;
@@ -60,6 +61,7 @@ export function InterviewRoundsDisplay({
     const [rounds, setRounds] = useState<InterviewRound[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set());
+    const [offerExists, setOfferExists] = useState(false);
     
     // Dialog states
     const [feedbackDialog, setFeedbackDialog] = useState<{
@@ -78,6 +80,22 @@ export function InterviewRoundsDisplay({
         isOpen: boolean;
         roundId: string;
     }>({ isOpen: false, roundId: "" });
+    
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        roundId: string;
+        roundNumber: number;
+        roundLabel: string | null;
+        interviewMode: string | null;
+        selectedTimeSlot: any;
+    }>({ 
+        isOpen: false, 
+        roundId: "", 
+        roundNumber: 0,
+        roundLabel: null,
+        interviewMode: null,
+        selectedTimeSlot: null
+    });
 
     useEffect(() => {
         fetchRounds();
@@ -117,6 +135,22 @@ export function InterviewRoundsDisplay({
         }
     };
 
+    const checkOfferExists = async () => {
+        try {
+            const response = await fetch(`/api/employer/invitations/${invitationId}/check-offer`);
+            const data = await response.json();
+            if (data.success) {
+                setOfferExists(data.exists);
+            }
+        } catch (error) {
+            console.error("Error checking offer:", error);
+        }
+    };
+
+    useEffect(() => {
+        checkOfferExists();
+    }, [invitationId]);
+
     const toggleRound = (roundId: string) => {
         const newExpanded = new Set(expandedRounds);
         if (newExpanded.has(roundId)) {
@@ -138,6 +172,12 @@ export function InterviewRoundsDisplay({
     };
 
     const handleOfferSuccess = () => {
+        fetchRounds();
+        checkOfferExists();
+        if (onUpdate) onUpdate();
+    };
+
+    const handleConfirmSuccess = () => {
         fetchRounds();
         if (onUpdate) onUpdate();
     };
@@ -201,15 +241,40 @@ export function InterviewRoundsDisplay({
 
     return (
         <>
+            {/* Job Offer Status Banner */}
+            {offerExists && (
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-4 mb-4 dark:from-blue-950/60 dark:to-blue-900/40 dark:border-blue-700">
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-blue-900 dark:text-blue-50">Job Offer Extended</h4>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 mt-0.5">
+                                A formal job offer has been sent to {candidateName}. Awaiting candidate response.
+                            </p>
+                        </div>
+                        <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold">Interview Rounds ({rounds.length})</h3>
                 </div>
 
-                {rounds.map((round) => {
+                {rounds.map((round, index) => {
                     const isExpanded = expandedRounds.has(round.id);
                     const outcomeInfo = getOutcomeInfo(round.outcome);
                     const canAddFeedback = round.status === 'confirmed' && !round.outcome;
+                    const needsConfirmation = round.status === 'accepted' && !round.confirmed_at;
+                    
+                    // Check if next round exists (to hide "Schedule Next Round" button)
+                    const nextRoundExists = rounds.some(r => r.round_number === round.round_number + 1);
+                    
+                    // Hide interview details if this round was advanced (outcome = 'advance')
+                    const shouldShowInterviewDetails = round.outcome !== 'advance';
 
                     return (
                         <Card key={round.id} className="overflow-hidden">
@@ -257,8 +322,8 @@ export function InterviewRoundsDisplay({
                                 <CollapsibleContent>
                                     <Separator />
                                     <div className="p-3 space-y-3">
-                                        {/* Interview Details */}
-                                        {round.selected_time_slot && (
+                                        {/* Interview Details - Hide if round was advanced to next round */}
+                                        {shouldShowInterviewDetails && round.selected_time_slot && (
                                             <div className="space-y-2">
                                                 <p className="text-xs font-medium text-muted-foreground">Interview Details</p>
                                                 <div className="grid gap-2 text-sm">
@@ -310,6 +375,27 @@ export function InterviewRoundsDisplay({
 
                                         {/* Action Buttons */}
                                         <div className="flex gap-2 pt-2">
+                                            {needsConfirmation && (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setConfirmDialog({
+                                                            isOpen: true,
+                                                            roundId: round.id,
+                                                            roundNumber: round.round_number,
+                                                            roundLabel: round.round_label,
+                                                            interviewMode: round.interview_mode,
+                                                            selectedTimeSlot: round.selected_time_slot
+                                                        });
+                                                    }}
+                                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                                >
+                                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                                                    Confirm Interview
+                                                </Button>
+                                            )}
+
                                             {canAddFeedback && (
                                                 <Button
                                                     size="sm"
@@ -328,7 +414,7 @@ export function InterviewRoundsDisplay({
                                                 </Button>
                                             )}
 
-                                            {round.outcome === 'advance' && (
+                                            {round.outcome === 'advance' && !nextRoundExists && (
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
@@ -346,8 +432,17 @@ export function InterviewRoundsDisplay({
                                                     Schedule Next Round
                                                 </Button>
                                             )}
+                                            
+                                            {round.outcome === 'advance' && nextRoundExists && (
+                                                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center dark:bg-green-950/20 dark:border-green-800">
+                                                    <p className="text-sm text-green-800 dark:text-green-200 flex items-center justify-center gap-2">
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        Next round has been scheduled
+                                                    </p>
+                                                </div>
+                                            )}
 
-                                            {round.outcome === 'offer' && (
+                                            {round.outcome === 'offer' && !offerExists && (
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
@@ -363,6 +458,15 @@ export function InterviewRoundsDisplay({
                                                     <Briefcase className="h-3.5 w-3.5 mr-1.5" />
                                                     Create Job Offer
                                                 </Button>
+                                            )}
+
+                                            {round.outcome === 'offer' && offerExists && (
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center dark:bg-blue-950/45 dark:border-blue-800">
+                                                    <p className="text-sm text-blue-800 dark:text-blue-100 flex items-center justify-center gap-2">
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        Job offer has been sent to candidate
+                                                    </p>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -399,6 +503,25 @@ export function InterviewRoundsDisplay({
                 isOpen={offerDialog.isOpen}
                 onClose={() => setOfferDialog({ isOpen: false, roundId: "" })}
                 onSuccess={handleOfferSuccess}
+            />
+
+            <RoundConfirmDialog
+                roundId={confirmDialog.roundId}
+                roundNumber={confirmDialog.roundNumber}
+                roundLabel={confirmDialog.roundLabel}
+                candidateName={candidateName}
+                interviewMode={confirmDialog.interviewMode}
+                selectedTimeSlot={confirmDialog.selectedTimeSlot}
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ 
+                    isOpen: false, 
+                    roundId: "", 
+                    roundNumber: 0,
+                    roundLabel: null,
+                    interviewMode: null,
+                    selectedTimeSlot: null
+                })}
+                onSuccess={handleConfirmSuccess}
             />
         </>
     );

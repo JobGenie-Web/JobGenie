@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
-// GET /api/candidate/invitations/[id]/rounds
-// Get all interview rounds for a specific invitation (candidate view)
+// GET /api/candidate/invitations/[id]/offer
+// Fetch job offer for a specific invitation (candidate view)
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -36,62 +36,62 @@ export async function GET(
         }
 
         // Verify invitation belongs to this candidate
-        const { data: invitation, error: invitationError } = await supabase
+        const { data: invitation } = await supabase
             .from('job_invitations')
             .select('id, candidate_id')
             .eq('id', invitationId)
             .eq('candidate_id', candidate.id)
             .single();
 
-        if (invitationError || !invitation) {
+        if (!invitation) {
             return NextResponse.json(
                 { success: false, error: "Invitation not found or unauthorized" },
                 { status: 404 }
             );
         }
 
-        // Get all interview rounds for this invitation
-        const { data: rounds, error: roundsError } = await supabase
-            .from('interview_rounds')
+        // Fetch the job offer
+        const { data: offer, error: offerError } = await supabase
+            .from('job_offers')
             .select(`
                 id,
-                round_number,
-                round_label,
+                job_title,
+                salary_amount,
+                salary_currency,
+                salary_period,
+                start_date,
+                expiry_date,
+                offer_letter_url,
+                description,
                 status,
-                outcome,
-                outcome_notes,
-                outcome_at,
-                given_time_slots,
-                alternative_dates,
-                selected_time_slot,
-                interview_mode,
-                confirmed_time,
-                meeting_link,
-                interview_address,
-                map_link,
-                confirmed_at,
-                sent_at
+                created_at,
+                responded_at
             `)
             .eq('invitation_id', invitationId)
-            .order('round_number', { ascending: true });
+            .maybeSingle();
 
-        if (roundsError) {
-            console.error('Error fetching rounds:', roundsError);
+        if (offerError) {
+            console.error('Database error fetching offer:', offerError);
+            await logError({
+                source: "api/candidate/invitations/offer:GET",
+                errorType: "DatabaseError",
+                message: offerError.message
+            });
             return NextResponse.json(
-                { success: false, error: "Failed to fetch interview rounds" },
+                { success: false, error: "Failed to fetch offer" },
                 { status: 500 }
             );
         }
 
         return NextResponse.json({
             success: true,
-            data: rounds || []
+            offer: offer || null
         });
 
     } catch (error) {
         console.error('API error:', error);
         await logError({
-            source: "api/candidate/invitations/rounds:GET",
+            source: "api/candidate/invitations/offer:GET",
             errorType: "APIError",
             message: error instanceof Error ? error.message : String(error)
         });

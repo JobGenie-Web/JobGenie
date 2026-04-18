@@ -15,6 +15,8 @@ import Link from "next/link";
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 import { InterviewOutcomeDisplay } from "@/components/candidate/InterviewOutcomeDisplay";
+import { InterviewRoadmap } from "@/components/shared/InterviewRoadmap";
+import { JobOfferCard } from "@/components/candidate/JobOfferCard";
 
 interface TimeSlot {
     date: string;
@@ -88,11 +90,20 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState('');
     const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
+    const [jobOffer, setJobOffer] = useState<any>(null);
 
     useEffect(() => {
         fetchInvitation();
+        fetchJobOffer();
         // Reset outcome state when invitation changes
         setHasInterviewOutcome(false);
+        
+        // Auto-refresh to check for new offers every 10 seconds
+        const interval = setInterval(() => {
+            fetchJobOffer();
+        }, 10000);
+        
+        return () => clearInterval(interval);
     }, [invitationId]);
 
     const fetchInvitation = async () => {
@@ -112,6 +123,22 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
             router.push("/candidate/invitations");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchJobOffer = async () => {
+        try {
+            const response = await fetch(`/api/candidate/invitations/${invitationId}/offer`);
+            const data = await response.json();
+            
+            if (data.success && data.offer) {
+                setJobOffer(data.offer);
+            } else {
+                setJobOffer(null);
+            }
+        } catch (error) {
+            console.error("Error fetching job offer:", error);
+            setJobOffer(null);
         }
     };
 
@@ -463,11 +490,23 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 </Card>
             )}
 
-            {/* Interview Outcome Display */}
+            {/* Job Offer Card - Shows prominent offer details */}
+            {jobOffer && (
+                <JobOfferCard
+                    offer={jobOffer}
+                    companyName={invitation.company.company_name}
+                    jobDesignation={invitation.job_designation}
+                    onRefresh={fetchJobOffer}
+                />
+            )}
+
+            {/* Interview Roadmap - Shows all rounds and progress */}
             {isConfirmed && !invitation.invitation_canceled && (
-                <InterviewOutcomeDisplay 
-                    invitationId={invitation.id} 
+                <InterviewRoadmap
+                    invitationId={invitation.id}
+                    userRole="candidate"
                     onOutcomeFound={setHasInterviewOutcome}
+                    className="mb-6"
                 />
             )}
 
