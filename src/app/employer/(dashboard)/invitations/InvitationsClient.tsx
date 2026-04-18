@@ -25,6 +25,7 @@ interface TimeSlot {
 
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
+import { InterviewRoundsDisplay } from "@/components/employer/InterviewRoundsDisplay";
 
 interface Invitation {
     id: string;
@@ -94,6 +95,7 @@ export default function InvitationsClient() {
     const [showOriginalDetails, setShowOriginalDetails] = useState(false);
     const [showConfirmedDetails, setShowConfirmedDetails] = useState(true);
     const [showCanceledDetails, setShowCanceledDetails] = useState(false);
+    const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
 
     useEffect(() => {
         fetchInvitations();
@@ -152,6 +154,8 @@ export default function InvitationsClient() {
     const handleSelectInvitation = (invitation: Invitation) => {
         setSelectedInvitation(invitation);
         updateURLWithInvitation(invitation.id);
+        // Reset outcome state when switching invitations
+        setHasInterviewOutcome(false);
     };
 
     const filteredInvitations = invitations.filter(inv => {
@@ -650,8 +654,8 @@ export default function InvitationsClient() {
                                             </>
                                         )}
 
-                                        {/* Confirmation Section - Only for Accepted Invitations */}
-                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && (
+                                        {/* Confirmation Section - Only for Accepted Invitations (hide if feedback given) */}
+                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && !hasInterviewOutcome && (
                                             <div>
                                                 {!selectedInvitation.interview_confirmed ? (
                                                     /* Confirmation Form */
@@ -934,6 +938,20 @@ export default function InvitationsClient() {
                                                     ))}
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {/* Interview Rounds Display */}
+                                        {selectedInvitation.interview_confirmed && !selectedInvitation.invitation_canceled && (
+                                            <>
+                                                <Separator className="my-4" />
+                                                <InterviewRoundsDisplay
+                                                    invitationId={selectedInvitation.id}
+                                                    candidateName={`${selectedInvitation.candidate.first_name} ${selectedInvitation.candidate.last_name}`}
+                                                    jobTitle={selectedInvitation.job_designation}
+                                                    onUpdate={fetchInvitations}
+                                                    onOutcomeFound={setHasInterviewOutcome}
+                                                />
+                                            </>
                                         )}
 
                                         {/* Metadata */}

@@ -592,48 +592,54 @@ model InterviewRound {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   invitation_id   String   @db.Uuid
   round_number    Int      // 1, 2, 3, ...
-  round_label     String?  // e.g. "Technical", "Culture fit" — optional, employer-supplied
+  round_label     String?  @db.VarChar(100) // e.g. "Technical Interview", "Culture Fit", "Final Round"
 
-  // ---- Scheduling (moved from JobInvitation) ----
+  // ---- Scheduling ----
   status          RoundStatus   @default(pending)  // pending|viewed|accepted|declined|expired|confirmed|completed|canceled
-  given_time_slots   Json
-  alternative_dates  Json?
-  selected_time_slot Json?
+  given_time_slots   Json  // Array of time slot objects
+  alternative_dates  Json? // Array of alternative date objects
+  selected_time_slot Json? // Candidate's selected time slot
   interview_mode     InterviewMode?
   interview_confirmed Boolean @default(false)
-  confirmed_time      Json?
-  meeting_link        String?
-  interview_address   String?
-  map_link            String?
-  confirmed_at        DateTime?
+  confirmed_time      Json?   // Confirmed time for alternative dates
+  meeting_link        String? @db.Text
+  interview_address   String? @db.Text
+  map_link            String? @db.Text
+  confirmed_at        DateTime? @db.Timestamptz(6)
 
   // ---- Cancellation ----
   round_canceled       Boolean  @default(false)
   canceled_by          CanceledBy?
-  cancellation_reason  String?
-  canceled_at          DateTime?
+  cancellation_reason  String?  @db.Text
+  canceled_at          DateTime? @db.Timestamptz(6)
 
-  // ---- MIS reschedule (moved) ----
+  // ---- MIS reschedule ----
   mis_rescheduled     Boolean @default(false)
-  mis_rescheduled_at  DateTime?
+  mis_rescheduled_at  DateTime? @db.Timestamptz(6)
   mis_rescheduled_by  String? @db.Uuid
   mis_reschedule_data Json?
 
-  // ---- Outcome (NEW — decision the employer makes after the round) ----
+  // ---- Interview Feedback & Outcome ----
   outcome             RoundOutcome?   // advance|reject|offer|no_decision
-  outcome_notes       String?
-  outcome_at          DateTime?
-  outcome_by          String? @db.Uuid   // employer user id
+  outcome_notes       String?  @db.Text  // Employer's feedback about candidate performance
+  outcome_at          DateTime? @db.Timestamptz(6)
+  outcome_by          String? @db.Uuid   // employer user id who made the decision
 
-  sent_at      DateTime  @default(now())
-  viewed_at    DateTime?
-  responded_at DateTime?
+  // ---- Timestamps ----
+  sent_at      DateTime  @default(now()) @db.Timestamptz(6)
+  viewed_at    DateTime? @db.Timestamptz(6)
+  responded_at DateTime? @db.Timestamptz(6)
 
+  // ---- Relations ----
   invitation JobInvitation @relation(fields: [invitation_id], references: [id], onDelete: Cascade)
   offer      JobOffer?
 
   @@unique([invitation_id, round_number])
   @@index([invitation_id])
+  @@index([status])
+  @@index([outcome])
+  @@index([outcome_by])
+  @@index([invitation_id, round_number])
   @@map("interview_rounds")
 }
 
