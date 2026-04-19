@@ -161,6 +161,11 @@ export async function POST(
             const interviewDate = selectedSlot?.date;
             const interviewTime = confirmed_time || selectedSlot?.time;
             
+            // Combine meeting link/address based on interview mode
+            const meetingLinkOrAddress = round.interview_mode === 'online' 
+                ? meeting_link 
+                : interview_address || '';
+            
             sendInterviewConfirmedEmail(
                 candidate.email,
                 candidate.first_name,
@@ -169,9 +174,7 @@ export async function POST(
                 interviewDate,
                 interviewTime,
                 round.interview_mode,
-                meeting_link || null,
-                interview_address || null,
-                map_link || null,
+                meetingLinkOrAddress,
                 invitation.id,
                 recipientTz
             ).catch(err => console.error('Email send error:', err));

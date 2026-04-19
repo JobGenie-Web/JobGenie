@@ -214,8 +214,7 @@ export async function POST(request: Request) {
                 `${invitation.job_designation} - ${round_label || `Round ${nextRoundNumber}`}`,
                 time_slots,
                 invitation.id,
-                recipientTz,
-                message || `Congratulations! You've been selected for the next round of interviews.`
+                recipientTz
             ).catch(err => console.error('Email send error:', err));
         }
 
