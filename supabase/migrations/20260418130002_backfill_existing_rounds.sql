@@ -30,7 +30,11 @@ SELECT
   ji.selected_time_slot,
   ji.interview_mode,
   true as interview_confirmed,
-  ji.confirmed_time::jsonb as confirmed_time,
+  CASE 
+    WHEN ji.confirmed_time IS NOT NULL THEN 
+      jsonb_build_object('time', ji.confirmed_time)
+    ELSE NULL
+  END as confirmed_time,
   ji.meeting_link,
   ji.interview_address,
   ji.map_link,

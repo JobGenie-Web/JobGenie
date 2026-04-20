@@ -112,6 +112,7 @@ export async function POST(
         }
 
         // Create the job offer
+        const now = new Date().toISOString();
         const { data: offer, error: createError } = await supabase
             .from('job_offers')
             .insert({
@@ -126,7 +127,9 @@ export async function POST(
                 offer_letter_url: offer_letter_url || null,
                 description: description || null,
                 status: 'pending',
-                created_by: employer.user_id
+                created_by: employer.user_id,
+                created_at: now,
+                updated_at: now
             })
             .select()
             .single();

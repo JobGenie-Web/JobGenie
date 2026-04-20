@@ -158,16 +158,42 @@ export async function POST(request: Request) {
             );
         }
 
-        // Update invitation's current round number
-        const { error: updateError } = await supabase
+        // Note: The database trigger will automatically update job_invitations.current_round_number
+        // when the interview_round is created (see migration 20260419000000_fix_invitation_round_sync.sql)
+        // But we'll also do it explicitly here for redundancy and immediate confirmation
+        
+        const { data: updateData, error: updateError } = await supabase
             .from('job_invitations')
             .update({
-                current_round_number: nextRoundNumber
+                current_round_number: nextRoundNumber,
+                pipeline_status: 'active'
             })
-            .eq('id', invitation.id);
+            .eq('id', invitation.id)
+            .select('id, current_round_number, pipeline_status')
+            .single();
 
         if (updateError) {
-            console.error('Error updating current round:', updateError);
+            console.error('ERROR: Failed to update invitation current_round_number:', {
+                invitation_id: invitation.id,
+                nextRoundNumber,
+                error: updateError
+            });
+            // This is critical - log but don't fail since trigger should handle it
+        } else {
+            console.log('SUCCESS: Invitation updated:', {
+                invitation_id: updateData.id,
+                current_round_number: updateData.current_round_number,
+                pipeline_status: updateData.pipeline_status,
+                expected_round: nextRoundNumber
+            });
+            
+            // Verify the update actually worked
+            if (updateData.current_round_number !== nextRoundNumber) {
+                console.warn('WARNING: current_round_number mismatch!', {
+                    expected: nextRoundNumber,
+                    actual: updateData.current_round_number
+                });
+            }
         }
 
         // Get company info for email
@@ -188,8 +214,7 @@ export async function POST(request: Request) {
                 `${invitation.job_designation} - ${round_label || `Round ${nextRoundNumber}`}`,
                 time_slots,
                 invitation.id,
-                recipientTz,
-                message || `Congratulations! You've been selected for the next round of interviews.`
+                recipientTz
             ).catch(err => console.error('Email send error:', err));
         }
 

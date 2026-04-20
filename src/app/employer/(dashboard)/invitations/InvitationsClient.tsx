@@ -26,6 +26,7 @@ interface TimeSlot {
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 import { InterviewRoundsDisplay } from "@/components/employer/InterviewRoundsDisplay";
+import { InterviewRoadmap } from "@/components/shared/InterviewRoadmap";
 
 interface Invitation {
     id: string;
@@ -940,10 +941,18 @@ export default function InvitationsClient() {
                                             </div>
                                         )}
 
-                                        {/* Interview Rounds Display */}
+                                        {/* Interview Rounds Management */}
                                         {selectedInvitation.interview_confirmed && !selectedInvitation.invitation_canceled && (
                                             <>
                                                 <Separator className="my-4" />
+                                                {/* Visual Roadmap */}
+                                                <InterviewRoadmap
+                                                    invitationId={selectedInvitation.id}
+                                                    userRole="employer"
+                                                    onOutcomeFound={setHasInterviewOutcome}
+                                                    className="mb-4"
+                                                />
+                                                {/* Management Actions */}
                                                 <InterviewRoundsDisplay
                                                     invitationId={selectedInvitation.id}
                                                     candidateName={`${selectedInvitation.candidate.first_name} ${selectedInvitation.candidate.last_name}`}

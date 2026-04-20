@@ -1,5 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PDFDocument, rgb } from "pdf-lib";
+import {
+    PDFDocument,
+    rgb,
+    pushGraphicsState,
+    popGraphicsState,
+    moveTo,
+    curveTo,
+    closePath,
+    clip,
+    endPath,
+} from "pdf-lib";
 import fs from "fs/promises";
 import path from "path";
 
@@ -9,7 +19,7 @@ const PROFILE_IMAGE_BUCKET = "profile-images";
 const BR_CERTIFICATES_BUCKET = "br-certificates";
 
 /**
- * Watermarks a PDF file with the company logo.
+ * Watermarks a PDF file with the company logo as a smaller circular badge.
  * @param fileBuffer - The buffer of the PDF file.
  * @returns The buffer of the watermarked PDF.
  */
@@ -17,25 +27,100 @@ export async function watermarkPDF(fileBuffer: ArrayBuffer): Promise<Uint8Array>
     try {
         const pdfDoc = await PDFDocument.load(fileBuffer);
 
-        // Load logo
+        // Load logo from public folder
         const logoPath = path.join(process.cwd(), "public", "logo.jpg");
         const logoImageBytes = await fs.readFile(logoPath);
-
-        // Embed the JPG image
         const logoImage = await pdfDoc.embedJpg(logoImageBytes);
-        const logoDims = logoImage.scale(0.1); // Scale down the logo (adjust as needed)
+
+        // Scale down to ~45% of the original size (was 0.1, now 0.055)
+        const logoDims = logoImage.scale(0.055);
+
+        // Determine the circle radius — use the shorter side of the image
+        const radius = Math.min(logoDims.width, logoDims.height) / 2;
+
+        // Bezier control-point factor for circle approximation
+        const k = 0.5523 * radius;
 
         const pages = pdfDoc.getPages();
         for (const page of pages) {
             const { width, height } = page.getSize();
 
-            // Draw logo at top right
+            // Place logo at top-right with a small margin
+            const imgX = width - logoDims.width - 16;
+            const imgY = height - logoDims.height - 16;
+
+            // Center of the drawn image rectangle
+            const cx = imgX + logoDims.width / 2;
+            const cy = imgY + logoDims.height / 2;
+
+            // 1. Draw a white filled circle background so logo doesn't bleed into PDF content
+            page.drawCircle({
+                x: cx,
+                y: cy,
+                size: radius + 1.5,
+                color: rgb(1, 1, 1),
+                opacity: 0.85,
+            });
+
+            // 2. Push graphics state, build circular clip path, draw image, pop state
+            //    Circle approximated by 4 cubic bezier curves (standard approach).
+            //    PDF coordinate system: (cx+r, cy) is the rightmost point.
+            page.pushOperators(
+                pushGraphicsState(),
+
+                // Move to right-most point of circle
+                moveTo(cx + radius, cy),
+
+                // Quadrant 1: right → top  (counter-clockwise in PDF coords is actually CW visually)
+                curveTo(
+                    cx + radius, cy + k,   // cp1
+                    cx + k,     cy + radius, // cp2
+                    cx,         cy + radius  // end
+                ),
+                // Quadrant 2: top → left
+                curveTo(
+                    cx - k,     cy + radius,
+                    cx - radius, cy + k,
+                    cx - radius, cy
+                ),
+                // Quadrant 3: left → bottom
+                curveTo(
+                    cx - radius, cy - k,
+                    cx - k,      cy - radius,
+                    cx,          cy - radius
+                ),
+                // Quadrant 4: bottom → right (close the circle)
+                curveTo(
+                    cx + k,      cy - radius,
+                    cx + radius, cy - k,
+                    cx + radius, cy
+                ),
+
+                closePath(),
+                clip(),
+                endPath(),   // consume the path without painting (required after clip)
+            );
+
+            // 3. Draw the logo image — clipped to the circle above
             page.drawImage(logoImage, {
-                x: width - logoDims.width - 20,
-                y: height - logoDims.height - 20,
+                x: imgX,
+                y: imgY,
                 width: logoDims.width,
                 height: logoDims.height,
-                opacity: 0.5, // Semi-transparent
+                opacity: 0.80,
+            });
+
+            // 4. Restore graphics state (removes clip)
+            page.pushOperators(popGraphicsState());
+
+            // 5. Draw a subtle border ring on top for polish
+            page.drawCircle({
+                x: cx,
+                y: cy,
+                size: radius + 1.5,
+                borderColor: rgb(0.75, 0.75, 0.75),
+                borderWidth: 0.6,
+                opacity: 0,
             });
         }
 

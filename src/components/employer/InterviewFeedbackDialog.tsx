@@ -46,11 +46,6 @@ export function InterviewFeedbackDialog({
             return;
         }
 
-        if (!notes.trim() && outcome !== 'advance') {
-            toast.error("Please provide feedback notes");
-            return;
-        }
-
         setSubmitting(true);
         try {
             const response = await fetch(`/api/employer/interview-rounds/${roundId}/feedback`, {
@@ -91,29 +86,38 @@ export function InterviewFeedbackDialog({
             label: 'Advance to Next Round',
             description: 'Candidate passed this round and will proceed to the next interview',
             icon: ArrowRight,
-            color: 'text-green-600',
-            bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
-            selectedBg: 'bg-green-100 border-green-500'
+            iconColor: 'text-green-600 dark:text-green-400',
+            labelClass: 'text-green-900 dark:text-green-50',
+            descClass: 'text-green-800 dark:text-green-200',
+            bgColor:
+                'bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950/55 dark:hover:bg-green-950/75 dark:border-green-700',
+            selectedBg: 'bg-green-100 border-green-500 dark:bg-green-950 dark:border-green-400'
         },
         {
             value: 'reject',
             label: 'Reject Candidate',
             description: 'Candidate did not meet the requirements for this position',
             icon: XCircle,
-            color: 'text-red-600',
-            bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
-            selectedBg: 'bg-red-100 border-red-500'
+            iconColor: 'text-red-600 dark:text-red-400',
+            labelClass: 'text-red-900 dark:text-red-50',
+            descClass: 'text-red-800 dark:text-red-200',
+            bgColor:
+                'bg-red-50 hover:bg-red-100 border-red-200 dark:bg-red-950/55 dark:hover:bg-red-950/75 dark:border-red-800',
+            selectedBg: 'bg-red-100 border-red-500 dark:bg-red-950 dark:border-red-400'
         },
         {
             value: 'offer',
             label: 'Offer Job',
             description: 'Candidate passed all rounds and is ready to receive a job offer',
             icon: Briefcase,
-            color: 'text-blue-600',
-            bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
-            selectedBg: 'bg-blue-100 border-blue-500'
+            iconColor: 'text-blue-600 dark:text-blue-400',
+            labelClass: 'text-blue-900 dark:text-blue-50',
+            descClass: 'text-blue-800 dark:text-blue-200',
+            bgColor:
+                'bg-blue-50 hover:bg-blue-100 border-blue-200 dark:bg-blue-950/55 dark:hover:bg-blue-950/75 dark:border-blue-800',
+            selectedBg: 'bg-blue-100 border-blue-500 dark:bg-blue-950 dark:border-blue-400'
         }
-    ];
+    ] as const;
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -148,15 +152,17 @@ export function InterviewFeedbackDialog({
                                                 isSelected && option.selectedBg
                                             )}
                                         >
-                                            <Icon className={cn("h-5 w-5 mt-0.5 flex-shrink-0", option.color)} />
-                                            <div className="flex-1">
-                                                <p className="font-semibold text-sm">{option.label}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">
+                                            <Icon className={cn("h-5 w-5 mt-0.5 flex-shrink-0", option.iconColor)} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className={cn("font-semibold text-sm", option.labelClass)}>
+                                                    {option.label}
+                                                </p>
+                                                <p className={cn("text-xs mt-1 leading-relaxed", option.descClass)}>
                                                     {option.description}
                                                 </p>
                                             </div>
                                             {isSelected && (
-                                                <CheckCircle2 className={cn("h-5 w-5", option.color)} />
+                                                <CheckCircle2 className={cn("h-5 w-5 flex-shrink-0", option.iconColor)} />
                                             )}
                                         </label>
                                     </div>
@@ -167,9 +173,7 @@ export function InterviewFeedbackDialog({
 
                     {/* Feedback Notes */}
                     <div className="space-y-2">
-                        <Label htmlFor="notes">
-                            Feedback Notes {outcome !== 'advance' && <span className="text-red-500">*</span>}
-                        </Label>
+                        <Label htmlFor="notes">Feedback Notes</Label>
                         <Textarea
                             id="notes"
                             placeholder="Provide detailed feedback about the candidate's performance, strengths, areas for improvement..."
@@ -178,6 +182,7 @@ export function InterviewFeedbackDialog({
                             rows={6}
                             maxLength={2000}
                             disabled={submitting}
+                            className="placeholder:text-muted-foreground/80 dark:placeholder:text-zinc-400"
                         />
                         <p className="text-xs text-muted-foreground text-right">
                             {notes.length}/2000 characters
@@ -186,22 +191,22 @@ export function InterviewFeedbackDialog({
 
                     {/* Action-specific hints */}
                     {outcome === 'advance' && (
-                        <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                            <p className="text-sm text-green-800">
+                        <div className="bg-green-50 border border-green-200 rounded-md p-3 dark:bg-green-950/45 dark:border-green-800">
+                            <p className="text-sm text-green-800 dark:text-green-100">
                                 After saving, you'll be able to schedule the next interview round for this candidate.
                             </p>
                         </div>
                     )}
                     {outcome === 'reject' && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                            <p className="text-sm text-red-800">
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3 dark:bg-red-950/45 dark:border-red-800">
+                            <p className="text-sm text-red-800 dark:text-red-100">
                                 This candidate will be marked as rejected. The candidate will be notified about the decision.
                             </p>
                         </div>
                     )}
                     {outcome === 'offer' && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                            <p className="text-sm text-blue-800">
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 dark:bg-blue-950/45 dark:border-blue-800">
+                            <p className="text-sm text-blue-800 dark:text-blue-100">
                                 After saving, you'll be able to create and send a formal job offer to this candidate.
                             </p>
                         </div>
