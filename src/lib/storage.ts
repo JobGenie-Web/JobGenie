@@ -1,15 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-    PDFDocument,
-    rgb,
-    pushGraphicsState,
-    popGraphicsState,
-    moveTo,
-    curveTo,
-    closePath,
-    clip,
-    endPath,
-} from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs/promises";
 import path from "path";
 
@@ -38,9 +28,6 @@ export async function watermarkPDF(fileBuffer: ArrayBuffer): Promise<Uint8Array>
         // Determine the circle radius — use the shorter side of the image
         const radius = Math.min(logoDims.width, logoDims.height) / 2;
 
-        // Bezier control-point factor for circle approximation
-        const k = 0.5523 * radius;
-
         const pages = pdfDoc.getPages();
         for (const page of pages) {
             const { width, height } = page.getSize();
@@ -53,7 +40,7 @@ export async function watermarkPDF(fileBuffer: ArrayBuffer): Promise<Uint8Array>
             const cx = imgX + logoDims.width / 2;
             const cy = imgY + logoDims.height / 2;
 
-            // 1. Draw a white filled circle background so logo doesn't bleed into PDF content
+            // Draw a white filled circle background so logo doesn't bleed into PDF content
             page.drawCircle({
                 x: cx,
                 y: cy,
@@ -62,46 +49,7 @@ export async function watermarkPDF(fileBuffer: ArrayBuffer): Promise<Uint8Array>
                 opacity: 0.85,
             });
 
-            // 2. Push graphics state, build circular clip path, draw image, pop state
-            //    Circle approximated by 4 cubic bezier curves (standard approach).
-            //    PDF coordinate system: (cx+r, cy) is the rightmost point.
-            page.pushOperators(
-                pushGraphicsState(),
-
-                // Move to right-most point of circle
-                moveTo(cx + radius, cy),
-
-                // Quadrant 1: right → top  (counter-clockwise in PDF coords is actually CW visually)
-                curveTo(
-                    cx + radius, cy + k,   // cp1
-                    cx + k,     cy + radius, // cp2
-                    cx,         cy + radius  // end
-                ),
-                // Quadrant 2: top → left
-                curveTo(
-                    cx - k,     cy + radius,
-                    cx - radius, cy + k,
-                    cx - radius, cy
-                ),
-                // Quadrant 3: left → bottom
-                curveTo(
-                    cx - radius, cy - k,
-                    cx - k,      cy - radius,
-                    cx,          cy - radius
-                ),
-                // Quadrant 4: bottom → right (close the circle)
-                curveTo(
-                    cx + k,      cy - radius,
-                    cx + radius, cy - k,
-                    cx + radius, cy
-                ),
-
-                closePath(),
-                clip(),
-                endPath(),   // consume the path without painting (required after clip)
-            );
-
-            // 3. Draw the logo image — clipped to the circle above
+            // Draw the logo image
             page.drawImage(logoImage, {
                 x: imgX,
                 y: imgY,
@@ -110,10 +58,7 @@ export async function watermarkPDF(fileBuffer: ArrayBuffer): Promise<Uint8Array>
                 opacity: 0.80,
             });
 
-            // 4. Restore graphics state (removes clip)
-            page.pushOperators(popGraphicsState());
-
-            // 5. Draw a subtle border ring on top for polish
+            // Draw a subtle border ring on top for polish
             page.drawCircle({
                 x: cx,
                 y: cy,
