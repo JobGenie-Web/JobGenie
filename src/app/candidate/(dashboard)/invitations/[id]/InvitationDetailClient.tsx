@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
+import { InterviewOutcomeDisplay } from "@/components/candidate/InterviewOutcomeDisplay";
 
 interface TimeSlot {
     date: string;
@@ -86,9 +87,12 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState('');
+    const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
 
     useEffect(() => {
         fetchInvitation();
+        // Reset outcome state when invitation changes
+        setHasInterviewOutcome(false);
     }, [invitationId]);
 
     const fetchInvitation = async () => {
@@ -459,8 +463,16 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 </Card>
             )}
 
-            {/* CONFIRMED STATUS */}
-            {isConfirmed && invitation.selected_time_slot && (
+            {/* Interview Outcome Display */}
+            {isConfirmed && !invitation.invitation_canceled && (
+                <InterviewOutcomeDisplay 
+                    invitationId={invitation.id} 
+                    onOutcomeFound={setHasInterviewOutcome}
+                />
+            )}
+
+            {/* CONFIRMED STATUS - Only show if no outcome yet */}
+            {isConfirmed && invitation.selected_time_slot && !hasInterviewOutcome && (
                 <Card className={invitation.invitation_canceled && !invitation.mis_rescheduled ? "border-gray-200 " : "border-green-200 bg-green-50/50 dark:bg-green-950/20"}>
                     <CardContent className="p-6">
                         {!invitation.mis_rescheduled && (
