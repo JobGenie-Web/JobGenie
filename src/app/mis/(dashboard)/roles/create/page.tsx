@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { MISLayout } from "@/components/mis";
-import { AddMISUserForm } from "@/components/auth/AddMISUserForm";
+import { CreateRoleForm } from "./CreateRoleForm";
 
-export default function AddMISUserPage() {
+export default function CreateRolePage() {
     return (
         <MISLayout
-            pageTitle="Add MIS User"
-            pageDescription="Create a new MIS administrator account"
+            pageTitle="Create New Role"
+            pageDescription="Create a new role and assign permissions later"
         >
             <div className="max-w-2xl mx-auto">
                 {/* Back Link */}
                 <div className="mb-6">
                     <Link
-                        href="/mis/users"
+                        href="/mis/roles"
                         className="text-sm text-muted-foreground hover:text-foreground inline-block"
                     >
-                        ← Back to MIS Users
+                        ← Back to Roles
                     </Link>
                 </div>
 
                 {/* Form Card */}
                 <div className="bg-card border rounded-lg p-6 shadow-sm">
-                    <AddMISUserForm />
+                    <CreateRoleForm />
                 </div>
             </div>
         </MISLayout>

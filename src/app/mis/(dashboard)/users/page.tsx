@@ -7,10 +7,19 @@ async function fetchMISUsers() {
     try {
         const adminClient = createAdminClient();
 
-        // Fetch all MIS users directly from database
+        // Fetch all MIS users directly from database with role information
         const { data: misUsers, error: fetchError } = await adminClient
             .from("mis_user")
-            .select("user_id, first_name, last_name, email, created_at")
+            .select(`
+                user_id,
+                first_name,
+                last_name,
+                email,
+                created_at,
+                is_super_admin,
+                role_id,
+                role:mis_roles(name, description)
+            `)
             .order("created_at", { ascending: false });
 
         if (fetchError) {
