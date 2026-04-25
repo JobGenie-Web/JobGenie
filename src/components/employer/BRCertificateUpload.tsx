@@ -258,16 +258,18 @@ export function BRCertificateUpload({
                                     {verificationStatus === "failed" && (
                                         <div className="flex items-start gap-2 text-destructive">
                                             <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                            <div className="text-sm">
-                                                <p className="font-medium">Verification Failed</p>
-                                                <p className="text-xs text-destructive/80 whitespace-pre-line">
-                                                    {verificationMessage}
-                                                </p>
+                                            <div className="text-sm w-full">
+                                                <p className="font-medium mb-2">Verification Failed</p>
+                                                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-xs">
+                                                    <pre className="whitespace-pre-line font-sans text-destructive/90 leading-relaxed">
+                                                        {verificationMessage}
+                                                    </pre>
+                                                </div>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={handleRetry}
-                                                    className="mt-2"
+                                                    className="mt-3"
                                                 >
                                                     Retry Verification
                                                 </Button>

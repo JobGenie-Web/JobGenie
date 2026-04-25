@@ -20,14 +20,16 @@ Extract the following information from the provided Business Registration certif
 IMPORTANT:
 - Return ONLY valid JSON, no markdown formatting or code blocks
 - Extract the company/business name EXACTLY as shown on the certificate
-- Extract the registration number/BR number EXACTLY as shown
+- Extract the registration number/BR number EXACTLY as shown (including prefix like PV, PB, GR, HP and numbers)
+- The BR number format should be: PREFIX + SPACE + NUMBERS (e.g., "PV 12345678" or "PB 12345678")
+- Common prefixes: PV (Private Limited Company), PB (Public Limited Company), GR (Guarantee Company), HP (Hybrid/Other types)
 - If information is not clearly visible or found, use null for that field
-- Be case-insensitive when comparing text
+- Preserve the spacing and format of the registration number as it appears on the certificate
 
 Extract this structure:
 {
     "companyName": "string (exact company name from certificate)",
-    "registrationNumber": "string (exact BR/registration number from certificate)",
+    "registrationNumber": "string (exact BR/registration number from certificate with prefix)",
     "extractedText": "string (any other relevant text found on the document for context)"
 }
 
@@ -102,6 +104,9 @@ export async function verifyBRCertificate(
         // Normalize strings for comparison (trim, lowercase, remove extra spaces)
         const normalize = (str: string) => str.trim().toLowerCase().replace(/\s+/g, " ");
 
+        // Normalize BR number for comparison (remove spaces, convert to uppercase)
+        const normalizeBRNumber = (str: string) => str.trim().toUpperCase().replace(/\s+/g, "");
+
         const extractedCompanyName = extractedData.companyName || "";
         const extractedRegNumber = extractedData.registrationNumber || "";
 
@@ -111,7 +116,7 @@ export async function verifyBRCertificate(
 
         const regNumberMatch =
             extractedRegNumber &&
-            normalize(extractedRegNumber) === normalize(userProvidedRegNumber);
+            normalizeBRNumber(extractedRegNumber) === normalizeBRNumber(userProvidedRegNumber);
 
         // Determine match status and confidence
         let matchesInput = false;
@@ -155,9 +160,22 @@ export async function verifyBRCertificate(
                 data: validationResult.data,
             };
         } else {
+            // Build specific error messages for each mismatch
+            const errors: string[] = [];
+            
+            if (!companyNameMatch) {
+                errors.push(`❌ Company Name Mismatch:\n   • You entered: "${userProvidedCompanyName}"\n   • Certificate shows: "${extractedCompanyName || 'Not found'}"`);
+            }
+            
+            if (!regNumberMatch) {
+                errors.push(`❌ Business Registration Number Mismatch:\n   • You entered: "${userProvidedRegNumber}"\n   • Certificate shows: "${extractedRegNumber || 'Not found'}"`);
+            }
+
+            const errorMessage = `Certificate verification failed:\n\n${errors.join('\n\n')}\n\nPlease check your inputs and ensure they exactly match the information on your BR certificate.`;
+
             return {
                 success: false,
-                message: `Certificate verification failed. The extracted information does not match:\n- Provided: "${userProvidedCompanyName}" / "${userProvidedRegNumber}"\n- Found: "${extractedCompanyName || 'Not found'}" / "${extractedRegNumber || 'Not found'}"\nPlease verify your inputs or upload a clearer certificate.`,
+                message: errorMessage,
                 data: validationResult.data,
             };
         }
