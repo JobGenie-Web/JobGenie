@@ -27,7 +27,13 @@ async function fetchMISUsers() {
             return [];
         }
 
-        return misUsers || [];
+        // Transform the data: Supabase returns role as an array, but we need a single object
+        const transformedUsers = (misUsers || []).map((user: any) => ({
+            ...user,
+            role: Array.isArray(user.role) && user.role.length > 0 ? user.role[0] : null,
+        }));
+
+        return transformedUsers;
     } catch (error) {
         console.error("Error fetching MIS users:", error);
         return [];
