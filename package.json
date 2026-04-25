@@ -11,7 +11,9 @@
     "db:policies": "tsx scripts/setup-database.ts",
     "db:setup": "prisma migrate deploy && tsx scripts/setup-database.ts",
     "db:reset": "prisma migrate reset --force && tsx scripts/setup-database.ts",
-    "db:cleanup": "tsx scripts/cleanup-logs.ts"
+    "db:cleanup": "tsx scripts/cleanup-logs.ts",
+    "mis:seed-permissions": "tsx scripts/seed-mis-permissions.ts",
+    "mis:add-permissions": "tsx scripts/add-mis-permissions.ts"
   },
   "prisma": {
     "seed": "tsx scripts/setup-database.ts"

@@ -867,11 +867,15 @@ export async function addMISUser(
     _prevState: ActionState | null,
     formData: FormData
 ): Promise<ActionState> {
-    // Extract form data (only name and email now)
+    // Extract form data (including role_id; empty = none — optional)
+    const roleIdRaw = formData.get("roleId");
+    const roleId =
+        roleIdRaw === null || roleIdRaw === "" ? null : (roleIdRaw as string);
     const rawData = {
         firstName: formData.get("firstName") as string,
         lastName: formData.get("lastName") as string,
         email: formData.get("email") as string,
+        roleId,
     };
 
     // Validate with Zod (simplified schema without password)
@@ -880,6 +884,7 @@ export async function addMISUser(
         firstName: z.z.string().min(2, "First name must be at least 2 characters").max(50),
         lastName: z.z.string().min(2, "Last name must be at least 2 characters").max(50),
         email: z.z.string().email("Please enter a valid email address"),
+        roleId: z.z.string().uuid("Please select a valid role").nullable().optional(),
     });
 
     const validationResult = inviteSchema.safeParse(rawData);
@@ -915,41 +920,26 @@ export async function addMISUser(
             };
         }
 
-        // Check if the requesting user is a MIS admin
-        const { data: userData, error: userError } = await supabase
-            .from("users")
-            .select("role")
-            .eq("id", user.id)
+        // Check if the requesting user is a MIS admin with proper permissions
+        const adminClient = createAdminClient();
+        const { data: misUserData, error: misUserError } = await adminClient
+            .from("mis_user")
+            .select("is_super_admin, role_id, role:mis_roles(id, name)")
+            .eq("user_id", user.id)
             .single();
 
-        if (userError || !userData || userData.role !== "mis") {
+        if (misUserError || !misUserData) {
             return {
                 success: false,
                 message: "You do not have permission to add MIS users.",
             };
         }
 
-        // Use admin client for database operations
-        const adminClient = createAdminClient();
-
-        // Check MIS admin count limit (max 3)
-        const maxAdmins = parseInt(process.env.MIS_MAX_ADMINS || "3");
-        const { count: misCount, error: countError } = await adminClient
-            .from("mis_user")
-            .select("*", { count: "exact", head: true });
-
-        if (countError) {
-            console.error("Error checking MIS user count:", countError);
+        // Only super admins can add MIS users
+        if (!misUserData.is_super_admin) {
             return {
                 success: false,
-                message: "Unable to verify admin limit. Please try again.",
-            };
-        }
-
-        if (misCount && misCount >= maxAdmins) {
-            return {
-                success: false,
-                message: `Maximum number of MIS admins (${maxAdmins}) has been reached.`,
+                message: "Only super administrators can add MIS users.",
             };
         }
 
@@ -973,6 +963,23 @@ export async function addMISUser(
                 success: false,
                 message: "A user with this email already exists.",
             };
+        }
+
+        // If roleId is provided, validate it exists
+        if (data.roleId) {
+            const { data: roleExists, error: roleError } = await adminClient
+                .from("mis_roles")
+                .select("id")
+                .eq("id", data.roleId)
+                .eq("is_active", true)
+                .maybeSingle();
+
+            if (roleError || !roleExists) {
+                return {
+                    success: false,
+                    message: "Selected role is invalid or inactive.",
+                };
+            }
         }
 
         // Generate invitation token and temporary password
@@ -1011,17 +1018,19 @@ export async function addMISUser(
         }
 
         // Create MIS user profile (without auth user yet)
-        const { error: misUserError } = await adminClient.from("mis_user").insert({
+        const { error: misUserInsertError } = await adminClient.from("mis_user").insert({
             user_id: userId,
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
+            role_id: data.roleId || null,
+            is_super_admin: false, // New users are never super admin by default
             created_at: now,
             updated_at: now,
         });
 
-        if (misUserError) {
-            console.error("MIS user creation error:", misUserError);
+        if (misUserInsertError) {
+            console.error("MIS user creation error:", misUserInsertError);
             // Cleanup user record
             await adminClient.from("users").delete().eq("id", userId);
             return {

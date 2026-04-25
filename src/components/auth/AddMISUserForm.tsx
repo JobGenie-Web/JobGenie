@@ -1,13 +1,23 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addMISUser, type ActionState } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
+
+/** Radix Select disallows `value=""`; use this and map to empty before submit. */
+const NO_MIS_ROLE_VALUE = "__no_mis_role__";
+
+interface Role {
+    id: string;
+    name: string;
+    description: string | null;
+}
 
 // Individual field component for consistent styling
 function FormField({
@@ -42,6 +52,31 @@ export function AddMISUserForm() {
         addMISUser,
         null
     );
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(true);
+    const [selectedRole, setSelectedRole] = useState<string>(NO_MIS_ROLE_VALUE);
+
+    // Fetch available roles
+    useEffect(() => {
+        async function fetchRoles() {
+            try {
+                const response = await fetch("/api/mis/roles");
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Filter only active roles
+                    const activeRoles = data.roles.filter((role: any) => role.is_active);
+                    setRoles(activeRoles);
+                }
+            } catch (error) {
+                console.error("Failed to fetch roles:", error);
+            } finally {
+                setLoadingRoles(false);
+            }
+        }
+
+        fetchRoles();
+    }, []);
 
     // Handle redirect on success
     useEffect(() => {
@@ -110,6 +145,36 @@ export function AddMISUserForm() {
                     placeholder="admin@example.com"
                     aria-invalid={!!errors.email}
                 />
+            </FormField>
+
+            {/* Role Selection */}
+            <FormField label="Role" id="roleId" error={errors.roleId} required={false}>
+                <input
+                    type="hidden"
+                    name="roleId"
+                    value={selectedRole === NO_MIS_ROLE_VALUE ? "" : selectedRole}
+                />
+                <Select value={selectedRole} onValueChange={setSelectedRole} disabled={loadingRoles}>
+                    <SelectTrigger id="roleId" className="w-full">
+                        <SelectValue placeholder={loadingRoles ? "Loading roles..." : "Select a role (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={NO_MIS_ROLE_VALUE}>No role assigned</SelectItem>
+                        {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                                {role.name}
+                                {role.description && (
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                        - {role.description}
+                                    </span>
+                                )}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Assign a role to grant specific permissions. Leave empty to assign later.
+                </p>
             </FormField>
 
             {/* Submit Button */}
