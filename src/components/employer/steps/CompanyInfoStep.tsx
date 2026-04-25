@@ -7,9 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { Building2, Info } from "lucide-react";
 import { BRCertificateUpload } from "../BRCertificateUpload";
 import { useIndustries } from "@/hooks/useIndustries";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CompanyInfoStepProps {
     data: {
@@ -112,12 +118,62 @@ export function CompanyInfoStep({
 
                     {/* Business Registration Number */}
                     <div className="space-y-2">
-                        <Label htmlFor="businessRegistrationNo">
-                            Business Registration Number <span className="text-destructive">*</span>
-                        </Label>
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="businessRegistrationNo">
+                                Business Registration Number <span className="text-destructive">*</span>
+                            </Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-xs p-4">
+                                        <div className="space-y-3">
+                                            <p className="font-semibold text-sm border-b pb-2">BR Number Format Guide</p>
+                                            
+                                            <div className="space-y-1.5">
+                                                <p className="text-xs font-semibold">Prefix - Company Type</p>
+                                                
+                                                <div className="space-y-1 text-sm">
+                                                    <div>
+                                                        <span className="font-bold">PV</span>
+                                                        <span> - Private Limited Company</span>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <span className="font-bold">PB</span>
+                                                        <span> - Public Limited Company</span>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <span className="font-bold">GR</span>
+                                                        <span> - Guarantee Company</span>
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <span className="font-bold">HP</span>
+                                                        <span> - Hybrid/Other types</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="pt-2 border-t space-y-1">
+                                                <p className="text-xs font-semibold">Format:</p>
+                                                <p className="text-sm">
+                                                    Prefix (PV/GR/HP) + Space + Numbers
+                                                </p>
+                                                <p className="text-sm">
+                                                    Example: <span className="font-mono font-semibold">PV 12345678</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <Input
                             id="businessRegistrationNo"
-                            placeholder="Enter business registration number"
+                            placeholder="e.g., PV 12345678"
                             value={data.businessRegistrationNo}
                             onChange={(e) => handleChange("businessRegistrationNo", e.target.value)}
                             className={errors.businessRegistrationNo ? "border-destructive" : ""}
