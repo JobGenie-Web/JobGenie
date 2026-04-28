@@ -134,33 +134,6 @@ export function CompanyInfoStep({
                                     <TooltipTrigger asChild>
                                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                                     </TooltipTrigger>
-                                    <TooltipContent side="right" className="max-w-md p-0">
-                                        <div className="p-2">
-                                            <p className="text-sm font-semibold mb-2">BR Number Format Guide</p>
-                                            <Image
-                                                src="/br-format-guide.png"
-                                                alt="BR Number Format Guide"
-                                                width={400}
-                                                height={150}
-                                                className="rounded"
-                                            />
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                Format: Prefix (PV/PB/GR/HP) + Space + Numbers (e.g., PV 12345678)
-                                            </p>
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor="businessRegistrationNo">
-                                Business Registration Number <span className="text-destructive">*</span>
-                            </Label>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
                                     <TooltipContent side="right" className="max-w-xs p-4">
                                         <div className="space-y-3">
                                             <p className="font-semibold text-sm border-b pb-2">BR Number Format Guide</p>
