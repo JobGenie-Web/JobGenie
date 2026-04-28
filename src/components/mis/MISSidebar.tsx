@@ -12,6 +12,8 @@ import {
     Settings,
     BarChart3,
     Calendar,
+    Shield,
+    FileText,
 } from "lucide-react";
 import {
     Sidebar,
@@ -42,6 +44,11 @@ const navigationItems = [
         icon: Users,
     },
     {
+        title: "Roles & Permissions",
+        href: "/mis/roles",
+        icon: Shield,
+    },
+    {
         title: "Candidates",
         href: "/mis/candidates",
         icon: UserSquare,
@@ -62,12 +69,17 @@ const navigationItems = [
         icon: Briefcase,
     },
     {
-        title: "Reports",
+        title: "Reports & Analytics",
         href: "/mis/reports",
         icon: BarChart3,
     },
     {
-        title: "Settings",
+        title: "Audit Logs",
+        href: "/mis/audit",
+        icon: FileText,
+    },
+    {
+        title: "Master Data",
         href: "/mis/settings",
         icon: Settings,
     },

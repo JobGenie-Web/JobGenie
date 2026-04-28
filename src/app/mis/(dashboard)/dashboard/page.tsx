@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, UserSquare, Building2, Briefcase, BarChart3 } from "lucide-react";
+import { Users, UserSquare, Building2, Briefcase, BarChart3, Shield, FileText, Settings } from "lucide-react";
 import { MISLayout } from "@/components/mis";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,10 +7,11 @@ export default async function MISDashboardPage() {
     const supabase = await createClient();
 
     // Fetch counts for dashboard stats
-    const [candidatesCount, employersCount, jobsCount] = await Promise.all([
+    const [candidatesCount, employersCount, jobsCount, interviewsCount] = await Promise.all([
         supabase.from('candidates').select('id', { count: 'exact', head: true }),
         supabase.from('companies').select('id', { count: 'exact', head: true }),
         supabase.from('jobs').select('id', { count: 'exact', head: true }),
+        supabase.from('job_invitations').select('id', { count: 'exact', head: true }),
     ]);
 
     const dashboardCards = [
@@ -20,6 +21,14 @@ export default async function MISDashboardPage() {
             href: "/mis/users",
             icon: Users,
             color: "blue",
+            count: null,
+        },
+        {
+            title: "Roles & Permissions",
+            description: "Manage roles and access control",
+            href: "/mis/roles",
+            icon: Shield,
+            color: "violet",
             count: null,
         },
         {
@@ -54,6 +63,22 @@ export default async function MISDashboardPage() {
             color: "indigo",
             count: null,
         },
+        {
+            title: "Audit Logs",
+            description: "View system activity and error logs",
+            href: "/mis/audit",
+            icon: FileText,
+            color: "red",
+            count: null,
+        },
+        {
+            title: "Master Data",
+            description: "Manage industries and designations",
+            href: "/mis/settings",
+            icon: Settings,
+            color: "gray",
+            count: null,
+        },
     ];
 
     const colorClasses: Record<string, { bg: string; text: string; hover: string }> = {
@@ -62,6 +87,9 @@ export default async function MISDashboardPage() {
         purple: { bg: "bg-purple-500/10", text: "text-purple-500", hover: "hover:border-purple-500" },
         orange: { bg: "bg-orange-500/10", text: "text-orange-500", hover: "hover:border-orange-500" },
         indigo: { bg: "bg-indigo-500/10", text: "text-indigo-500", hover: "hover:border-indigo-500" },
+        violet: { bg: "bg-violet-500/10", text: "text-violet-500", hover: "hover:border-violet-500" },
+        red: { bg: "bg-red-500/10", text: "text-red-500", hover: "hover:border-red-500" },
+        gray: { bg: "bg-gray-500/10", text: "text-gray-500", hover: "hover:border-gray-500" },
     };
 
     return (
@@ -70,7 +98,7 @@ export default async function MISDashboardPage() {
             pageDescription="Welcome to the Management Information System dashboard."
         >
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {dashboardCards.map((card) => {
                         const Icon = card.icon;
                         const colors = colorClasses[card.color];

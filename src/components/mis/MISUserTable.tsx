@@ -1,7 +1,7 @@
 "use client";
 
 import { formatTimestamp } from "@/lib/date-utils";
-import { Users } from "lucide-react";
+import { Users, Shield } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -11,6 +11,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface MISUser {
     user_id: string;
@@ -18,6 +19,12 @@ interface MISUser {
     last_name: string;
     email: string;
     created_at: string;
+    is_super_admin?: boolean;
+    role_id?: string | null;
+    role?: {
+        name: string;
+        description: string | null;
+    } | null;
 }
 
 interface MISUserTableProps {
@@ -32,27 +39,31 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
             <div className="bg-card border rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Created Date</TableHead>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Created Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {[1, 2, 3].map((i) => (
+                            <TableRow key={i}>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-32" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-48" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-24" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-28" />
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {[1, 2, 3].map((i) => (
-                                <TableRow key={i}>
-                                    <TableCell>
-                                        <Skeleton className="h-5 w-32" />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Skeleton className="h-5 w-48" />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Skeleton className="h-5 w-28" />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                        ))}
                         </TableBody>
                     </Table>
                 </div>
@@ -86,6 +97,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
                             <TableHead>Created Date</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -93,10 +105,25 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                         {users.map((user) => (
                             <TableRow key={user.user_id}>
                                 <TableCell className="font-medium">
-                                    {user.first_name} {user.last_name}
+                                    <div className="flex items-center gap-2">
+                                        {user.first_name} {user.last_name}
+                                        {user.is_super_admin && (
+                                            <Badge variant="default" className="gap-1">
+                                                <Shield className="h-3 w-3" />
+                                                Super Admin
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
                                     {user.email}
+                                </TableCell>
+                                <TableCell>
+                                    {user.role ? (
+                                        <Badge variant="secondary">{user.role.name}</Badge>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">No role assigned</span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
                                     {formatTimestamp(user.created_at, "MMM dd, yyyy")}

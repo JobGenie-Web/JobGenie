@@ -51,7 +51,7 @@ export default async function CompleteProfilePage() {
             <div className="container max-w-3xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">Complete Your Profile</h1>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">Complete Employer Profile</h1>
                     <p className="text-muted-foreground">
                         {isSuperAdmin
                             ? "Let's finish setting up your profile to start posting jobs and finding top talent"
