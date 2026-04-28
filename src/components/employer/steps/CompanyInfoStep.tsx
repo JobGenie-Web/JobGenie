@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Info } from "lucide-react";
-import { Building2, Info } from "lucide-react";
 import { BRCertificateUpload } from "../BRCertificateUpload";
 import { useIndustries } from "@/hooks/useIndustries";
 import {
@@ -18,12 +17,6 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Image from "next/image";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface CompanyInfoStepProps {
     data: {
@@ -214,7 +207,6 @@ export function CompanyInfoStep({
                         </div>
                         <Input
                             id="businessRegistrationNo"
-                            placeholder="e.g., PV 12345678"
                             placeholder="e.g., PV 12345678"
                             value={data.businessRegistrationNo}
                             onChange={(e) => handleChange("businessRegistrationNo", e.target.value)}
