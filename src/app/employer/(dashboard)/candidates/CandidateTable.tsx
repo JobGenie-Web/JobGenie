@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Briefcase } from "lucide-react";
+import { Users, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
     Table,
@@ -18,10 +18,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Combobox } from "@/components/ui/combobox";
+import { MultiCombobox } from "@/components/ui/multi-combobox";
+import { Input } from "@/components/ui/input";
 import { CandidateDetailModal } from "./CandidateDetailModal";
 import { cn, formatIndustry } from "@/lib/utils";
 import { resolveIndustryIdsForProfile } from "@/lib/job-designations-resolve";
+import {
+    getInvitationJourneyDisplay,
+    journeyVariantToEmployerBadgeProps,
+} from "@/lib/invitation-journey-status";
 
 interface Candidate {
     id: string;
@@ -33,9 +38,17 @@ interface Candidate {
     experience_level: string | null;
     employment_type: string | null;
     availability_status: string | null;
+    highest_qualification: string | null;
+    expected_monthly_salary: number | null;
     qualifications: string[];
     expected_positions: string[];  // Positions the candidate is targeting
     invited: boolean;  // Track if candidate has been invited
+    // Invitation journey fields (present when invited=true)
+    invitationStatus?: string | null;
+    invitationPipelineStatus?: string | null;
+    invitationInterviewConfirmed?: boolean;
+    invitationCurrentRound?: number | null;
+    invitationMisRescheduled?: boolean;
 }
 
 interface Industry {
@@ -98,10 +111,16 @@ function getHighestQualification(qualifications: string[]): string {
 
 export function CandidateTable({ candidates, industries }: CandidateTableProps) {
     const [selectedIndustryId, setSelectedIndustryId] = useState<string>("");
-    const [selectedDesignation, setSelectedDesignation] = useState<string>("");
+    const [selectedDesignations, setSelectedDesignations] = useState<string[]>([]);
     const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
     const [jobDesignations, setJobDesignations] = useState<JobDesignation[]>([]);
     const [loadingDesignations, setLoadingDesignations] = useState(false);
+
+    // Optional filters
+    const [expectedSalaryStr, setExpectedSalaryStr] = useState<string>("");
+    const [selectedExperience, setSelectedExperience] = useState<string>("_all");
+    const [selectedQualification, setSelectedQualification] = useState<string>("_all");
+    const [showOptionalFilters, setShowOptionalFilters] = useState(false);
 
     // Fetch job designations when industry is selected
     useEffect(() => {
@@ -137,23 +156,68 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
     // Reset job designation when industry changes
     const handleIndustryChange = (industryId: string) => {
         setSelectedIndustryId(industryId);
-        setSelectedDesignation(""); // Reset designation when industry changes
+        setSelectedDesignations([]); // Reset designations when industry changes
     };
 
-    // Filter candidates by industry + expected_positions only.
+    // Use database enum values for optional dropdowns
+    const EXPERIENCE_LEVELS = [
+        "entry",
+        "junior",
+        "mid",
+        "senior",
+        "lead",
+        "principal"
+    ];
+
+    const QUALIFICATIONS = [
+        "doctorate_phd",
+        "masters_degree",
+        "post_graduate",
+        "bachelors_degree",
+        "professional_certification",
+        "undergraduate",
+        "diploma",
+        "certificate",
+        "vocational_training",
+        "no_formal_education"
+    ];
+
+    // Filter candidates by industry + expected_positions (mandatory) and optional filters.
     // Candidates appear in results only if the searched designation
     // is listed in their expected_positions array.
-    const filteredCandidates = (selectedIndustryId && selectedDesignation)
+    const filteredCandidates = (selectedIndustryId && selectedDesignations.length > 0)
         ? candidates.filter(candidate => {
             const candidateIndustryIds = resolveIndustryIdsForProfile(candidate.industry, industries);
-            return (
-                candidateIndustryIds.includes(parseInt(selectedIndustryId, 10)) &&
-                (candidate.expected_positions ?? []).includes(selectedDesignation)
+            
+            // 1. Mandatory filters
+            const hasMatchingDesignation = selectedDesignations.some(desig => 
+                (candidate.expected_positions ?? []).includes(desig)
             );
+            
+            const matchMandatory = candidateIndustryIds.includes(parseInt(selectedIndustryId, 10)) && hasMatchingDesignation;
+            if (!matchMandatory) return false;
+
+            // 2. Optional filters
+            if (expectedSalaryStr) {
+                const maxSal = parseInt(expectedSalaryStr, 10);
+                if (!isNaN(maxSal) && candidate.expected_monthly_salary && candidate.expected_monthly_salary > maxSal) {
+                    return false;
+                }
+            }
+
+            if (selectedExperience && selectedExperience !== "_all") {
+                if (candidate.experience_level !== selectedExperience) return false;
+            }
+
+            if (selectedQualification && selectedQualification !== "_all") {
+                if (candidate.highest_qualification !== selectedQualification) return false;
+            }
+
+            return true;
         })
         : [];
 
-    const hasSearched = selectedIndustryId !== "" && selectedDesignation !== "";
+    const hasSearched = selectedIndustryId !== "" && selectedDesignations.length > 0;
 
     return (
         <div className="space-y-6">
@@ -198,16 +262,16 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                             <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <div className="w-full" id="designation-filter">
-                                    <Combobox
+                                    <MultiCombobox
                                         options={jobDesignations.map((designation) => ({
                                             value: designation.designation_name,
                                             label: designation.designation_name,
                                         }))}
-                                        value={selectedDesignation}
-                                        onValueChange={setSelectedDesignation}
+                                        values={selectedDesignations}
+                                        onValuesChange={setSelectedDesignations}
                                         placeholder={
                                             selectedIndustryId
-                                                ? "Choose a job designation..."
+                                                ? "Choose job designations..."
                                                 : "Select industry first..."
                                         }
                                         searchPlaceholder="Search designations..."
@@ -224,13 +288,88 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                         </div>
                     </div>
 
+                    {/* Optional Filters */}
+                    <div className="pt-4 mt-4 border-t border-border/50">
+                        <button
+                            onClick={() => setShowOptionalFilters(!showOptionalFilters)}
+                            className="flex items-center justify-between w-full mb-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+                        >
+                            <span>Optional Filters</span>
+                            {showOptionalFilters ? (
+                                <ChevronUp className="h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            )}
+                        </button>
+                        {showOptionalFilters && (
+                            <div className="grid gap-4 sm:grid-cols-3">
+                            {/* Max Expected Salary Filter */}
+                            <div className="space-y-2">
+                                <label htmlFor="salary-filter" className="text-sm font-medium block">
+                                    Max Expected Salary (LKR)
+                                </label>
+                                <Input
+                                    id="salary-filter"
+                                    type="number"
+                                    placeholder="e.g. 150000"
+                                    value={expectedSalaryStr}
+                                    onChange={(e) => setExpectedSalaryStr(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Experience Filter */}
+                            <div className="space-y-2">
+                                <label htmlFor="experience-filter" className="text-sm font-medium block">
+                                    Experience Level
+                                </label>
+                                <Select value={selectedExperience} onValueChange={setSelectedExperience}>
+                                    <SelectTrigger id="experience-filter" className="w-full">
+                                        <SelectValue placeholder="Any Experience" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="_all">Any Experience</SelectItem>
+                                        {EXPERIENCE_LEVELS.map((exp) => (
+                                            <SelectItem key={exp} value={exp}>
+                                                {formatExperienceLevel(exp)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Qualification Filter */}
+                            <div className="space-y-2">
+                                <label htmlFor="qualification-filter" className="text-sm font-medium block">
+                                    Highest Qualification
+                                </label>
+                                <Select value={selectedQualification} onValueChange={setSelectedQualification}>
+                                    <SelectTrigger id="qualification-filter" className="w-full">
+                                        <SelectValue placeholder="Any Qualification" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="_all">Any Qualification</SelectItem>
+                                        {QUALIFICATIONS.map((qual) => (
+                                            <SelectItem key={qual} value={qual}>
+                                                {qual.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        )}
+                    </div>
+
                     {/* Clear Search Button */}
-                    {(selectedIndustryId || selectedDesignation) && (
+                    {(selectedIndustryId || selectedDesignations.length > 0) && (
                         <div className="flex justify-end">
                             <button
                                 onClick={() => {
                                     setSelectedIndustryId("");
-                                    setSelectedDesignation("");
+                                    setSelectedDesignations([]);
+                                    setExpectedSalaryStr("");
+                                    setSelectedExperience("_all");
+                                    setSelectedQualification("_all");
                                 }}
                                 className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                             >
@@ -259,7 +398,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
 
                         {filteredCandidates.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
-                                No candidates are targeting the &ldquo;{selectedDesignation}&rdquo; position.
+                                No candidates are targeting the selected position(s).
                             </div>
                         ) : (
                             <div className="rounded-md border overflow-x-auto">
@@ -267,7 +406,6 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Candidate Name</TableHead>
-                                            <TableHead>Industry</TableHead>
                                             <TableHead>Experience</TableHead>
                                             <TableHead>Level</TableHead>
                                             <TableHead>Highest Qualification</TableHead>
@@ -287,7 +425,6 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                 <TableCell className="font-medium">
                                                     {candidate.first_name} {candidate.last_name}
                                                 </TableCell>
-                                                <TableCell>{formatIndustry(candidate.industry)}</TableCell>
                                                 <TableCell>
                                                     {candidate.years_of_experience !== null
                                                         ? `${candidate.years_of_experience} ${candidate.years_of_experience === 1 ? 'year' : 'years'}`
@@ -298,8 +435,8 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                         {formatExperienceLevel(candidate.experience_level)}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell>
-                                                    {getHighestQualification(candidate.qualifications)}
+                                                <TableCell className="capitalize">
+                                                    {candidate.highest_qualification ? candidate.highest_qualification.replace(/_/g, ' ') : 'N/A'}
                                                 </TableCell>
                                                 <TableCell>
                                                     {formatEmploymentType(candidate.employment_type)}
@@ -318,9 +455,22 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                 </TableCell>
                                                 <TableCell>
                                                     {candidate.invited ? (
-                                                        <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
-                                                            Invited
-                                                        </Badge>
+                                                        (() => {
+                                                            const journeyDisplay = getInvitationJourneyDisplay({
+                                                                status: candidate.invitationStatus || 'pending',
+                                                                invitation_canceled: false,
+                                                                interview_confirmed: candidate.invitationInterviewConfirmed || false,
+                                                                mis_rescheduled: candidate.invitationMisRescheduled || false,
+                                                                pipeline_status: candidate.invitationPipelineStatus || null,
+                                                                current_round_number: candidate.invitationCurrentRound || null,
+                                                            });
+                                                            const badgeProps = journeyVariantToEmployerBadgeProps(journeyDisplay.variant);
+                                                            return (
+                                                                <Badge variant={badgeProps.variant} className={badgeProps.className}>
+                                                                    {journeyDisplay.label}
+                                                                </Badge>
+                                                            );
+                                                        })()
                                                     ) : (
                                                         <span className="text-sm text-muted-foreground">Not Invited</span>
                                                     )}
@@ -351,8 +501,13 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                 <CandidateDetailModal
                     candidateId={selectedCandidateId}
                     selectedIndustry={selectedIndustryName}
-                    selectedDesignation={selectedDesignation}
+                    selectedDesignation={selectedDesignations.join(', ')}
                     isInvited={filteredCandidates.find(c => c.id === selectedCandidateId)?.invited || false}
+                    invitationStatus={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationStatus ?? null}
+                    invitationPipelineStatus={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationPipelineStatus ?? null}
+                    invitationInterviewConfirmed={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationInterviewConfirmed ?? false}
+                    invitationCurrentRound={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationCurrentRound ?? null}
+                    invitationMisRescheduled={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationMisRescheduled ?? false}
                     onClose={() => setSelectedCandidateId(null)}
                 />
             )}

@@ -22,7 +22,6 @@ interface EmployerUserMenuProps {
         firstName: string;
         lastName: string;
         email: string;
-        profileImage?: string;
         companyName?: string;
     };
 }
@@ -83,7 +82,6 @@ export function EmployerUserMenu({ user }: EmployerUserMenuProps) {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10 border-2 border-border hover:border-primary transition-colors cursor-pointer">
-                        <AvatarImage src={user.profileImage} alt={fullName} />
                         <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                             {initials}
                         </AvatarFallback>

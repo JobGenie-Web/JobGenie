@@ -13,7 +13,6 @@ export interface EmployerProfile {
     department: string | null;
     designation: string | null;
     address: string;
-    profile_image_url: string | null;
     profile_completed: boolean;
 }
 
@@ -56,7 +55,6 @@ export async function getEmployerProfile(userId: string): Promise<EmployerProfil
                 department,
                 designation,
                 address,
-                profile_image_url,
                 profile_completed
             `)
             .eq("user_id", userId)
@@ -153,7 +151,6 @@ export async function getEmployerAndCompanyProfiles(userId: string): Promise<{
                 department,
                 designation,
                 address,
-                profile_image_url,
                 profile_completed,
                 companies!inner (
                     id,
@@ -195,7 +192,6 @@ export async function getEmployerAndCompanyProfiles(userId: string): Promise<{
                 department: data.department,
                 designation: data.designation,
                 address: data.address,
-                profile_image_url: data.profile_image_url,
                 profile_completed: data.profile_completed,
             } as EmployerProfile,
             company: company as CompanyProfile,

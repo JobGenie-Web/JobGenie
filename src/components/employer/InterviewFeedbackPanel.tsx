@@ -130,7 +130,7 @@ export function InterviewFeedbackPanel({
                         <Badge variant={roundOutcome ? "default" : "secondary"}>
                             {roundOutcome === 'advance' ? 'Advanced' : 
                              roundOutcome === 'reject' ? 'Rejected' :
-                             roundOutcome === 'offer' ? 'Offer Extended' :
+                             roundOutcome === 'offer' ? 'Job Offer Sent' :
                              'Awaiting Feedback'}
                         </Badge>
                     </div>

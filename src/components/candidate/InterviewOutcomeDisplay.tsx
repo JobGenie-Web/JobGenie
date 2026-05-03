@@ -174,7 +174,7 @@ export function InterviewOutcomeDisplay({ invitationId, onOutcomeFound }: Interv
                         <Badge className={config.color + " text-white"}>
                             {latestRoundWithOutcome.outcome === 'advance' ? 'Passed' : 
                              latestRoundWithOutcome.outcome === 'reject' ? 'Not Selected' :
-                             'Offer Extended'}
+                             'Offer Received'}
                         </Badge>
                     </div>
 

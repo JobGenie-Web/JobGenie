@@ -445,7 +445,6 @@ model Employer {
   department        String? @db.VarChar(100)
   is_super_admin    Boolean @default(false)
   profile_completed Boolean @default(false)
-  profile_image_url String? @db.VarChar(255)
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -627,6 +626,8 @@ model JobInvitation {
   sent_at      DateTime  @default(now()) @db.Timestamptz(6)
   viewed_at    DateTime? @db.Timestamptz(6)
   responded_at DateTime? @db.Timestamptz(6)
+  /// When the employer last opened this invitation; null = unread on employer sidebar
+  employer_last_seen_at DateTime? @db.Timestamptz(6)
 
   // Relations
   job       Job?      @relation(fields: [job_id], references: [id], onDelete: Cascade)

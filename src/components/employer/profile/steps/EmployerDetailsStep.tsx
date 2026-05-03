@@ -7,17 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { User } from "lucide-react";
-import { ProfileImageUpload } from "../ProfileImageUpload";
 
 interface EmployerDetailsStepProps {
     data: {
         department: string;
-        profile_image_url: string;
         address: string;
         phone: string;
     };
     onChange: (data: EmployerDetailsStepProps["data"]) => void;
-    onFileSelect: (file: File | null) => void; // Separate file handler
     onPrevious: () => void;
     onSubmit: () => void;
     isLoading: boolean;
@@ -27,7 +24,6 @@ interface EmployerDetailsStepProps {
 export function EmployerDetailsStep({
     data,
     onChange,
-    onFileSelect,
     onPrevious,
     onSubmit,
     isLoading,
@@ -83,18 +79,6 @@ export function EmployerDetailsStep({
                 </div>
 
                 <div className="space-y-4">
-                    {/* Profile Image */}
-                    <div className="space-y-2">
-                        <Label>Profile Picture</Label>
-                        <p className="text-sm text-muted-foreground mb-3">
-                            Upload a professional photo for your profile
-                        </p>
-                        <ProfileImageUpload
-                            onImageSelect={onFileSelect}
-                            currentImageUrl={data.profile_image_url}
-                        />
-                    </div>
-
                     {/* Department */}
                     <div className="space-y-2">
                         <Label htmlFor="department">Department / Division</Label>

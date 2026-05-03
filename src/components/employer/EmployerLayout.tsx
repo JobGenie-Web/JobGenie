@@ -26,7 +26,6 @@ async function getCurrentEmployer() {
         .select(`
             first_name,
             last_name,
-            profile_image_url,
             companies!inner (
                 company_name
             )
@@ -46,7 +45,6 @@ async function getCurrentEmployer() {
         email: user.email || '',
         firstName: employer.first_name || '',
         lastName: employer.last_name || '',
-        profileImage: employer.profile_image_url || undefined,
         companyName: company?.company_name || undefined,
     };
 }

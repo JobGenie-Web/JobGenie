@@ -2,18 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
-// GET /api/employer/invitations/[id]/check-offer
-// Check if a job offer exists for this invitation
-export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const dynamic = 'force-dynamic';
+
+// GET /api/employer/invitations/pending-count
+export async function GET() {
     try {
         const supabase = await createClient();
-        const { id: invitationId } = await params;
 
         // Get the current user
         const { data: { user } } = await supabase.auth.getUser();
+
         if (!user) {
             return NextResponse.json(
                 { success: false, error: "Unauthorized" },
@@ -22,54 +20,43 @@ export async function GET(
         }
 
         // Get employer record
-        const { data: employer } = await supabase
+        const { data: employer, error: employerError } = await supabase
             .from('employers')
-            .select('company_id')
+            .select('id, company_id')
             .eq('user_id', user.id)
             .single();
 
-        if (!employer) {
+        if (employerError || !employer) {
             return NextResponse.json(
                 { success: false, error: "Employer profile not found" },
                 { status: 404 }
             );
         }
 
-        // Verify invitation belongs to this company
-        const { data: invitation } = await supabase
+        // Invitations with updates the employer has not opened yet (employer_last_seen_at IS NULL)
+        const { count, error: countError } = await supabase
             .from('job_invitations')
-            .select('id, company_id')
-            .eq('id', invitationId)
+            .select('id', { count: 'exact', head: true })
             .eq('company_id', employer.company_id)
-            .single();
+            .eq('invitation_canceled', false)
+            .is('employer_last_seen_at', null);
 
-        if (!invitation) {
+        if (countError) {
+            console.error('Error counting pending invitations:', countError);
             return NextResponse.json(
-                { success: false, error: "Invitation not found or unauthorized" },
-                { status: 404 }
+                { success: false, error: "Failed to count pending invitations" },
+                { status: 500 }
             );
         }
 
-        // Check if offer exists
-        const { data: offer } = await supabase
-            .from('job_offers')
-            .select('*')
-            .eq('invitation_id', invitationId)
-            .maybeSingle();
-
         return NextResponse.json({
             success: true,
-            exists: !!offer,
-            offer: offer || null
+            count: count || 0
         });
 
     } catch (error) {
         console.error('API error:', error);
-        await logError({
-            source: "api/employer/invitations/check-offer:GET",
-            errorType: "APIError",
-            message: error instanceof Error ? error.message : String(error)
-        });
+        await logError({ source: "api/employer/invitations/pending-count:GET", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });
         return NextResponse.json(
             { success: false, error: "Internal server error" },
             { status: 500 }

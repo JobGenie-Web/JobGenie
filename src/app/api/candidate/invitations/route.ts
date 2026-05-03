@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/candidate/invitations
 export async function GET() {
     try {
@@ -42,12 +44,18 @@ export async function GET() {
                 given_time_slots,
                 alternative_dates,
                 status,
+                interview_confirmed,
+                pipeline_status,
+                current_round_number,
                 invitation_canceled,
+                mis_rescheduled,
+                candidate_reschedule_requested,
                 canceled_by,
                 cancellation_reason,
                 canceled_at,
                 sent_at,
                 viewed_at,
+                job_offers(id, status),
                 employer:employers(id, user_id),
                 company:companies(company_name, logo_url, industry, headoffice_location)
             `)

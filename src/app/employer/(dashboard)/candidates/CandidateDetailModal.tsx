@@ -80,6 +80,12 @@ interface CandidateDetailModalProps {
     selectedIndustry?: string;
     selectedDesignation?: string;
     isInvited?: boolean;
+    // Invitation journey fields — used to disable Cancel Invitation once accepted
+    invitationStatus?: string | null;
+    invitationPipelineStatus?: string | null;
+    invitationInterviewConfirmed?: boolean;
+    invitationCurrentRound?: number | null;
+    invitationMisRescheduled?: boolean;
     onClose: () => void;
 }
 
@@ -87,7 +93,7 @@ function formatQualification(qual: string): string {
     return qual.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, onClose }: CandidateDetailModalProps) {
+export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, invitationStatus, invitationPipelineStatus, invitationInterviewConfirmed, invitationCurrentRound, invitationMisRescheduled, onClose }: CandidateDetailModalProps) {
     const [candidate, setCandidate] = useState<CandidateData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showCVViewer, setShowCVViewer] = useState(false);
@@ -207,10 +213,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                     <h3 className="text-lg font-semibold">Professional Details</h3>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <p className="text-muted-foreground">Industry</p>
-                                        <p className="font-medium">{formatIndustry(candidate.industry)}</p>
-                                    </div>
+                                    {/* Industry Removed */}
                                     <div>
                                         <p className="text-muted-foreground">Current Position</p>
                                         <p className="font-medium">{candidate.current_position}</p>
@@ -400,6 +403,11 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                     suggestedIndustry={selectedIndustry}
                                     suggestedDesignation={selectedDesignation}
                                     isInvited={isInvited}
+                                    invitationStatus={invitationStatus}
+                                    invitationPipelineStatus={invitationPipelineStatus}
+                                    invitationInterviewConfirmed={invitationInterviewConfirmed}
+                                    invitationCurrentRound={invitationCurrentRound}
+                                    invitationMisRescheduled={invitationMisRescheduled}
                                 />
                             </section>
                         </div>
@@ -410,7 +418,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
             {/* CV Viewer Dialog */}
             {candidate && showCVViewer && candidate.resume_url && (
                 <Dialog open={showCVViewer} onOpenChange={setShowCVViewer}>
-                    <DialogContent className="max-w-[95vw] sm:max-w-[50vw] h-[95vh] flex flex-col p-6">
+                    <DialogContent className="max-w-[95vw] md:max-w-[85vw] lg:max-w-[75vw] xl:max-w-[65vw] h-[95vh] flex flex-col p-4 sm:p-6">
                         <DialogHeader>
                             <DialogTitle>Candidate CV - {candidate.first_name} {candidate.last_name}</DialogTitle>
                             <DialogDescription>

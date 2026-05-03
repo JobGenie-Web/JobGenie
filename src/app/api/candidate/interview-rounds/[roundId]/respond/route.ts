@@ -129,6 +129,11 @@ export async function POST(
             );
         }
 
+        await supabase
+            .from("job_invitations")
+            .update({ employer_last_seen_at: null })
+            .eq("id", invitation.id);
+
         await logBusiness(
             `interview_round_${action}`,
             user.id,

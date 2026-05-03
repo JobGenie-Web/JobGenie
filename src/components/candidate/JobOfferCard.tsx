@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,13 +35,44 @@ interface JobOffer {
 }
 
 interface JobOfferCardProps {
+    invitationId: string;
     offer: JobOffer;
     companyName: string;
     jobDesignation: string;
     onRefresh?: () => void;
 }
 
-export function JobOfferCard({ offer, companyName, jobDesignation, onRefresh }: JobOfferCardProps) {
+export function JobOfferCard({
+    invitationId,
+    offer,
+    companyName,
+    jobDesignation,
+    onRefresh,
+}: JobOfferCardProps) {
+    const [responding, setResponding] = useState<"accept" | "decline" | null>(null);
+
+    const respond = async (action: "accept" | "decline") => {
+        setResponding(action);
+        try {
+            const response = await fetch(`/api/candidate/invitations/${invitationId}/offer`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success(data.message || (action === "accept" ? "Offer accepted" : "Offer declined"));
+                onRefresh?.();
+            } else {
+                toast.error(data.error || "Could not update your response");
+            }
+        } catch {
+            toast.error("Something went wrong. Please try again.");
+        } finally {
+            setResponding(null);
+        }
+    };
+
     const getStatusConfig = () => {
         switch (offer.status) {
             case 'accepted':
@@ -50,7 +83,7 @@ export function JobOfferCard({ offer, companyName, jobDesignation, onRefresh }: 
                     bgClass: 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/60 dark:to-green-900/40',
                     borderClass: 'border-green-300 dark:border-green-700'
                 };
-            case 'rejected':
+            case 'declined':
                 return {
                     color: 'bg-red-500',
                     text: 'Declined',
@@ -102,7 +135,7 @@ export function JobOfferCard({ offer, companyName, jobDesignation, onRefresh }: 
                                     Job Offer Received! 🎉
                                 </h3>
                                 <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                                    {companyName} has extended a formal offer for the position of {offer.job_title}
+                                    {companyName} has sent a formal job offer for the position of {offer.job_title}
                                 </p>
                             </div>
                         </div>
@@ -203,13 +236,24 @@ export function JobOfferCard({ offer, companyName, jobDesignation, onRefresh }: 
                             ⏰ Action Required: Please review the offer and respond
                         </p>
                         <div className="grid gap-2 sm:grid-cols-2">
-                            <Button className="w-full bg-green-600 hover:bg-green-700">
+                            <Button
+                                type="button"
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                disabled={responding !== null}
+                                onClick={() => respond("accept")}
+                            >
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                                Accept Offer
+                                {responding === "accept" ? "Saving…" : "Accept Offer"}
                             </Button>
-                            <Button variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                disabled={responding !== null}
+                                onClick={() => respond("decline")}
+                            >
                                 <XCircle className="h-4 w-4 mr-2" />
-                                Decline Offer
+                                {responding === "decline" ? "Saving…" : "Decline Offer"}
                             </Button>
                         </div>
                     </div>
@@ -226,7 +270,7 @@ export function JobOfferCard({ offer, companyName, jobDesignation, onRefresh }: 
                     </div>
                 )}
 
-                {offer.status === 'rejected' && (
+                {offer.status === 'declined' && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 dark:bg-red-950/30 dark:border-red-800">
                         <div className="flex items-center gap-2">
                             <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />

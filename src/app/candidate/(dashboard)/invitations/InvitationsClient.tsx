@@ -4,10 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Loader2, AlertCircle, CheckCircle, XCircle, Ban } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+    getInvitationJourneyDisplay,
+    normalizeEmbeddedOffer,
+    journeyVariantToCandidateClasses,
+} from "@/lib/invitation-journey-status";
+
+import useSWR from "swr";
 
 interface TimeSlot {
     date: string;
@@ -30,6 +37,11 @@ interface Invitation {
     canceled_by: string | null;
     cancellation_reason: string | null;
     canceled_at: string | null;
+    interview_confirmed?: boolean;
+    pipeline_status?: string | null;
+    current_round_number?: number | null;
+    mis_rescheduled?: boolean;
+    job_offers?: { id: string; status: string } | { id: string; status: string }[] | null;
     company: {
         company_name: string;
         logo_url: string | null;
@@ -37,32 +49,6 @@ interface Invitation {
         headoffice_location: string | null;
     };
 }
-
-const statusConfig: Record<
-    string,
-    { label: string; icon: React.ElementType; classes: string }
-> = {
-    pending: {
-        label: "Pending",
-        icon: AlertCircle,
-        classes: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    },
-    accepted: {
-        label: "Accepted",
-        icon: CheckCircle,
-        classes: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    },
-    declined: {
-        label: "Declined",
-        icon: XCircle,
-        classes: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    },
-    canceled: {
-        label: "Canceled",
-        icon: Ban,
-        classes: "bg-muted text-muted-foreground",
-    },
-};
 
 // Helper function to format date relative to today
 function formatInvitationDate(sentAt: string): string {
@@ -79,37 +65,19 @@ function formatInvitationDate(sentAt: string): string {
     return format(sentDate, "MMM d, yyyy");
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function InvitationsClient() {
     const router = useRouter();
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data, error, isLoading } = useSWR("/api/candidate/invitations", fetcher);
     const [filter, setFilter] = useState<string>("all");
 
-    useEffect(() => {
-        fetchInvitations();
-    }, []);
-
-    const fetchInvitations = async () => {
-        try {
-            const response = await fetch("/api/candidate/invitations");
-            const data = await response.json();
-
-            if (data.success) {
-                setInvitations(data.data);
-            } else {
-                toast.error("Failed to load invitations");
-            }
-        } catch (error) {
-            console.error("Error fetching invitations:", error);
-            toast.error("An error occurred while loading invitations");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const invitations: Invitation[] = data?.success ? data.data : [];
 
     const handleCardClick = (invitationId: string) => {
         router.push(`/candidate/invitations/${invitationId}`);
     };
+
 
     const filteredInvitations = invitations.filter(inv => {
         if (filter === "all") return true;
@@ -125,7 +93,7 @@ export default function InvitationsClient() {
         cancelled: invitations.filter(i => i.invitation_canceled).length,
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -182,8 +150,20 @@ export default function InvitationsClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {filteredInvitations.map((invitation) => {
-                    const effectiveStatus = invitation.invitation_canceled ? "canceled" : invitation.status;
-                    const config = statusConfig[effectiveStatus] || statusConfig.pending;
+                    const offer = normalizeEmbeddedOffer(invitation.job_offers);
+                    const journey = getInvitationJourneyDisplay(
+                        {
+                            status: invitation.status,
+                            invitation_canceled: invitation.invitation_canceled,
+                            interview_confirmed: invitation.interview_confirmed ?? false,
+                            mis_rescheduled: invitation.mis_rescheduled,
+                            pipeline_status: invitation.pipeline_status ?? null,
+                            current_round_number: invitation.current_round_number ?? null,
+                            candidate_reschedule_requested: (invitation as any).candidate_reschedule_requested,
+                        },
+                        offer
+                    );
+                    const badgeClass = journeyVariantToCandidateClasses(journey.variant);
 
                     return (
                         <Card
@@ -214,8 +194,8 @@ export default function InvitationsClient() {
                                                     {invitation.company.company_name}
                                                 </p>
                                             </div>
-                                            <Badge className={cn("text-[10px] px-2 py-0.5 w-fit", config.classes)}>
-                                                {config.label}
+                                            <Badge className={cn("text-[10px] px-2 py-0.5 w-fit", badgeClass)}>
+                                                {journey.label}
                                             </Badge>
                                         </div>
                                     {invitation.company.headoffice_location && (

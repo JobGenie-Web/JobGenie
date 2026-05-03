@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/candidate/invitations/:id
 export async function GET(
     request: Request,
@@ -65,7 +67,12 @@ export async function GET(
                 mis_rescheduled,
                 mis_rescheduled_at,
                 mis_reschedule_data,
-                employer:employers(id, user_id, first_name, last_name, designation, email, phone, job_title, department, profile_image_url),
+                candidate_reschedule_requested,
+                reschedule_request_reason,
+                pipeline_status,
+                current_round_number,
+                job_offers(id, status),
+                employer:employers(id, user_id, first_name, last_name, designation, email, phone, job_title, department),
                 company:companies(company_name, logo_url, industry, headoffice_location, bio, website, phone)
             `)
             .eq('id', id)
@@ -80,11 +87,20 @@ export async function GET(
             );
         }
 
-        // Mark as viewed if not already
+        // Mark as viewed if not already; notify employer (clear their seen flag) when candidate first opens
         if (!invitation.viewed_at) {
+            const updateData: any = {
+                viewed_at: new Date().toISOString(),
+                employer_last_seen_at: null,
+            };
+            
+            if (invitation.status === 'pending') {
+                updateData.status = 'viewed';
+            }
+
             await supabase
                 .from('job_invitations')
-                .update({ viewed_at: new Date().toISOString() })
+                .update(updateData)
                 .eq('id', id);
         }
 

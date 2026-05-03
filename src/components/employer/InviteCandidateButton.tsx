@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Loader2, Plus, Trash2, XCircle } from "lucide-react";
+import { Send, Loader2, Plus, Trash2, XCircle, Lock, Video, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+    getInvitationJourneyDisplay,
+    journeyVariantToEmployerBadgeProps,
+} from "@/lib/invitation-journey-status";
 import {
     Dialog,
     DialogContent,
@@ -34,6 +39,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
 
 interface TimeSlot {
     id: string;
@@ -46,6 +53,12 @@ interface InviteCandidateButtonProps {
     suggestedIndustry?: string;
     suggestedDesignation?: string;
     isInvited?: boolean;
+    // Invitation journey fields — used to lock the cancel button after acceptance
+    invitationStatus?: string | null;
+    invitationPipelineStatus?: string | null;
+    invitationInterviewConfirmed?: boolean;
+    invitationCurrentRound?: number | null;
+    invitationMisRescheduled?: boolean;
     onInvitationChange?: () => void;  // Callback to refresh data
 }
 
@@ -68,6 +81,11 @@ export function InviteCandidateButton({
     suggestedIndustry,
     suggestedDesignation,
     isInvited = false,
+    invitationStatus,
+    invitationPipelineStatus,
+    invitationInterviewConfirmed,
+    invitationCurrentRound,
+    invitationMisRescheduled,
     onInvitationChange
 }: InviteCandidateButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -76,8 +94,9 @@ export function InviteCandidateButton({
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
     const [sending, setSending] = useState(false);
     const [cancelling, setCancelling] = useState(false);
-    /** Latest calendar date among completed slots (UTC midnight), matches server anchor. */
-    const [lastSelectedSlotDate, setLastSelectedSlotDate] = useState<Date | null>(null);
+    const [interviewMode, setInterviewMode] = useState<'online' | 'physical'>('online');
+    const [interviewAddress, setInterviewAddress] = useState("");
+    const [mapLink, setMapLink] = useState("");
 
     // Initialize with one empty time slot when dialog opens
     useEffect(() => {
@@ -85,23 +104,6 @@ export function InviteCandidateButton({
             addTimeSlot();
         }
     }, [isOpen, isInvited]);
-
-    // Track latest selected slot date for copy (same UTC parsing as api/employer/invitations)
-    useEffect(() => {
-        if (timeSlots.length === 0) {
-            setLastSelectedSlotDate(null);
-            return;
-        }
-        const validSlots = timeSlots.filter(s => s.date && s.time);
-        if (validSlots.length === 0) {
-            setLastSelectedSlotDate(null);
-            return;
-        }
-        const latestMs = Math.max(
-            ...validSlots.map((s) => Date.parse(`${s.date}T00:00:00Z`))
-        );
-        setLastSelectedSlotDate(new Date(latestMs));
-    }, [timeSlots]);
 
     const addTimeSlot = () => {
         if (timeSlots.length < 3) {
@@ -147,6 +149,11 @@ export function InviteCandidateButton({
             return;
         }
 
+        if (interviewMode === 'physical' && !interviewAddress.trim()) {
+            toast.error("Please provide an interview address for physical interviews");
+            return;
+        }
+
         setSending(true);
         try {
             const response = await fetch("/api/employer/invitations", {
@@ -163,7 +170,10 @@ export function InviteCandidateButton({
                         date: slot.date,
                         time: slot.time,
                         order: index + 1
-                    }))
+                    })),
+                    interviewMode,
+                    interviewAddress: interviewMode === 'physical' ? interviewAddress.trim() : undefined,
+                    mapLink: interviewMode === 'physical' ? mapLink.trim() : undefined
                 }),
             });
 
@@ -174,6 +184,9 @@ export function InviteCandidateButton({
                 setIsOpen(false);
                 setTimeSlots([]);
                 setMessage("");
+                setInterviewAddress("");
+                setMapLink("");
+                setInterviewMode('online');
                 // Trigger refresh
                 if (onInvitationChange) {
                     onInvitationChange();
@@ -224,31 +237,83 @@ export function InviteCandidateButton({
 
     const today = new Date().toISOString().split('T')[0];
     const timeOptions = generateTimeOptions();
-    const isFormValid = timeSlots.length > 0 && timeSlots.every(s => s.date && s.time);
+    const isFormValid = timeSlots.length > 0 && 
+                       timeSlots.every(s => s.date && s.time) &&
+                       (interviewMode === 'online' || (interviewMode === 'physical' && interviewAddress.trim().length > 0));
 
-    // If already invited, show cancel button
+    // Determine if the Cancel Invitation button should be locked.
+    // Cancellation is only allowed while the candidate hasn't acted on the invitation
+    // (i.e. status is pending or viewed). Once accepted, the pipeline is underway.
+    const canCancelInvitation = !invitationStatus ||
+        invitationStatus === 'pending' ||
+        invitationStatus === 'viewed';
+
+    // Compute the human-readable journey label to display when locked
+    const journeyDisplay = (!canCancelInvitation && invitationStatus)
+        ? getInvitationJourneyDisplay({
+            status: invitationStatus,
+            invitation_canceled: false,
+            interview_confirmed: invitationInterviewConfirmed ?? false,
+            mis_rescheduled: invitationMisRescheduled ?? false,
+            pipeline_status: invitationPipelineStatus ?? null,
+            current_round_number: invitationCurrentRound ?? null,
+        })
+        : null;
+
+    const journeyBadgeProps = journeyDisplay
+        ? journeyVariantToEmployerBadgeProps(journeyDisplay.variant)
+        : null;
+
+    // If already invited, show cancel button (or locked status if accepted)
     if (isInvited) {
         return (
             <>
-                <Button
-                    className="w-full cursor-pointer"
-                    size="lg"
-                    variant="destructive"
-                    onClick={() => setShowCancelDialog(true)}
-                    disabled={cancelling}
-                >
-                    {cancelling ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Cancelling...
-                        </>
-                    ) : (
-                        <>
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Cancel Invitation
-                        </>
-                    )}
-                </Button>
+                {canCancelInvitation ? (
+                    /* Candidate hasn't accepted yet — allow cancellation */
+                    <Button
+                        className="w-full cursor-pointer"
+                        size="lg"
+                        variant="destructive"
+                        onClick={() => setShowCancelDialog(true)}
+                        disabled={cancelling}
+                    >
+                        {cancelling ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Cancelling...
+                            </>
+                        ) : (
+                            <>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Cancel Invitation
+                            </>
+                        )}
+                    </Button>
+                ) : (
+                    /* Candidate has accepted — disable and show current status */
+                    <div className="space-y-2">
+                        <Button
+                            className="w-full"
+                            size="lg"
+                            variant="outline"
+                            disabled
+                        >
+                            <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <span className="text-muted-foreground">Cancel Invitation</span>
+                        </Button>
+                        {journeyDisplay && journeyBadgeProps && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <span>Candidate status:</span>
+                                <Badge
+                                    variant={journeyBadgeProps.variant}
+                                    className={journeyBadgeProps.className}
+                                >
+                                    {journeyDisplay.label}
+                                </Badge>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
                     <AlertDialogContent>
@@ -361,13 +426,61 @@ export function InviteCandidateButton({
                         <p className="text-xs text-muted-foreground">
                             {timeSlots.length} of 3 time slots added
                         </p>
+                    </div>
 
-                        {/* Alternative Date Info */}
-                        {lastSelectedSlotDate && (
-                            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm dark:border-green-800 dark:bg-green-900/20">
-                                <p className="text-green-900 dark:text-green-200">
-                                    Up to 3 working days after your latest selected date ({lastSelectedSlotDate.toLocaleDateString()}) will be offered as alternative dates.
-                                </p>
+                    {/* Interview Mode Section */}
+                    <div className="space-y-3">
+                        <Label>Interview Mode *</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button
+                                type="button"
+                                variant={interviewMode === 'online' ? 'default' : 'outline'}
+                                className={cn(
+                                    "flex items-center gap-2 h-12",
+                                    interviewMode === 'online' && "ring-2 ring-primary ring-offset-2"
+                                )}
+                                onClick={() => setInterviewMode('online')}
+                                disabled={sending}
+                            >
+                                <Video className="h-4 w-4" />
+                                Online
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={interviewMode === 'physical' ? 'default' : 'outline'}
+                                className={cn(
+                                    "flex items-center gap-2 h-12",
+                                    interviewMode === 'physical' && "ring-2 ring-primary ring-offset-2"
+                                )}
+                                onClick={() => setInterviewMode('physical')}
+                                disabled={sending}
+                            >
+                                <MapPinned className="h-4 w-4" />
+                                Physical
+                            </Button>
+                        </div>
+
+                        {interviewMode === 'physical' && (
+                            <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
+                                <div className="space-y-2">
+                                    <Label className="text-xs">Interview Address *</Label>
+                                    <Input
+                                        placeholder="Enter the full address for the interview..."
+                                        value={interviewAddress}
+                                        onChange={(e) => setInterviewAddress(e.target.value)}
+                                        disabled={sending}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs">Google Maps Link (Optional)</Label>
+                                    <Input
+                                        placeholder="Paste Google Maps URL here..."
+                                        value={mapLink}
+                                        onChange={(e) => setMapLink(e.target.value)}
+                                        disabled={sending}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>

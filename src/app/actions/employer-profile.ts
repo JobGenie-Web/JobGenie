@@ -20,7 +20,6 @@ export interface ProfileData {
         job_title: string | null;
         department: string | null;
         address: string;
-        profile_image_url: string | null;
         profile_completed: boolean;
         company_id: string;
     };
@@ -65,7 +64,6 @@ export async function getEmployerProfileData(userId: string): Promise<ProfileDat
                 job_title,
                 department,
                 address,
-                profile_image_url,
                 profile_completed,
                 company_id,
                 companies!inner (
@@ -103,7 +101,6 @@ export async function getEmployerProfileData(userId: string): Promise<ProfileDat
                 job_title: employerData.job_title,
                 department: employerData.department,
                 address: employerData.address,
-                profile_image_url: employerData.profile_image_url,
                 profile_completed: employerData.profile_completed,
                 company_id: employerData.company_id,
             },
@@ -237,7 +234,6 @@ export async function completeEmployerProfile(
             .from("employers")
             .update({
                 department: employerValidation.data.department || null,
-                profile_image_url: employerValidation.data.profile_image_url || null,
                 address: employerValidation.data.address || employerRecord.address, // Keep existing if not provided
                 phone: employerValidation.data.phone || null,
                 profile_completed: true,

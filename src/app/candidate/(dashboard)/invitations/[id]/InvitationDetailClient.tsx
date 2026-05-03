@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +19,11 @@ import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 import { InterviewOutcomeDisplay } from "@/components/candidate/InterviewOutcomeDisplay";
 import { InterviewRoadmap } from "@/components/shared/InterviewRoadmap";
 import { JobOfferCard } from "@/components/candidate/JobOfferCard";
+import { createClient } from "@/lib/supabase/client";
+import {
+    getInvitationJourneyDisplay,
+    normalizeEmbeddedOffer,
+} from "@/lib/invitation-journey-status";
 
 interface TimeSlot {
     date: string;
@@ -78,78 +85,81 @@ interface InvitationDetail {
         department: string | null;
         profile_image_url: string | null;
     };
+    pipeline_status?: string | null;
+    current_round_number?: number | null;
+    candidate_reschedule_requested?: boolean;
+    reschedule_request_reason?: string | null;
+    job_offers?: { id: string; status: string } | { id: string; status: string }[] | null;
 }
+
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function InvitationDetailClient({ invitationId }: { invitationId: string }) {
     const router = useRouter();
-    const [invitation, setInvitation] = useState<InvitationDetail | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: invitationData, error: invitationError, isLoading: invitationLoading, mutate: mutateInvitation } = useSWR(`/api/candidate/invitations/${invitationId}`, fetcher);
+    const { data: offerData, mutate: mutateOffer } = useSWR(`/api/candidate/invitations/${invitationId}/offer`, fetcher);
+    
     const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
     const [selectedMode, setSelectedMode] = useState<'online' | 'physical' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [requestReschedule, setRequestReschedule] = useState(false);
+    const [rescheduleReason, setRescheduleReason] = useState("");
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState('');
     const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
-    const [jobOffer, setJobOffer] = useState<any>(null);
+
+    const invitation: InvitationDetail | null = invitationData?.success ? invitationData.data : null;
+    const jobOffer = offerData?.success ? offerData.offer : null;
 
     useEffect(() => {
-        fetchInvitation();
-        fetchJobOffer();
-        // Reset outcome state when invitation changes
-        setHasInterviewOutcome(false);
-        
-        // Auto-refresh to check for new offers every 10 seconds
-        const interval = setInterval(() => {
-            fetchJobOffer();
-        }, 10000);
-        
-        return () => clearInterval(interval);
-    }, [invitationId]);
-
-    const fetchInvitation = async () => {
-        try {
-            const response = await fetch(`/api/candidate/invitations/${invitationId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                setInvitation(data.data);
-            } else {
-                toast.error("Failed to load invitation");
-                router.push("/candidate/invitations");
-            }
-        } catch (error) {
-            console.error("Error fetching invitation:", error);
-            toast.error("An error occurred while loading invitation");
-            router.push("/candidate/invitations");
-        } finally {
-            setLoading(false);
+        if (invitation) {
+            setHasInterviewOutcome(!!invitation.pipeline_status && invitation.pipeline_status !== 'active');
         }
-    };
+    }, [invitation]);
 
-    const fetchJobOffer = async () => {
-        try {
-            const response = await fetch(`/api/candidate/invitations/${invitationId}/offer`);
-            const data = await response.json();
-            
-            if (data.success && data.offer) {
-                setJobOffer(data.offer);
-            } else {
-                setJobOffer(null);
-            }
-        } catch (error) {
-            console.error("Error fetching job offer:", error);
-            setJobOffer(null);
-        }
-    };
+    useEffect(() => {
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`invitation-detail-${invitationId}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "job_invitations",
+                    filter: `id=eq.${invitationId}`,
+                },
+                () => {
+                    mutateInvitation();
+                    mutateOffer();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "job_offers",
+                    filter: `invitation_id=eq.${invitationId}`,
+                },
+                () => {
+                    mutateOffer();
+                    mutateInvitation();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [invitationId, mutateInvitation, mutateOffer]);
+
 
     const handleAccept = async () => {
         if (!selectedSlot) {
             toast.error("Please select a time slot before accepting");
-            return;
-        }
-
-        if (!selectedMode) {
-            toast.error("Please select an interview mode before accepting");
             return;
         }
 
@@ -161,7 +171,6 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 body: JSON.stringify({
                     action: 'accept',
                     selected_time_slot: selectedSlot,
-                    interview_mode: selectedMode
                 })
             });
 
@@ -188,7 +197,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'decline'
+                    action: 'decline',
+                    request_reschedule: requestReschedule,
+                    reschedule_reason: rescheduleReason
                 })
             });
 
@@ -223,7 +234,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
             if (data.success) {
                 toast.success("Acceptance cancelled. You can select a new time slot.");
-                fetchInvitation();
+                mutateInvitation();
             } else {
                 toast.error(data.error || "Failed to cancel acceptance");
             }
@@ -257,7 +268,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                 toast.success('Interview canceled successfully');
                 setShowCancelDialog(false);
                 setCancellationReason('');
-                fetchInvitation();
+                mutateInvitation();
             } else {
                 toast.error(data.error || 'Failed to cancel interview');
             }
@@ -269,7 +280,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
         }
     };
 
-    if (loading) {
+    if (invitationLoading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -278,40 +289,70 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     }
 
     if (!invitation) {
-        return null;
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Card className="max-w-md w-full">
+                    <CardHeader>
+                        <CardTitle>Invitation not found</CardTitle>
+                        <CardDescription>The invitation you are looking for does not exist or you don't have access to it.</CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                        <Button onClick={() => router.push("/candidate/invitations")} className="w-full">
+                            Back to Invitations
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+        );
     }
+
 
     const isPending = invitation.status === 'pending' || invitation.status === 'viewed';
     const isConfirmed = invitation.status === 'accepted' && invitation.interview_confirmed;
     const isPendingConfirmation = invitation.status === 'accepted' && !invitation.interview_confirmed;
 
-    // Get status configuration
-    const getStatusConfig = () => {
-        if (invitation.invitation_canceled && invitation.mis_rescheduled) {
-            return { color: 'bg-green-500', text: 'Rescheduled', icon: Calendar };
-        }
-        if (invitation.invitation_canceled) {
-            return { color: 'bg-gray-500', text: 'Canceled', icon: X };
-        }
-        if (isConfirmed) {
-            return { color: 'bg-green-500', text: 'Confirmed', icon: Check };
-        }
-        if (isPendingConfirmation) {
-            return { color: 'bg-orange-500', text: 'Pending Confirmation', icon: Clock };
-        }
-        if (invitation.status === 'declined') {
-            return { color: 'bg-red-500', text: 'Declined', icon: X };
-        }
-        return { color: 'bg-blue-500', text: 'Pending Response', icon: AlertCircle };
+    const embeddedOffer = normalizeEmbeddedOffer(invitation.job_offers);
+    const offerForJourney = jobOffer ? { status: jobOffer.status } : embeddedOffer;
+
+    const journey = getInvitationJourneyDisplay(
+        {
+            status: invitation.status,
+            invitation_canceled: invitation.invitation_canceled,
+            interview_confirmed: invitation.interview_confirmed,
+            mis_rescheduled: invitation.mis_rescheduled,
+            pipeline_status: invitation.pipeline_status ?? null,
+            current_round_number: invitation.current_round_number ?? null,
+            candidate_reschedule_requested: invitation.candidate_reschedule_requested,
+        },
+        offerForJourney
+    );
+
+    const heroVariantClass: Record<typeof journey.variant, string> = {
+        pending: "bg-amber-500",
+        info: "bg-sky-500",
+        success: "bg-green-500",
+        warning: "bg-orange-500",
+        danger: "bg-red-500",
+        muted: "bg-gray-500",
     };
 
-    const statusConfig = getStatusConfig();
-    const StatusIcon = statusConfig.icon;
+    let StatusIcon = AlertCircle;
+    if (journey.variant === "success") StatusIcon = CheckCircle2;
+    else if (journey.variant === "danger") StatusIcon = X;
+    else if (journey.variant === "warning") StatusIcon = Briefcase;
+    else if (journey.variant === "info") StatusIcon = Clock;
+    else if (journey.variant === "muted") StatusIcon = Calendar;
+
+    const statusConfig = {
+        color: heroVariantClass[journey.variant],
+        text: journey.label,
+        icon: StatusIcon,
+    };
 
     // Check if steps are complete
-    const isModeSelected = selectedMode !== null;
+    const isModeSelected = !!invitation?.interview_mode;
     const isSlotSelected = selectedSlot !== null;
-    const canProceed = isModeSelected && isSlotSelected;
+    const canProceed = isSlotSelected;
 
     return (
         <div className="max-w-5xl mx-auto ">
@@ -399,17 +440,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                     <div>
                         <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Contact Person</h3>
                         <div className="flex justify-center items-center gap-3">
-                            {invitation.employer.profile_image_url ? (
-                                <img
-                                    src={invitation.employer.profile_image_url}
-                                    alt={`${invitation.employer.first_name} ${invitation.employer.last_name}`}
-                                    className="h-12 w-12 rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <User className="h-6 w-6 text-primary" />
-                                </div>
-                            )}
+                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-6 w-6 text-primary" />
+                            </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-base leading-tight mb-1">
                                     {invitation.employer.first_name} {invitation.employer.last_name}
@@ -493,10 +526,14 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
             {/* Job Offer Card - Shows prominent offer details */}
             {jobOffer && (
                 <JobOfferCard
+                    invitationId={invitationId}
                     offer={jobOffer}
                     companyName={invitation.company.company_name}
                     jobDesignation={invitation.job_designation}
-                    onRefresh={fetchJobOffer}
+                    onRefresh={() => {
+                        void mutateOffer();
+                        void mutateInvitation();
+                    }}
                 />
             )}
 
@@ -856,20 +893,16 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">Action required</p>
                                     <h3 className="text-lg font-semibold mt-2">Review and confirm your interview</h3>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        Choose how you'd like to attend, pick a time slot, then accept or decline the invitation.
+                                        The employer has requested a <span className="font-semibold text-primary capitalize">{invitation.interview_mode}</span> interview. Please pick a time slot to confirm.
                                     </p>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div className="rounded-xl bg-white p-2 text-center shadow-sm">
                                         <div className="text-sm font-semibold text-primary">1</div>
-                                        <div className="mt-1 text-muted-foreground">Mode</div>
+                                        <div className="mt-1 text-muted-foreground">Pick Time</div>
                                     </div>
                                     <div className="rounded-xl bg-white p-2 text-center shadow-sm">
                                         <div className="text-sm font-semibold text-primary">2</div>
-                                        <div className="mt-1 text-muted-foreground">Time</div>
-                                    </div>
-                                    <div className="rounded-xl bg-white p-2 text-center shadow-sm">
-                                        <div className="text-sm font-semibold text-primary">3</div>
                                         <div className="mt-1 text-muted-foreground">Confirm</div>
                                     </div>
                                 </div>
@@ -878,81 +911,75 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                     </Card>
 
                     <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-                        <Card className={isModeSelected ? 'border-green-200' : ''}>
+                        <Card className="border-primary/10">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isModeSelected ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'}`}>
-                                        {isModeSelected ? <Check className="h-4 w-4" /> : '1'}
+                                    <div className="h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold bg-green-500 text-white">
+                                        <Check className="h-4 w-4" />
                                     </div>
-                                    <CardTitle className="text-lg">How would you like to attend?</CardTitle>
+                                    <CardTitle className="text-lg">Interview Mode</CardTitle>
                                 </div>
-                                <CardDescription>Select the interview mode that works best for you.</CardDescription>
+                                <CardDescription>The employer has pre-selected the following mode:</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid gap-2 md:grid-cols-2">
-                                    <button
-                                        onClick={() => setSelectedMode('online')}
-                                        className={`relative p-4 rounded-xl border transition-all text-left ${selectedMode === 'online'
-                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
-                                            : 'border-border hover:border-primary hover:bg-primary/5'
-                                            }`}>
-                                        {selectedMode === 'online' && (
-                                            <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                                <Check className="h-4 w-4" />
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-4">
-                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${selectedMode === 'online' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'}`}>
-                                                <Video className={`h-6 w-6 ${selectedMode === 'online' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-base">Online Interview</p>
-                                                <p className="text-sm text-muted-foreground">Attend via video call</p>
-                                            </div>
+                                <div className="p-4 rounded-xl border-2 border-primary bg-primary/5 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-full flex items-center justify-center bg-primary/10">
+                                            {invitation.interview_mode === 'online' ? (
+                                                <Video className="h-6 w-6 text-primary" />
+                                            ) : (
+                                                <MapPinned className="h-6 w-6 text-primary" />
+                                            )}
                                         </div>
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedMode('physical')}
-                                        className={`relative p-4 rounded-xl border transition-all text-left ${selectedMode === 'physical'
-                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 shadow-sm'
-                                            : 'border-border hover:border-primary hover:bg-primary/5'
-                                            }`}>
-                                        {selectedMode === 'physical' && (
-                                            <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                                <Check className="h-4 w-4" />
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-4">
-                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${selectedMode === 'physical' ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'}`}>
-                                                <MapPinned className={`h-6 w-6 ${selectedMode === 'physical' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-base">Physical Interview</p>
-                                                <p className="text-sm text-muted-foreground">Attend in-person at the company</p>
-                                            </div>
+                                        <div>
+                                            <p className="font-semibold text-base capitalize">{invitation.interview_mode} Interview</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {invitation.interview_mode === 'online' 
+                                                    ? "Meeting link will be provided after time slot confirmation." 
+                                                    : "Please attend in-person at the specified location."}
+                                            </p>
                                         </div>
-                                    </button>
+                                    </div>
                                 </div>
+
+                                {invitation.interview_mode === 'physical' && invitation.interview_address && (
+                                    <div className="mt-4 p-4 rounded-xl border bg-muted/30 space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-semibold">Location</p>
+                                                <p className="text-sm text-muted-foreground">{invitation.interview_address}</p>
+                                            </div>
+                                        </div>
+                                        {invitation.map_link && (
+                                            <Button variant="outline" size="sm" asChild className="w-full">
+                                                <a href={invitation.map_link} target="_blank" rel="noopener noreferrer">
+                                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                                    Open in Maps
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
                         <Card className={isSlotSelected ? 'border-green-200' : !isModeSelected ? 'opacity-60 pointer-events-none' : ''}>
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isSlotSelected ? 'bg-green-500 text-white' : isModeSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                        {isSlotSelected ? <Check className="h-4 w-4" /> : '2'}
+                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${isSlotSelected ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+                                        {isSlotSelected ? <Check className="h-4 w-4" /> : '1'}
                                     </div>
                                     <CardTitle className="text-lg">Choose a time slot</CardTitle>
                                 </div>
-                                <CardDescription>{isModeSelected ? 'Pick one of the employer proposed times below.' : 'Select an interview mode first.'}</CardDescription>
+                                <CardDescription>Pick one of the employer proposed times below.</CardDescription>
                             </CardHeader>
-                            {isModeSelected && (
-                                <CardContent className="space-y-6">
-                                    {invitation.given_time_slots.length > 0 ? (
+                            <CardContent className="space-y-6">
+                                    {(invitation.given_time_slots || []).length > 0 ? (
                                         <div className="space-y-3">
                                             <h4 className="font-semibold text-sm">Available times</h4>
                                             <div className="grid gap-2">
-                                                {invitation.given_time_slots.map((slot, index) => (
+                                                {(invitation.given_time_slots || []).map((slot, index) => (
                                                     <button
                                                         key={index}
                                                         onClick={() => setSelectedSlot(slot)}
@@ -980,14 +1007,14 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             No proposed time slots were provided. Please contact the employer for alternatives.
                                         </div>
                                     )}
-                                    {invitation.alternative_dates.length > 0 && (
+                                    {(invitation.alternative_dates || []).length > 0 && (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-semibold text-sm">Alternative dates</h4>
                                                 <Badge variant="secondary" className="text-xs">If the above times don’t work</Badge>
                                             </div>
                                             <div className="grid gap-2">
-                                                {invitation.alternative_dates.map((slot, index) => {
+                                                {(invitation.alternative_dates || []).map((slot, index) => {
                                                     const altSlot = { ...slot, is_alternative: true };
                                                     return (
                                                         <button
@@ -1015,7 +1042,6 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                         </div>
                                     )}
                                 </CardContent>
-                            )}
                         </Card>
                     </div>
 
@@ -1097,6 +1123,39 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             <X className="h-5 w-5 mr-2" />
                                             Decline Invitation
                                         </Button>
+                                    </div>
+                                    <div className="pt-2 border-t mt-2">
+                                        <div className="flex items-start space-x-3 rounded-xl border border-primary/20 bg-primary/5 p-4 transition-all hover:bg-primary/10">
+                                            <Checkbox
+                                                id="reschedule"
+                                                checked={requestReschedule}
+                                                onCheckedChange={(checked) => setRequestReschedule(!!checked)}
+                                                className="mt-1"
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <Label
+                                                    htmlFor="reschedule"
+                                                    className="text-sm font-semibold leading-none cursor-pointer text-primary"
+                                                >
+                                                    Request another date & time
+                                                </Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    If none of these slots work, check this to ask the employer for new options.
+                                                </p>
+                                                {requestReschedule && (
+                                                    <div className="mt-3 animate-in fade-in slide-in-from-top-1">
+                                                        <Label htmlFor="rescheduleReason" className="text-xs mb-1.5 block">Optional: Suggest your availability</Label>
+                                                        <Textarea
+                                                            id="rescheduleReason"
+                                                            placeholder="e.g., I'm available on Monday afternoons next week..."
+                                                            value={rescheduleReason}
+                                                            onChange={(e) => setRescheduleReason(e.target.value)}
+                                                            className="text-sm min-h-[80px] bg-white dark:bg-gray-900"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

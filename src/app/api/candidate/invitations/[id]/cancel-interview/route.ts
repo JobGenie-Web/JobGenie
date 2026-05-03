@@ -84,7 +84,8 @@ export async function POST(
                 invitation_canceled: true,
                 canceled_by: 'candidate',
                 cancellation_reason: cancellation_reason.trim(),
-                canceled_at: new Date().toISOString()
+                canceled_at: new Date().toISOString(),
+                employer_last_seen_at: null,
             })
             .eq('id', id);
 

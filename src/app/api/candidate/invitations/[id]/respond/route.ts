@@ -9,7 +9,7 @@ export async function POST(
 ) {
     try {
         const supabase = await createClient();
-        const { action, selected_time_slot, interview_mode } = await request.json();
+        const { action, selected_time_slot, request_reschedule, reschedule_reason } = await request.json();
 
         // Get the current user
         const { data: { user } } = await supabase.auth.getUser();
@@ -53,21 +53,7 @@ export async function POST(
             );
         }
 
-        // For accept action, interview_mode is required
-        if (action === 'accept' && !interview_mode) {
-            return NextResponse.json(
-                { success: false, error: "Interview mode is required when accepting" },
-                { status: 400 }
-            );
-        }
 
-        // Validate interview_mode if provided
-        if (interview_mode && !['online', 'physical'].includes(interview_mode)) {
-            return NextResponse.json(
-                { success: false, error: "Interview mode must be either 'online' or 'physical'" },
-                { status: 400 }
-            );
-        }
 
         // Verify the invitation belongs to this candidate
         const { data: invitation, error: invitationError } = await supabase
@@ -105,24 +91,26 @@ export async function POST(
         let updateData: any = {};
 
         if (action === 'cancel') {
-            // Reset to pending and clear selected time slot and interview mode
+            // Reset to viewed and clear selected time slot (keep employer's interview mode)
             updateData = {
-                status: 'pending',
+                status: 'viewed',
                 selected_time_slot: null,
-                interview_mode: null,
-                responded_at: null
+                responded_at: null,
+                employer_last_seen_at: null,
             };
         } else {
             // Handle accept or decline
             updateData = {
                 status: action === 'accept' ? 'accepted' : 'declined',
-                responded_at: new Date().toISOString()
+                responded_at: new Date().toISOString(),
+                employer_last_seen_at: null,
+                candidate_reschedule_requested: action === 'decline' ? !!request_reschedule : false,
+                reschedule_request_reason: action === 'decline' && request_reschedule ? reschedule_reason : null,
             };
 
-            // Add selected_time_slot and interview_mode if accepting
+            // Add selected_time_slot if accepting
             if (action === 'accept' && selected_time_slot) {
                 updateData.selected_time_slot = selected_time_slot;
-                updateData.interview_mode = interview_mode;
             }
         }
 
@@ -145,7 +133,7 @@ export async function POST(
             cancel: 'Acceptance cancelled successfully'
         };
 
-        await logBusiness(`invitation_${action}`, user.id, "candidate", "job_invitation", id, { action, interview_mode });
+        await logBusiness(`invitation_${action}`, user.id, "candidate", "job_invitation", id, { action });
         return NextResponse.json({
             success: true,
             message: messages[action as keyof typeof messages]

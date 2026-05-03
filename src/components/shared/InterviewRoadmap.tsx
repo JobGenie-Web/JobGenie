@@ -130,7 +130,10 @@ export function InterviewRoadmap({
     const getRoundStatus = (round: InterviewRound) => {
         if (round.outcome === 'advance') return { label: 'Passed', color: 'bg-green-500' };
         if (round.outcome === 'reject') return { label: 'Not Selected', color: 'bg-red-500' };
-        if (round.outcome === 'offer') return { label: 'Offer Extended', color: 'bg-blue-500' };
+        if (round.outcome === 'offer') return { 
+            label: userRole === 'candidate' ? 'Offer Received' : 'Offer Sent', 
+            color: 'bg-blue-500' 
+        };
         if (round.status === 'confirmed') return { label: 'Confirmed', color: 'bg-green-500' };
         if (round.status === 'accepted') return { label: 'Awaiting Confirmation', color: 'bg-orange-500' };
         if (round.status === 'pending') return { label: 'Invitation Sent', color: 'bg-blue-500' };
@@ -173,7 +176,9 @@ export function InterviewRoadmap({
                 <p className="text-sm text-muted-foreground mt-1">
                     {finalOutcome 
                         ? finalOutcome.outcome === 'offer' 
-                            ? '🎉 Interview process completed - Offer extended'
+                            ? userRole === 'candidate'
+                                ? '🎉 Interview process completed - Offer received'
+                                : '🎉 Interview process completed - Offer sent'
                             : 'Interview process concluded'
                         : 'Your interview journey progress'}
                 </p>
@@ -389,7 +394,11 @@ export function InterviewRoadmap({
                                                                 )}>
                                                                     {round.outcome === 'advance' && "🎉 Congratulations! You've advanced to the next round"}
                                                                     {round.outcome === 'reject' && "Interview Result: Not Selected"}
-                                                                    {round.outcome === 'offer' && "🎊 Excellent! Job Offer Extended"}
+                                                                    {round.outcome === 'offer' && (
+                                                                        userRole === 'candidate' 
+                                                                            ? "🎊 Excellent! Job Offer Received" 
+                                                                            : "✅ Job Offer Sent Successfully"
+                                                                    )}
                                                                 </p>
                                                                 {round.outcome_at && (
                                                                     <p className="text-xs text-muted-foreground mt-1">
@@ -446,7 +455,9 @@ export function InterviewRoadmap({
                     )}>
                         <p className="text-sm font-medium">
                             {finalOutcome.outcome === 'offer' 
-                                ? "Interview process completed successfully! Check your offers section for details."
+                                ? (userRole === 'candidate' 
+                                    ? "Interview process completed successfully! Check your offers section for details."
+                                    : "Interview process completed successfully! You can view the sent offer details below.")
                                 : "Interview process has concluded. Thank you for your time."}
                         </p>
                     </div>

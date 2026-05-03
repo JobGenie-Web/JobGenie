@@ -46,7 +46,6 @@ export default async function EmployerProfilePage() {
                         <div className="flex flex-col md:flex-row gap-6 items-start">
                             {/* Profile Image */}
                             <Avatar className="h-24 w-24 border-4 border-border">
-                                <AvatarImage src={employerProfile.profile_image_url || undefined} alt={fullName} />
                                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                                     {initials}
                                 </AvatarFallback>

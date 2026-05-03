@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useUnopenedInvitationCount } from "@/hooks/useInvitationCount";
 
 const navigationItems = [
     {
@@ -79,32 +80,26 @@ export function CandidateSidebar() {
     const pathname = usePathname();
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
-    const [unopenedCount, setUnopenedCount] = useState<number>(0);
     const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
+    
+    // Use SWR hook for automatic revalidation and caching
+    const { count: unopenedCount } = useUnopenedInvitationCount();
 
     useEffect(() => {
-        // Fetch unopened invitations count and approval status on mount
-        const fetchSidebarData = async () => {
+        // Fetch approval status on mount
+        const fetchApprovalStatus = async () => {
             try {
-                // Fetch unopened count
-                const invitationsResponse = await fetch("/api/candidate/invitations/unopened-count");
-                const invitationsData = await invitationsResponse.json();
-                if (invitationsData.success) {
-                    setUnopenedCount(invitationsData.count);
-                }
-
-                // Fetch approval status
                 const profileResponse = await fetch("/api/candidate/profile");
                 const profileData = await profileResponse.json();
                 if (profileData.success && profileData.data) {
                     setIsApproved(profileData.data.approval_status === "approved");
                 }
             } catch (error) {
-                console.error("Error fetching sidebar data:", error);
+                console.error("Error fetching approval status:", error);
             }
         };
 
-        fetchSidebarData();
+        fetchApprovalStatus();
     }, []);
 
     return (
@@ -190,7 +185,7 @@ export function CandidateSidebar() {
                                                         <Icon className="h-6 w-6 shrink-0" />
                                                         {!isCollapsed && <span>{item.title}</span>}
                                                     </div>
-                                                    {/* Show badge for unopened invitations */}
+                                                    {/* Invitations not yet opened (viewed_at null) */}
                                                     {item.title === "Invitations" && unopenedCount > 0 && !isCollapsed && (
                                                         <Badge
                                                             className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"

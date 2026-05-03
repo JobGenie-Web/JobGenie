@@ -29,7 +29,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { usePendingInvitationCount } from "@/hooks/useInvitationCount";
 
 const navigationItems = [
     {
@@ -87,15 +89,18 @@ export function EmployerSidebar() {
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
     const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
+    
+    // Use SWR hook for automatic revalidation and caching
+    const { count: pendingCount } = usePendingInvitationCount();
 
     useEffect(() => {
         // Fetch company approval status on mount
         const fetchApprovalStatus = async () => {
             try {
-                const response = await fetch("/api/employer/company");
-                const data = await response.json();
-                if (data.success && data.data) {
-                    setIsApproved(data.data.approval_status === "approved");
+                const companyResponse = await fetch("/api/employer/company");
+                const companyData = await companyResponse.json();
+                if (companyData.success && companyData.data) {
+                    setIsApproved(companyData.data.approval_status === "approved");
                 }
             } catch (error) {
                 console.error("Error fetching company approval status:", error);
@@ -183,15 +188,32 @@ export function EmployerSidebar() {
                                                     isActive && "bg-sidebar-accent text-sidebar-accent-foreground border-r-3 border-green-500"
                                                 )}
                                             >
-                                                <Link href={item.href} className="gap-3">
-                                                    <Icon className="h-6 w-6 shrink-0" />
-                                                    {!isCollapsed && <span>{item.title}</span>}
+                                                <Link href={item.href} className="gap-3 flex items-center justify-between w-full">
+                                                    <div className="flex items-center gap-3">
+                                                        <Icon className="h-6 w-6 shrink-0" />
+                                                        {!isCollapsed && <span>{item.title}</span>}
+                                                    </div>
+                                                    {/* Unread invitation updates from candidates */}
+                                                    {item.title === "Invitations" && pendingCount > 0 && !isCollapsed && (
+                                                        <Badge
+                                                            className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
+                                                        >
+                                                            {pendingCount}
+                                                        </Badge>
+                                                    )}
                                                 </Link>
                                             </SidebarMenuButton>
                                         </TooltipTrigger>
                                         {isCollapsed && (
                                             <TooltipContent side="right" className="font-medium">
                                                 {item.title}
+                                                {item.title === "Invitations" && pendingCount > 0 && (
+                                                    <Badge
+                                                        className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold"
+                                                    >
+                                                        {pendingCount}
+                                                    </Badge>
+                                                )}
                                             </TooltipContent>
                                         )}
                                     </Tooltip>

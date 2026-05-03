@@ -32,14 +32,12 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
     // Step 2: Employer Data
     const [employerData, setEmployerData] = useState({
         department: initialData.employer.department || "",
-        profile_image_url: initialData.employer.profile_image_url || "",
         address: initialData.employer.address || "",
         phone: initialData.employer.phone || "",
     });
 
     // File states (will be uploaded during submission)
     const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
-    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
     // Only super admins see company details step
     const steps = isSuperAdmin
@@ -83,8 +81,6 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
             }
 
             let uploadedLogoUrl = "";
-            let uploadedProfileImageUrl = "";
-            const employerId = initialData.employer.id;
 
             // Step 1: Upload company logo if provided
             if (companyLogoFile) {
@@ -107,37 +103,7 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
                 uploadedLogoUrl = logoData.url;
             }
 
-            // Step 2: Upload profile image if provided (in employer-specific folder)
-            if (profileImageFile) {
-                toast.info("Uploading profile picture...");
-
-                const profileFormData = new FormData();
-                profileFormData.append("file", profileImageFile);
-                profileFormData.append("bucket", "profile-images");
-                profileFormData.append("folder", employerId); // Store in employer ID folder
-
-                const profileResponse = await fetch("/api/upload", {
-                    method: "POST",
-                    body: profileFormData,
-                });
-
-                if (!profileResponse.ok) {
-                    // Rollback logo upload if profile upload fails
-                    if (uploadedLogoUrl) {
-                        await fetch("/api/delete-file", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ fileUrl: uploadedLogoUrl }),
-                        });
-                    }
-                    throw new Error("Failed to upload profile picture");
-                }
-
-                const profileData = await profileResponse.json();
-                uploadedProfileImageUrl = profileData.url;
-            }
-
-            // Step 3: Update profiles with uploaded URLs
+            // Step 2: Update profiles with uploaded URLs
             // Only update company data if user is super admin
             const updatedCompanyData = isSuperAdmin ? {
                 description: companyData.description,
@@ -149,7 +115,6 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
 
             const updatedEmployerData = {
                 department: employerData.department || "",
-                profile_image_url: uploadedProfileImageUrl || employerData.profile_image_url || "",
                 address: employerData.address || "",
                 phone: employerData.phone || "",
             };
@@ -172,13 +137,6 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
                         body: JSON.stringify({ fileUrl: uploadedLogoUrl }),
                     });
                 }
-                if (uploadedProfileImageUrl) {
-                    await fetch("/api/delete-file", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ fileUrl: uploadedProfileImageUrl }),
-                    });
-                }
 
                 // Display field-specific errors
                 if (result.errors && Object.keys(result.errors).length > 0) {
@@ -196,7 +154,7 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
         } finally {
             setIsLoading(false);
         }
-    }, [companyData, employerData, companyLogoFile, profileImageFile, initialData.employer.id, router]);
+    }, [companyData, employerData, companyLogoFile, initialData.employer.id, router, isSuperAdmin]);
 
     const renderStep = () => {
         const stepId = steps[currentStep]?.id;
@@ -217,7 +175,6 @@ export function EmployerProfileWizard({ initialData, isSuperAdmin }: EmployerPro
                     <EmployerDetailsStep
                         data={employerData}
                         onChange={setEmployerData}
-                        onFileSelect={setProfileImageFile}
                         onPrevious={handlePrevious}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}

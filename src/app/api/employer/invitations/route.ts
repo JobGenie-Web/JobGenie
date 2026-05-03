@@ -4,7 +4,7 @@ import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
 import { getUserTimezoneByEmail } from "@/lib/user-timezone";
 import { logBusiness, logError } from "@/lib/logger";
 
-// (calendar-date helpers moved to bottom — see calculateAlternativeDatesArray)
+
 
 // GET /api/employer/invitations - Fetch all invitations for the company
 export async function GET(request: Request) {
@@ -64,6 +64,9 @@ export async function GET(request: Request) {
                 mis_rescheduled,
                 mis_rescheduled_at,
                 mis_reschedule_data,
+                pipeline_status,
+                current_round_number,
+                job_offers(id, status),
                 candidate:candidates(id, first_name, last_name, email, phone, current_position, profile_image_url),
                 employer:employers(id, first_name, last_name)
             `)
@@ -109,11 +112,18 @@ export async function POST(request: Request) {
 
         // Parse request body
         const body = await request.json();
-        const { candidateId, industry, jobDesignation, message, timeSlots } = body;
+        const { candidateId, industry, jobDesignation, message, timeSlots, interviewMode, interviewAddress, mapLink } = body;
 
-        if (!candidateId || !industry || !jobDesignation) {
+        if (!candidateId || !industry || !jobDesignation || !interviewMode) {
             return NextResponse.json(
                 { success: false, error: "Missing required fields" },
+                { status: 400 }
+            );
+        }
+
+        if (interviewMode === 'physical' && !interviewAddress) {
+            return NextResponse.json(
+                { success: false, error: "Interview address is required for physical interviews" },
                 { status: 400 }
             );
         }
@@ -182,6 +192,7 @@ export async function POST(request: Request) {
         }
 
         // Create invitation record (no job_id needed)
+        const sentNow = new Date().toISOString();
         const { data: invitation, error: invitationError } = await supabase
             .from('job_invitations')
             .insert({
@@ -193,7 +204,11 @@ export async function POST(request: Request) {
                 message: message || null,
                 status: 'pending',
                 given_time_slots: timeSlots,  // Store as JSON array
-                alternative_dates: calculateAlternativeDatesArray(timeSlots)  // Calculate and store
+                alternative_dates: null,  // Removed alternative dates logic
+                employer_last_seen_at: sentNow,
+                interview_mode: interviewMode,
+                interview_address: interviewAddress || null,
+                map_link: mapLink || null,
             })
             .select()
             .single();
@@ -238,8 +253,7 @@ export async function POST(request: Request) {
             message: "Invitation sent successfully",
             data: {
                 ...invitation,
-                time_slots_count: timeSlots.length,
-                alternative_slots_count: 3
+                time_slots_count: timeSlots.length
             }
         });
 
@@ -253,35 +267,3 @@ export async function POST(request: Request) {
     }
 }
 
-// Calculate 3 working days after the latest time slot. Operates on the
-// "YYYY-MM-DD" calendar-date strings with UTC methods so the result is
-// independent of the server's timezone (Vercel = UTC, local dev may differ).
-function calculateAlternativeDatesArray(timeSlots: any[]): any[] {
-    if (!timeSlots || timeSlots.length === 0) return [];
-
-    // Parse "YYYY-MM-DD" at UTC midnight; Math.max chooses latest calendar date.
-    const latestMs = Math.max(
-        ...timeSlots.map((s: any) => Date.parse(`${s.date}T00:00:00Z`))
-    );
-    const cursor = new Date(latestMs);
-    const alternatives: any[] = [];
-    let workingDaysAdded = 0;
-
-    while (workingDaysAdded < 3) {
-        cursor.setUTCDate(cursor.getUTCDate() + 1);
-        const dayOfWeek = cursor.getUTCDay();
-
-        // Skip weekends (0 = Sunday, 6 = Saturday)
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            alternatives.push({
-                date: cursor.toISOString().split('T')[0],
-                time: null,
-                order: timeSlots.length + workingDaysAdded + 1,
-                is_alternative: true
-            });
-            workingDaysAdded++;
-        }
-    }
-
-    return alternatives;
-}

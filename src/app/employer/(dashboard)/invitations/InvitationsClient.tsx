@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +16,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import {
+    getInvitationJourneyDisplay,
+    normalizeEmbeddedOffer,
+    journeyVariantToEmployerBadgeProps,
+} from "@/lib/invitation-journey-status";
 
 interface TimeSlot {
     date: string;
@@ -76,11 +82,17 @@ interface Invitation {
         first_name: string;
         last_name: string;
     };
+    pipeline_status?: string | null;
+    current_round_number?: number | null;
+    candidate_reschedule_requested?: boolean;
+    reschedule_request_reason?: string | null;
+    job_offers?: { id: string; status: string } | { id: string; status: string }[] | null;
 }
 
 export default function InvitationsClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { mutate } = useSWRConfig();
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>("all");
@@ -101,6 +113,27 @@ export default function InvitationsClient() {
     useEffect(() => {
         fetchInvitations();
     }, []);
+
+    // Mark invitation as seen when opened (updates sidebar unread count)
+    useEffect(() => {
+        if (!selectedInvitation?.id) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`/api/employer/invitations/${selectedInvitation.id}/mark-seen`, {
+                    method: "POST",
+                });
+                if (res.ok && !cancelled) {
+                    mutate((key) => typeof key === "string" && key.startsWith("/api/employer/"));
+                }
+            } catch {
+                /* ignore */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedInvitation?.id, mutate]);
 
     // Restore selected invitation from URL or auto-select
     useEffect(() => {
@@ -166,22 +199,22 @@ export default function InvitationsClient() {
         return inv.status === filter;
     });
 
-    const getStatusBadge = (status: string, invitation?: Invitation) => {
-        if (invitation?.invitation_canceled) {
-            return { variant: "destructive" as any, className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" };
-        }
-
-        if (invitation?.mis_rescheduled) {
-            return { variant: "default" as any, className: "bg-green-600 text-white" };
-        }
-
-        const variants: Record<string, { variant: any; className: string }> = {
-            pending: { variant: "secondary" as any, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-            viewed: { variant: "secondary" as any, className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-            accepted: { variant: "default" as any, className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-            declined: { variant: "destructive" as any, className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" },
-        };
-        return variants[status] || variants.pending;
+    const getInvitationStatusBadge = (invitation: Invitation) => {
+        const offer = normalizeEmbeddedOffer(invitation.job_offers);
+        const journey = getInvitationJourneyDisplay(
+            {
+                status: invitation.status,
+                invitation_canceled: invitation.invitation_canceled,
+                interview_confirmed: invitation.interview_confirmed,
+                mis_rescheduled: invitation.mis_rescheduled,
+                pipeline_status: invitation.pipeline_status ?? null,
+                current_round_number: invitation.current_round_number ?? null,
+                candidate_reschedule_requested: invitation.candidate_reschedule_requested,
+            },
+            offer
+        );
+        const { variant, className } = journeyVariantToEmployerBadgeProps(journey.variant);
+        return { variant, className, label: journey.label };
     };
 
     const statusCounts = {
@@ -290,6 +323,10 @@ export default function InvitationsClient() {
         }
     };
 
+    const selectedBadge = selectedInvitation
+        ? getInvitationStatusBadge(selectedInvitation)
+        : null;
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -340,7 +377,9 @@ export default function InvitationsClient() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 overflow-hidden">
                     {/* Left Side - Compact Cards List */}
                     <div className="lg:col-span-1 space-y-2 overflow-y-auto p-1 scrollbar-hide">
-                        {filteredInvitations.map((invitation) => (
+                        {filteredInvitations.map((invitation) => {
+                            const badge = getInvitationStatusBadge(invitation);
+                            return (
                             <Card
                                 key={invitation.id}
                                 className={cn(
@@ -368,15 +407,16 @@ export default function InvitationsClient() {
                                                 <p className="text-xs text-muted-foreground">
                                                     {formatTimestamp(invitation.sent_at, "MMM d")}
                                                 </p>
-                                                <Badge {...getStatusBadge(invitation.status, invitation)} className="text-xs px-2 py-0">
-                                                    {invitation.invitation_canceled ? 'Cancelled' : invitation.mis_rescheduled ? 'Rescheduled' : invitation.status}
+                                                <Badge variant={badge.variant} className={cn(badge.className, "text-xs px-2 py-0")}>
+                                                    {badge.label}
                                                 </Badge>
                                             </div>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Right Side - Detailed View */}
@@ -413,9 +453,11 @@ export default function InvitationsClient() {
                                                     </CardDescription>
                                                 </div>
                                             </div>
-                                            <Badge {...getStatusBadge(selectedInvitation.status, selectedInvitation)} className="flex-shrink-0">
-                                                {selectedInvitation.invitation_canceled ? 'Cancelled' : selectedInvitation.mis_rescheduled ? 'Rescheduled' : selectedInvitation.status}
-                                            </Badge>
+                                            {selectedBadge ? (
+                                                <Badge variant={selectedBadge.variant} className={cn(selectedBadge.className, "flex-shrink-0")}>
+                                                    {selectedBadge.label}
+                                                </Badge>
+                                            ) : null}
                                         </div>
                                     </CardHeader>
 
@@ -923,6 +965,36 @@ export default function InvitationsClient() {
                                                         </div>
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {/* Candidate Reschedule Request Alert */}
+                                        {selectedInvitation.status === 'declined' && selectedInvitation.candidate_reschedule_requested && (
+                                            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
+                                                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                                                    <Calendar className="h-4 w-4" />
+                                                    <span className="font-semibold text-sm">Reschedule Requested</span>
+                                                </div>
+                                                <p className="text-xs text-amber-700 dark:text-amber-400">
+                                                    The candidate declined the proposed slots and requested alternative dates.
+                                                </p>
+                                                {selectedInvitation.reschedule_request_reason && (
+                                                    <div className="mt-2 text-xs bg-white/50 dark:bg-black/20 p-2 rounded border border-amber-100 dark:border-amber-900/50 italic">
+                                                        "{selectedInvitation.reschedule_request_reason}"
+                                                    </div>
+                                                )}
+                                                <div className="pt-1">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="w-full h-8 border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-white dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-700 dark:hover:text-amber-100"
+                                                        onClick={() => {
+                                                            toast.info("Please send a new invitation with updated slots.");
+                                                        }}
+                                                    >
+                                                        Review & Send New Slots
+                                                    </Button>
+                                                </div>
                                             </div>
                                         )}
 

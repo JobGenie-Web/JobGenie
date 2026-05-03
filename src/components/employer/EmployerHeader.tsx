@@ -9,7 +9,6 @@ interface EmployerHeaderProps {
         firstName: string;
         lastName: string;
         email: string;
-        profileImage?: string;
         companyName?: string;
     };
     pageTitle?: string;

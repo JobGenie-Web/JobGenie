@@ -14,6 +14,8 @@ import {
     ArrowRight,
     Briefcase,
     ChevronDown,
+    ChevronUp,
+    ExternalLink,
     Loader2,
     MessageSquare,
     Video,
@@ -21,10 +23,25 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatUTCDate, formatUTCTime, formatTimestamp } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { InterviewFeedbackDialog } from "./InterviewFeedbackDialog";
 import { NextRoundDialog } from "./NextRoundDialog";
 import { JobOfferDialog } from "./JobOfferDialog";
 import { RoundConfirmDialog } from "./RoundConfirmDialog";
+
+interface JobOffer {
+    id: string;
+    job_title: string;
+    salary_amount: number | null;
+    salary_currency: string | null;
+    salary_period: string | null;
+    start_date: string | null;
+    expiry_date: string | null;
+    offer_letter_url: string | null;
+    description: string | null;
+    status: string;
+    created_at: string;
+}
 
 interface InterviewRound {
     id: string;
@@ -62,6 +79,8 @@ export function InterviewRoundsDisplay({
     const [loading, setLoading] = useState(true);
     const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set());
     const [offerExists, setOfferExists] = useState(false);
+    const [offerDetails, setOfferDetails] = useState<JobOffer | null>(null);
+    const [showOfferDetails, setShowOfferDetails] = useState(false);
     
     // Dialog states
     const [feedbackDialog, setFeedbackDialog] = useState<{
@@ -141,6 +160,7 @@ export function InterviewRoundsDisplay({
             const data = await response.json();
             if (data.success) {
                 setOfferExists(data.exists);
+                setOfferDetails(data.offer);
             }
         } catch (error) {
             console.error("Error checking offer:", error);
@@ -202,7 +222,7 @@ export function InterviewRoundsDisplay({
                 };
             case 'offer':
                 return {
-                    label: 'Job Offer Extended',
+                    label: 'Job Offer Sent',
                     icon: Briefcase,
                     color: 'text-blue-600',
                     bgColor: 'bg-blue-50',
@@ -242,20 +262,133 @@ export function InterviewRoundsDisplay({
     return (
         <>
             {/* Job Offer Status Banner */}
-            {offerExists && (
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-4 mb-4 dark:from-blue-950/60 dark:to-blue-900/40 dark:border-blue-700">
+            {offerExists && offerDetails && (
+                <div className={cn(
+                    "border-2 rounded-lg p-4 mb-4",
+                    offerDetails.status === 'accepted' 
+                        ? "bg-gradient-to-r from-green-50 to-green-100 border-green-300 dark:from-green-950/60 dark:to-green-900/40 dark:border-green-700"
+                        : offerDetails.status === 'declined'
+                            ? "bg-gradient-to-r from-red-50 to-red-100 border-red-300 dark:from-red-950/60 dark:to-red-900/40 dark:border-red-700"
+                            : "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-300 dark:from-blue-950/60 dark:to-blue-900/40 dark:border-blue-700"
+                )}>
                     <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                            <Briefcase className="h-6 w-6 text-white" />
+                        <div className={cn(
+                            "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0",
+                            offerDetails.status === 'accepted' ? "bg-green-500" : offerDetails.status === 'declined' ? "bg-red-500" : "bg-blue-500"
+                        )}>
+                            {offerDetails.status === 'accepted' ? (
+                                <CheckCircle2 className="h-6 w-6 text-white" />
+                            ) : offerDetails.status === 'declined' ? (
+                                <XCircle className="h-6 w-6 text-white" />
+                            ) : (
+                                <Briefcase className="h-6 w-6 text-white" />
+                            )}
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-blue-900 dark:text-blue-50">Job Offer Extended</h4>
-                            <p className="text-sm text-blue-800 dark:text-blue-200 mt-0.5">
-                                A formal job offer has been sent to {candidateName}. Awaiting candidate response.
+                            <div className="flex items-center justify-between">
+                                <h4 className={cn(
+                                    "font-semibold",
+                                    offerDetails.status === 'accepted' ? "text-green-900 dark:text-green-50" : offerDetails.status === 'declined' ? "text-red-900 dark:text-red-50" : "text-blue-900 dark:text-blue-50"
+                                )}>
+                                    {offerDetails.status === 'accepted' ? "Job Offer Accepted" : offerDetails.status === 'declined' ? "Job Offer Declined" : "Job Offer Sent"}
+                                </h4>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={cn(
+                                        "h-7 text-xs",
+                                        offerDetails.status === 'accepted' ? "text-green-700 hover:bg-green-200 dark:text-green-300 dark:hover:bg-green-900/40" : offerDetails.status === 'declined' ? "text-red-700 hover:bg-red-200 dark:text-red-300 dark:hover:bg-red-900/40" : "text-blue-700 hover:bg-blue-200 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                                    )}
+                                    onClick={() => setShowOfferDetails(!showOfferDetails)}
+                                >
+                                    {showOfferDetails ? "Hide Details" : "View Offer Details"}
+                                    {showOfferDetails ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
+                                </Button>
+                            </div>
+                            <p className={cn(
+                                "text-sm mt-0.5",
+                                offerDetails.status === 'accepted' ? "text-green-800 dark:text-green-200" : offerDetails.status === 'declined' ? "text-red-800 dark:text-red-200" : "text-blue-800 dark:text-blue-200"
+                            )}>
+                                {offerDetails.status === 'accepted' 
+                                    ? `🎊 Great news! ${candidateName} has accepted the job offer.` 
+                                    : offerDetails.status === 'declined'
+                                        ? `${candidateName} has declined the job offer.`
+                                        : `A formal job offer has been sent to ${candidateName}. Awaiting candidate response.`
+                                }
                             </p>
                         </div>
-                        <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        {offerDetails.status === 'accepted' ? (
+                            <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                        ) : offerDetails.status === 'declined' ? (
+                            <div className="h-6 w-6 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            </div>
+                        ) : (
+                            <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        )}
                     </div>
+
+                    {showOfferDetails && offerDetails && (
+                        <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Position</p>
+                                        <p className="font-semibold text-blue-900 dark:text-blue-100">{offerDetails.job_title}</p>
+                                    </div>
+                                    {offerDetails.salary_amount && (
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Salary</p>
+                                            <p className="font-semibold text-blue-900 dark:text-blue-100">
+                                                {offerDetails.salary_currency} {offerDetails.salary_amount.toLocaleString()} / {offerDetails.salary_period}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {offerDetails.start_date && (
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Proposed Start Date</p>
+                                            <p className="font-semibold text-blue-900 dark:text-blue-100">
+                                                {formatTimestamp(offerDetails.start_date, "MMMM d, yyyy")}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-3">
+                                    {offerDetails.expiry_date && (
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Offer Expiry</p>
+                                            <p className="font-semibold text-blue-900 dark:text-blue-100">
+                                                {formatTimestamp(offerDetails.expiry_date, "MMMM d, yyyy")}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {offerDetails.offer_letter_url && (
+                                        <div>
+                                            <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Offer Letter</p>
+                                            <a 
+                                                href={offerDetails.offer_letter_url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center text-sm font-medium text-blue-600 hover:underline mt-1"
+                                            >
+                                                View Document <ExternalLink className="ml-1 h-3 w-3" />
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            {offerDetails.description && (
+                                <div className="mt-4">
+                                    <p className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Additional Details</p>
+                                    <p className="text-sm text-blue-900 dark:text-blue-100 bg-blue-200/30 dark:bg-blue-900/20 p-3 rounded-md whitespace-pre-wrap">
+                                        {offerDetails.description}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -460,12 +593,49 @@ export function InterviewRoundsDisplay({
                                                 </Button>
                                             )}
 
-                                            {round.outcome === 'offer' && offerExists && (
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center dark:bg-blue-950/45 dark:border-blue-800">
-                                                    <p className="text-sm text-blue-800 dark:text-blue-100 flex items-center justify-center gap-2">
-                                                        <CheckCircle2 className="h-4 w-4" />
-                                                        Job offer has been sent to candidate
+                                            {round.outcome === 'offer' && offerExists && offerDetails && (
+                                                <div className={cn(
+                                                    "rounded-lg p-3 text-center border",
+                                                    offerDetails.status === 'accepted' ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" :
+                                                    offerDetails.status === 'declined' ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800" :
+                                                    "bg-blue-50 border-blue-200 dark:bg-blue-950/45 dark:border-blue-800"
+                                                )}>
+                                                    <p className={cn(
+                                                        "text-sm flex items-center justify-center gap-2 mb-2",
+                                                        offerDetails.status === 'accepted' ? "text-green-800 dark:text-green-200" :
+                                                        offerDetails.status === 'declined' ? "text-red-800 dark:text-red-200" :
+                                                        "text-blue-800 dark:text-blue-100"
+                                                    )}>
+                                                        {offerDetails.status === 'accepted' ? (
+                                                            <>
+                                                                <CheckCircle2 className="h-4 w-4" />
+                                                                Candidate has accepted the job offer
+                                                            </>
+                                                        ) : offerDetails.status === 'declined' ? (
+                                                            <>
+                                                                <XCircle className="h-4 w-4" />
+                                                                Candidate has declined the job offer
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <CheckCircle2 className="h-4 w-4" />
+                                                                Job offer has been sent to candidate
+                                                            </>
+                                                        )}
                                                     </p>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="h-7 text-xs bg-white dark:bg-gray-900"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowOfferDetails(!showOfferDetails);
+                                                            // Scroll to top where the banner is
+                                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                        }}
+                                                    >
+                                                        {showOfferDetails ? "Hide Details" : "View Offer Details"}
+                                                    </Button>
                                                 </div>
                                             )}
                                         </div>

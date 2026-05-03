@@ -2,7 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/candidate/invitations/unopened-count
+
 export async function GET() {
     try {
         const supabase = await createClient();

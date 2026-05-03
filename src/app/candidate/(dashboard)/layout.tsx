@@ -1,4 +1,5 @@
 import { TimezoneSync } from "@/components/common/TimezoneSync";
+import { CandidateInvitationRealtimeBridge } from "@/components/realtime/InvitationRealtimeBridge";
 
 export default function DashboardLayout({
     children,
@@ -8,6 +9,7 @@ export default function DashboardLayout({
     return (
         <>
             <TimezoneSync />
+            <CandidateInvitationRealtimeBridge />
             {children}
         </>
     );

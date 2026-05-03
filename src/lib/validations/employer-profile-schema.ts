@@ -52,10 +52,6 @@ export const employerProfileCompletionSchema = z.object({
         .optional()
         .or(z.literal("")),
 
-    profile_image_url: z
-        .string()
-        .optional(),
-
     address: z
         .string()
         .refine((val) => !val || val === "" || val.length >= 10, {
