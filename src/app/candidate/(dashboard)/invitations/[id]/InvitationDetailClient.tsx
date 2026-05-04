@@ -115,9 +115,11 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
     useEffect(() => {
         if (invitation) {
-            setHasInterviewOutcome(!!invitation.pipeline_status && invitation.pipeline_status !== 'active');
+            const embeddedOffer = normalizeEmbeddedOffer(invitation.job_offers);
+            const hasOffer = !!jobOffer || !!embeddedOffer;
+            setHasInterviewOutcome((!!invitation.pipeline_status && invitation.pipeline_status !== 'active') || hasOffer);
         }
-    }, [invitation]);
+    }, [invitation, jobOffer]);
 
     useEffect(() => {
         const supabase = createClient();

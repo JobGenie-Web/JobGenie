@@ -49,7 +49,6 @@ export async function GET() {
                 current_round_number,
                 invitation_canceled,
                 mis_rescheduled,
-                candidate_reschedule_requested,
                 canceled_by,
                 cancellation_reason,
                 canceled_at,

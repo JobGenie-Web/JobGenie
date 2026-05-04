@@ -111,6 +111,16 @@ export default function InvitationsClient() {
     const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
 
     useEffect(() => {
+        if (selectedInvitation) {
+            const embeddedOffer = normalizeEmbeddedOffer(selectedInvitation.job_offers);
+            const hasOffer = !!embeddedOffer;
+            setHasInterviewOutcome((!!selectedInvitation.pipeline_status && selectedInvitation.pipeline_status !== 'active') || hasOffer);
+        } else {
+            setHasInterviewOutcome(false);
+        }
+    }, [selectedInvitation]);
+
+    useEffect(() => {
         fetchInvitations();
     }, []);
 

@@ -104,8 +104,6 @@ export async function POST(
                 status: action === 'accept' ? 'accepted' : 'declined',
                 responded_at: new Date().toISOString(),
                 employer_last_seen_at: null,
-                candidate_reschedule_requested: action === 'decline' ? !!request_reschedule : false,
-                reschedule_request_reason: action === 'decline' && request_reschedule ? reschedule_reason : null,
             };
 
             // Add selected_time_slot if accepting

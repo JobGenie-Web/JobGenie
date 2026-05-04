@@ -49,6 +49,7 @@ const roleRoutes: Record<string, string[]> = {
         '/candidate/settings',
         '/candidate/jobs',
         '/candidate/create-profile',
+        '/candidate/calendar',
     ],
     employer: [
         '/employer/dashboard',
@@ -59,6 +60,7 @@ const roleRoutes: Record<string, string[]> = {
         '/employer/profile',
         '/employer/admins',
         '/employer/settings',
+        '/employer/calendar',
     ],
     mis: [
         '/mis/dashboard',
@@ -306,6 +308,7 @@ export const config = {
         '/candidate/settings/:path*',
         '/candidate/jobs/:path*',
         '/candidate/create-profile/:path*',
+        '/candidate/calendar/:path*',
         // Employer routes
         '/employer/dashboard/:path*',
         '/employer/jobs/:path*',
@@ -315,6 +318,7 @@ export const config = {
         '/employer/profile/:path*',
         '/employer/admins/:path*',
         '/employer/settings/:path*',
+        '/employer/calendar/:path*',
         // MIS routes
         '/mis/dashboard/:path*',
         '/mis/users/:path*',

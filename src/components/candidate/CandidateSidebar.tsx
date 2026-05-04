@@ -11,6 +11,7 @@ import {
     User,
     Settings,
     Mail,
+    CalendarDays,
 } from "lucide-react";
 import {
     Sidebar,
@@ -54,6 +55,12 @@ const navigationItems = [
         title: "Invitations",
         href: "/candidate/invitations",
         icon: Mail,
+        requiresApproval: true,
+    },
+    {
+        title: "Calendar",
+        href: "/candidate/calendar",
+        icon: CalendarDays,
         requiresApproval: true,
     },
     {

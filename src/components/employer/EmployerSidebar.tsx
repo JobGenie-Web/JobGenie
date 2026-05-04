@@ -13,6 +13,7 @@ import {
     UserCog,
     Settings,
     Mail,
+    CalendarDays,
 } from "lucide-react";
 import {
     Sidebar,
@@ -62,6 +63,12 @@ const navigationItems = [
         title: "Invitations",
         href: "/employer/invitations",
         icon: Mail,
+        requiresApproval: true,
+    },
+    {
+        title: "Calendar",
+        href: "/employer/calendar",
+        icon: CalendarDays,
         requiresApproval: true,
     },
     {

@@ -67,8 +67,6 @@ export async function GET(
                 mis_rescheduled,
                 mis_rescheduled_at,
                 mis_reschedule_data,
-                candidate_reschedule_requested,
-                reschedule_request_reason,
                 pipeline_status,
                 current_round_number,
                 job_offers(id, status),

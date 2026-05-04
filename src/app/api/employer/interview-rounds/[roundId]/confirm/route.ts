@@ -122,7 +122,7 @@ export async function POST(
         };
 
         if (confirmed_time) {
-            updateData.confirmed_time = { time: confirmed_time };
+            updateData.confirmed_time = confirmed_time;
         }
         if (meeting_link) {
             updateData.meeting_link = meeting_link;
