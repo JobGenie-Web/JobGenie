@@ -24,18 +24,11 @@ interface Permission {
 // ADD YOUR NEW PERMISSIONS HERE
 // ============================================
 const NEW_PERMISSIONS: Permission[] = [
-  // Example: Add a new audit permission
-  // { resource: "audit", action: "export", description: "Export audit logs" },
-  
-  // Example: Add content moderation permissions
-  // { resource: "content", action: "view", description: "View flagged content" },
-  // { resource: "content", action: "moderate", description: "Moderate and approve/reject content" },
-  
-  // Example: Add support ticket permissions
-  // { resource: "tickets", action: "view", description: "View support tickets" },
-  // { resource: "tickets", action: "create", description: "Create support tickets" },
-  // { resource: "tickets", action: "assign", description: "Assign tickets to team members" },
-  // { resource: "tickets", action: "resolve", description: "Resolve and close tickets" },
+  {
+    resource: "interviews",
+    action: "configure_reminders",
+    description: "Configure interview email reminder schedule (MIS)",
+  },
 ];
 
 // ============================================

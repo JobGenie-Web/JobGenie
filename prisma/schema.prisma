@@ -637,6 +637,7 @@ model JobInvitation {
 
   interview_rounds InterviewRound[]
   offer            JobOffer?
+  interview_reminder_sent InterviewReminderSent[]
 
   // Removed unique constraint to allow re-inviting candidates when previous invitations are cancelled or completed
   @@index([candidate_id, status])
@@ -700,6 +701,33 @@ model InterviewRound {
   @@index([outcome_by])
   @@index([invitation_id, round_number])
   @@map("interview_rounds")
+}
+
+/// Singleton row (id = 1): MIS-configured offsets in minutes before each interview start.
+model MisInterviewReminderSettings {
+  id                Int      @id @default(1)
+  enabled           Boolean  @default(false)
+  offsets_minutes   Int[]    @default([])
+  updated_at        DateTime @updatedAt @db.Timestamptz(6)
+  updated_by_user_id String? @db.Uuid
+
+  @@map("mis_interview_reminder_settings")
+}
+
+/// One row per reminder actually sent (deduped by target + offset + scheduled instant).
+model InterviewReminderSent {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  target_key             String   @db.VarChar(120)
+  job_invitation_id      String   @db.Uuid
+  offset_minutes         Int
+  interview_scheduled_at DateTime @db.Timestamptz(6)
+  sent_at                DateTime @default(now()) @db.Timestamptz(6)
+
+  invitation JobInvitation @relation(fields: [job_invitation_id], references: [id], onDelete: Cascade)
+
+  @@unique([target_key, offset_minutes, interview_scheduled_at])
+  @@index([job_invitation_id])
+  @@map("interview_reminder_sent")
 }
 
 model JobOffer {

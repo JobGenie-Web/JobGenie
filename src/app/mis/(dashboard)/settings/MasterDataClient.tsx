@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { InterviewRemindersSettings } from "./InterviewRemindersSettings";
 
 interface Industry {
     industry_id: number;
@@ -156,6 +157,7 @@ export function MasterDataClient() {
                     <TabsTrigger value="seniority">
                         Seniority Levels ({SENIORITY_LEVELS.length})
                     </TabsTrigger>
+                    <TabsTrigger value="reminders">Interview reminders</TabsTrigger>
                 </TabsList>
 
                 {/* Industries Tab */}
@@ -361,6 +363,10 @@ export function MasterDataClient() {
                             </Table>
                         </div>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="reminders">
+                    <InterviewRemindersSettings />
                 </TabsContent>
 
                 {/* Seniority Levels Tab */}

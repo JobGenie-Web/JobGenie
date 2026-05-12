@@ -41,6 +41,7 @@ const DEFAULT_PERMISSIONS: Permission[] = [
   { resource: "interviews", action: "view", description: "View interview schedules and details" },
   { resource: "interviews", action: "reschedule", description: "Reschedule interviews" },
   { resource: "interviews", action: "cancel", description: "Cancel interviews" },
+  { resource: "interviews", action: "configure_reminders", description: "Configure interview email reminder schedule (MIS)" },
 
   // MIS User Management
   { resource: "users", action: "view", description: "View MIS users list" },

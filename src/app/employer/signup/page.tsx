@@ -1,63 +1,57 @@
-import { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { EmployerSignupWizard } from "@/components/employer/EmployerSignupWizard";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { EmployerSignupWizard } from '@/components/employer/EmployerSignupWizard';
+import { AuthShell } from '@/components/layout/AuthShell';
 
 export const metadata: Metadata = {
-    title: "Employer Signup | JobGenie",
-    description: "Register your company and start hiring top talent",
+    title: 'Employer Signup | JobGenie',
+    description: 'Register your company and start hiring top talent',
 };
 
 export default async function EmployerSignupPage() {
-    // Check if user is already authenticated
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
 
     if (session) {
-        // Redirect if already logged in
-        redirect("/employer/dashboard");
+        redirect('/employer/dashboard');
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="container max-w-3xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">
-                        Employer Registration
+        <AuthShell
+            sideHeadline="Evidence-led hiring for serious teams."
+            sideDescription="Verify your organization, upload BR credentials, and onboard recruiters into one audit-friendly workspace."
+            bullets={[
+                'Business registry & document verification',
+                'Pipeline analytics leadership actually reads',
+                'Structured interviews & feedback in context',
+            ]}
+            formWidth="2xl"
+            bare
+        >
+            <div className="mx-auto w-full max-w-4xl space-y-8">
+                <div className="text-center lg:text-left">
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                        Employer registration
                     </h1>
-                    <p className="text-muted-foreground">
-                        Create your company account and start recruiting talent
+                    <p className="mt-2 text-sm text-muted-foreground sm:text-[15px]">
+                        Complete company details, then your admin profile — we&apos;ll guide you through
+                        both steps.
                     </p>
                 </div>
 
-                {/* Wizard */}
                 <EmployerSignupWizard />
 
-                {/* Footer Links */}
-                <div className="mt-6 text-center text-sm text-muted-foreground">
-                    Already have an account?{" "}
-                    <Link
-                        href="/employer/login"
-                        className="text-primary hover:underline font-medium"
-                    >
-                        Log in here
+                <p className="text-center text-sm text-muted-foreground">
+                    Already have an account?{' '}
+                    <Link href="/login" className="font-semibold text-primary hover:underline">
+                        Sign in
                     </Link>
-                </div>
-
-                {/* Back link */}
-                <div className="mt-4 text-center">
-                    <Button variant="ghost" asChild size="sm">
-                        <Link href="/" className="gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Home
-                        </Link>
-                    </Button>
-                </div>
+                </p>
             </div>
-        </div>
+        </AuthShell>
     );
 }

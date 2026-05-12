@@ -133,6 +133,8 @@ ALTER TABLE public.api_request_logs              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.industries                    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_designations              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.seniority_levels              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mis_interview_reminder_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.interview_reminder_sent       ENABLE ROW LEVEL SECURITY;
 
 
 -- ============================================================

@@ -180,6 +180,8 @@ export async function POST(
             );
         }
 
+        await adminClient.from("interview_reminder_sent").delete().eq("job_invitation_id", id);
+
         // Send email notifications to both candidate and employer
         const candidateData = updatedInterview.candidate as any;
         const employerData = updatedInterview.employer as any;

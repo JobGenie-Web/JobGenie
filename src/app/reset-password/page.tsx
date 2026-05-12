@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ShieldCheck } from 'lucide-react';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
 import { redirect } from 'next/navigation';
+import { AuthShell } from '@/components/layout/AuthShell';
 
 interface PageProps {
     searchParams: Promise<{ token?: string }>;
@@ -12,44 +12,41 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const token = params.token;
 
-    // If no token is provided, redirect to forgot password
     if (!token) {
         redirect('/forgot-password');
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-8">
-            <div className="w-full max-w-md">
-                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-                    {/* Icon */}
-                    <div className="mb-6 flex justify-center">
-                        <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-4 text-primary">
-                            <ShieldCheck className="h-10 w-10" />
-                        </div>
-                    </div>
-
-                    {/* Header */}
-                    <h1 className="mb-2 text-center text-2xl font-bold">
-                        Set New Password
-                    </h1>
-                    <p className="mb-8 text-center text-muted-foreground">
-                        Choose a strong password. You&apos;ll use it to sign in to your account.
-                    </p>
-
-                    {/* Form — token is passed from server so it's not re-read client-side from URL */}
-                    <ResetPasswordForm token={token} />
-                </div>
-
-                {/* Back link */}
-                <div className="mt-6 text-center">
-                    <Button variant="ghost" asChild>
-                        <Link href="/login" className="gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Login
-                        </Link>
-                    </Button>
+        <AuthShell
+            sideHeadline="Choose a password that protects your pipeline."
+            sideDescription="Use a unique passphrase with mixed characters — it secures every workspace tied to this email."
+            bullets={[
+                'Password strength enforced platform-wide',
+                'Single sign-on to candidate or employer apps',
+                'Invalid links expire automatically',
+            ]}
+            formWidth="md"
+        >
+            <div className="mb-5 flex justify-center sm:mb-6">
+                <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-3.5 text-primary sm:p-4">
+                    <ShieldCheck className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
             </div>
-        </div>
+
+            <h1 className="text-center text-2xl font-bold tracking-tight sm:text-[1.65rem]">
+                Set new password
+            </h1>
+            <p className="mb-6 mt-2 text-center text-sm text-muted-foreground sm:mb-7 sm:text-[15px]">
+                Enter and confirm your new password below.
+            </p>
+
+            <ResetPasswordForm token={token} />
+
+            <p className="mt-6 text-center text-sm text-muted-foreground sm:mt-7">
+                <Link href="/login" className="font-semibold text-primary hover:underline">
+                    Back to sign in
+                </Link>
+            </p>
+        </AuthShell>
     );
 }

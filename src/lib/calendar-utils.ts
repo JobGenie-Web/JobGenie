@@ -1,4 +1,4 @@
-import { format, parseISO, parse, isValid } from "date-fns";
+import { parseISO, isValid } from "date-fns";
 import { getInvitationJourneyDisplay, normalizeEmbeddedOffer } from "./invitation-journey-status";
 
 export interface TimeSlot {
@@ -15,14 +15,18 @@ export interface InterviewRound {
     status: string;
     outcome: string | null;
     interview_mode: string | null;
+    interview_confirmed?: boolean;
     given_time_slots: TimeSlot[] | null;
     selected_time_slot: TimeSlot | null;
-    confirmed_time: string | null;
+    confirmed_time: unknown;
     meeting_link: string | null;
     interview_address: string | null;
     map_link: string | null;
     confirmed_at: string | null;
     sent_at: string | null;
+    round_canceled?: boolean;
+    mis_rescheduled?: boolean;
+    mis_reschedule_data?: { date?: string; time?: string } | null;
 }
 
 export interface CalendarInvitation {
@@ -32,7 +36,7 @@ export interface CalendarInvitation {
     interview_mode: string | null;
     given_time_slots: TimeSlot[] | null;
     selected_time_slot: TimeSlot | null;
-    confirmed_time: string | null;
+    confirmed_time: unknown;
     meeting_link: string | null;
     interview_address: string | null;
     map_link: string | null;
@@ -44,12 +48,13 @@ export interface CalendarInvitation {
     pipeline_status: string | null;
     current_round_number: number | null;
     mis_rescheduled: boolean;
+    mis_reschedule_data?: unknown;
     // candidate view
     company?: { company_name: string; logo_url: string | null };
     // employer view
     candidate?: { id: string; first_name: string; last_name: string; profile_image_url: string | null; email: string } | null;
     interview_rounds: InterviewRound[] | null;
-    job_offers?: any;
+    job_offers?: unknown;
 }
 
 export interface CalendarEvent {
@@ -86,7 +91,7 @@ export interface EventResource {
     candidateId?: string;
     eventType: 'invitation' | 'round';
     misRescheduled: boolean;
-    jobOffers?: any;
+    jobOffers?: unknown;
 }
 
 function parseTimeString(time: string): { hours: number; minutes: number } {
@@ -108,14 +113,22 @@ function buildEventDate(dateStr: string, timeStr: string): Date {
     }
 }
 
+function confirmedTimeToRawString(value: unknown): string | null {
+    if (value == null || value === "") return null;
+    if (typeof value === "string") return value;
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return new Date(value).toISOString();
+    }
+    return null;
+}
+
 // Determine the confirmed/relevant time slot for an invitation's initial round
-function resolveInvitationSlot(inv: CalendarInvitation): TimeSlot | null {
+export function resolveInvitationSlot(inv: CalendarInvitation): TimeSlot | null {
     // If employer confirmed a specific time from alternatives
-    if (inv.confirmed_time) {
-        // confirmed_time may arrive as a string, Date, or number — normalise via new Date()
-        const raw = typeof inv.confirmed_time === 'string'
-            ? inv.confirmed_time
-            : new Date(inv.confirmed_time as any).toISOString();
+    if (inv.confirmed_time != null && inv.confirmed_time !== "") {
+        const raw = confirmedTimeToRawString(inv.confirmed_time);
+        if (!raw) return null;
         const parts = raw.split(/[ T]/);
         if (parts.length >= 2) {
             return { date: parts[0], time: parts[1].substring(0, 5), order: 1 };
@@ -130,22 +143,25 @@ function resolveInvitationSlot(inv: CalendarInvitation): TimeSlot | null {
     return null;
 }
 
-function resolveRoundSlot(round: InterviewRound): TimeSlot | null {
-    if (round.confirmed_time) {
-        // Normalise to a raw string — handle plain string, legacy { time: "HH:MM" } object, or anything else
-        let raw: string;
-        if (typeof round.confirmed_time === 'string') {
+export function resolveRoundSlot(round: InterviewRound): TimeSlot | null {
+    if (round.confirmed_time != null && round.confirmed_time !== "") {
+        let raw: string | null = null;
+        if (typeof round.confirmed_time === "string") {
             raw = round.confirmed_time;
-        } else if (typeof (round.confirmed_time as any)?.time === 'string') {
-            // Legacy shape stored by old bug: { time: "HH:MM" } — use the date from selected_time_slot
-            const legacyTime = (round.confirmed_time as any).time;
-            const baseDate = round.selected_time_slot?.date ?? '';
-            if (baseDate) return { date: baseDate, time: legacyTime.substring(0, 5), order: 1 };
-            return null;
+        } else if (typeof round.confirmed_time === "object" && round.confirmed_time !== null) {
+            const maybeTime = (round.confirmed_time as { time?: unknown }).time;
+            if (typeof maybeTime === "string") {
+                const baseDate = round.selected_time_slot?.date ?? "";
+                if (baseDate) {
+                    return { date: baseDate, time: maybeTime.substring(0, 5), order: 1 };
+                }
+                return null;
+            }
+            raw = confirmedTimeToRawString(round.confirmed_time);
         } else {
-            try { raw = new Date(round.confirmed_time as any).toISOString(); }
-            catch { return null; }
+            raw = confirmedTimeToRawString(round.confirmed_time);
         }
+        if (!raw) return null;
         const parts = raw.split(/[ T]/);
         if (parts.length >= 2) {
             return { date: parts[0], time: parts[1].substring(0, 5), order: 1 };

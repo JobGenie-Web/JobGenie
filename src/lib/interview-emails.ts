@@ -198,6 +198,109 @@ ${locationHTML}
     }
 }
 
+function formatOffsetLabel(offsetMinutes: number): string {
+    if (offsetMinutes % 1440 === 0 && offsetMinutes >= 1440) {
+        const d = offsetMinutes / 1440;
+        return d === 1 ? "24 hours" : `${d} days`;
+    }
+    if (offsetMinutes % 60 === 0 && offsetMinutes >= 60) {
+        const h = offsetMinutes / 60;
+        return h === 1 ? "1 hour" : `${h} hours`;
+    }
+    return `${offsetMinutes} minutes`;
+}
+
+/**
+ * MIS-configured reminder before a confirmed interview (candidate only).
+ */
+export async function sendInterviewReminderEmail(
+    candidateEmail: string,
+    candidateName: string,
+    companyName: string,
+    jobDesignation: string,
+    interviewDate: string,
+    interviewTime: string,
+    interviewMode: string,
+    meetingLinkOrAddress: string,
+    invitationId: string,
+    offsetMinutes: number,
+    roundLabel: string | null,
+    recipientTimezone?: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const baseUrl = getBaseUrl();
+        const offsetLabel = formatOffsetLabel(offsetMinutes);
+        const roundLine = roundLabel
+            ? `<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Round:</strong> ${roundLabel}</p>`
+            : "";
+
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.log(`\n====================================`);
+            console.log(`[DEV] Interview Reminder Email (${offsetLabel} before)`);
+            console.log(`====================================`);
+            console.log(`To: ${candidateEmail}`);
+            console.log(`Candidate: ${candidateName}`);
+            console.log(`Company: ${companyName}`);
+            console.log(`When: ${interviewDate} at ${interviewTime}`);
+            console.log(`====================================\n`);
+            return { success: true };
+        }
+
+        const transporter = createTransporter();
+        const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
+        const loginRedirectUrl = `${baseUrl}/login?returnUrl=${encodeURIComponent(invitationDetailUrl)}`;
+
+        const locationHTML =
+            interviewMode === "online"
+                ? `<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Online</strong> — <a href="${meetingLinkOrAddress}" style="color:#22c55e;">Join link</a></p>`
+                : `<p style="margin:0;font-size:14px;color:#166534;"><strong>Location:</strong> ${meetingLinkOrAddress}</p>`;
+
+        const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
+<table role="presentation" style="width:100%;border-collapse:collapse;">
+<tr><td align="center" style="padding:40px 0;">
+<table role="presentation" style="width:100%;max-width:600px;border-collapse:collapse;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<tr><td style="padding:40px 40px 20px;text-align:center;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);border-radius:16px 16px 0 0;">
+<h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">JobGenie</h1>
+<p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">Interview reminder</p>
+</td></tr>
+<tr><td style="padding:40px;">
+<h2 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#1f2937;text-align:center;">Your interview is coming up</h2>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">Hi <strong>${candidateName}</strong>,</p>
+<p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#4b5563;">This is a friendly reminder: your interview with <strong>${companyName}</strong> for <strong>${jobDesignation}</strong> starts in about <strong>${offsetLabel}</strong>.</p>
+<div style="background-color:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:20px;margin:24px 0;">
+<p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#166534;">Scheduled time</p>
+<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Date:</strong> ${formatUTCDate(interviewDate, "EEEE, MMMM d, yyyy", recipientTimezone)}</p>
+<p style="margin:0 0 12px;font-size:14px;color:#166534;"><strong>Time:</strong> ${formatUTCTime(interviewDate, interviewTime, "HH:mm", recipientTimezone)}</p>
+${roundLine}
+${locationHTML}
+</div>
+<div style="text-align:center;margin:32px 0;">
+<a href="${loginRedirectUrl}" style="display:inline-block;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:600;">View invitation</a>
+</div>
+</td></tr>
+<tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table></body></html>`;
+
+        await transporter.sendMail({
+            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+            to: candidateEmail,
+            subject: `Reminder: Interview with ${companyName} — JobGenie`,
+            html,
+        });
+
+        console.log(`[EMAIL] Interview reminder (${offsetLabel}) sent to ${candidateEmail}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Interview reminder email error:", error);
+        return { success: false, error: "Failed to send reminder email" };
+    }
+}
+
 /**
  * Send cancellation notification to employer when candidate cancels
  */
