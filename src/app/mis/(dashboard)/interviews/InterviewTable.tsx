@@ -5,7 +5,6 @@ import { formatUTCTime, formatDate } from "@/lib/date-utils";
 import { formatIndustry } from "@/lib/utils";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -14,8 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Eye, Search, Video, MapPin, CheckCircle2, Clock, XCircle, Calendar } from "lucide-react";
+import { Search, Video, MapPin, CheckCircle2, Clock, XCircle, Calendar } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -291,7 +289,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <tbody>
                         {filteredInterviews.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
@@ -302,7 +300,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
                             filteredInterviews.map((interview) => (
                                 <TableRow
                                     key={interview.id}
-                                    className="cursor-pointer hover:bg-muted/50"
+                                    className="cursor-pointer border-b transition-colors duration-150 hover:bg-muted/60"
                                     onClick={() => onViewDetails(interview.id)}
                                 >
                                     <TableCell>
@@ -373,7 +371,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
                                 </TableRow>
                             ))
                         )}
-                    </TableBody>
+                    </tbody>
                 </Table>
             </div>
         </div>

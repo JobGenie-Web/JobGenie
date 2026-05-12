@@ -304,12 +304,18 @@ export function getEventColor(resource: EventResource): string {
     }, offer);
 
     switch (journey.variant) {
-        case 'danger': return '#ef4444'; // red
-        case 'success': return '#10b981'; // emerald
-        case 'warning': return '#f59e0b'; // amber
-        case 'muted': return '#9ca3af'; // gray
-        case 'info': return '#3b82f6'; // blue
-        default: return '#6366f1'; // indigo
+        case "danger":
+            return "#ef4444";
+        case "success":
+            return "#10b981";
+        case "warning":
+            return "#22c55e";
+        case "muted":
+            return "#64748b";
+        case "info":
+            return "#14b8a6";
+        default:
+            return "#059669";
     }
 }
 

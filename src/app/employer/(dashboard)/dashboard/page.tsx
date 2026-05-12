@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 import { EmployerLayout } from "@/components/employer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, FileText, Users, TrendingUp } from "lucide-react";
+import { Briefcase, FileText, Users, TrendingUp, Loader2, Activity } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { RestrictionToastListener } from "@/components/employer/RestrictionToastListener";
+import { StatCardContainer } from "@/components/shared/StatCardContainer";
+import { EmployerStatsCard } from "@/components/employer/EmployerStatsCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PortalSectionTitle } from "@/components/shared/PortalSectionTitle";
 
 export const metadata: Metadata = {
     title: "Dashboard | JobGenie",
@@ -58,87 +61,81 @@ export default async function EmployerDashboardPage() {
 
             {/* Pending Status Alert */}
             {isPending && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-4 dark:border-green-900/50 dark:bg-green-900/10">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                            <svg className="h-5 w-5 text-green-600 dark:text-green-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                <Card
+                    variant="glass"
+                    className="mb-6 border-primary/20 bg-gradient-to-br from-primary/8 via-card/90 to-accent/10 p-5 shadow-md dark:from-primary/15 dark:via-card/50 dark:to-accent/15"
+                >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-accent/20 ring-1 ring-primary/20">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-green-900 dark:text-green-200">
-                                Please be patient. Our MIS Admin is reviewing your company profile...
+                        <div className="min-w-0 flex-1">
+                            <p className="text-base font-semibold text-foreground">
+                                Company profile in review
                             </p>
-                            <p className="mt-0.5 text-xs text-green-700 dark:text-green-300">
-                                You will be notified once the review is complete. You can update your company profile while waiting.
+                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                                MIS is verifying your organization. You will be notified when you are cleared to post jobs and run full hiring workflows. You can still refine your company profile while you wait.
                             </p>
                         </div>
                     </div>
-                </div>
+                </Card>
             )}
 
-            <div className="space-y-6">
-                {/* Stats Grid */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Active Job Postings</CardTitle>
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.activeJobs}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Jobs currently open
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.totalApplications}</div>
-                            <p className="text-xs text-muted-foreground">
-                                All time applications
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Shortlisted</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.shortlisted}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Candidates under review
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">New Applications</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.newApplications}</div>
-                            <p className="text-xs text-muted-foreground">
-                                In the last 7 days
-                            </p>
-                        </CardContent>
-                    </Card>
+            <div className="space-y-8 md:space-y-10">
+                <div>
+                    <PortalSectionTitle
+                        tone="employer"
+                        eyebrow="Recruiting"
+                        title="Operations snapshot"
+                        description="Headline metrics for postings and inbound talent. Wire these to live data when ready."
+                    />
+                    <StatCardContainer className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <EmployerStatsCard
+                        title="Active Job Postings"
+                        value={stats.activeJobs}
+                        description="Jobs currently open"
+                        colorScheme="green"
+                        icon={<Briefcase className="h-4 w-4" />}
+                    />
+                    <EmployerStatsCard
+                        title="Total Applications"
+                        value={stats.totalApplications}
+                        description="All time applications"
+                        colorScheme="cyan"
+                        icon={<FileText className="h-4 w-4" />}
+                    />
+                    <EmployerStatsCard
+                        title="Shortlisted"
+                        value={stats.shortlisted}
+                        description="Candidates under review"
+                        colorScheme="green"
+                        icon={<Users className="h-4 w-4" />}
+                    />
+                    <EmployerStatsCard
+                        title="New Applications"
+                        value={stats.newApplications}
+                        description="In the last 7 days"
+                        colorScheme="cyan"
+                        icon={<TrendingUp className="h-4 w-4" />}
+                    />
+                </StatCardContainer>
                 </div>
 
-                {/* Recent Activity Placeholder */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
+                <Card variant="glass" className="overflow-hidden border-border/70 shadow-sm">
+                    <CardHeader className="border-b border-border/50 bg-muted/20 pb-4 dark:bg-muted/10">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/25 to-accent/20 ring-1 ring-primary/20">
+                                <Activity className="h-4 w-4 text-primary" />
+                            </span>
+                            <CardTitle className="text-lg">Recent activity</CardTitle>
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center justify-center h-32 text-muted-foreground">
-                            No recent activity to display
+                    <CardContent className="pt-6">
+                        <div className="flex min-h-[10rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/15 px-6 py-10 text-center dark:bg-muted/5">
+                            <p className="text-sm font-medium text-foreground">No activity yet</p>
+                            <p className="max-w-sm text-sm text-muted-foreground">
+                                Once candidates apply and your team moves stages, a live feed will appear here.
+                            </p>
                         </div>
                     </CardContent>
                 </Card>

@@ -8,7 +8,7 @@ import {
     Users,
     Zap,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
     fadeUp,
     inViewProps,
@@ -63,6 +63,22 @@ const features = [
 ];
 
 export function Features() {
+    const prefersReducedMotion = useReducedMotion();
+
+    // When reduced motion is preferred, render all elements in their final
+    // visible state with no entrance animation.
+    const headingMotionProps = prefersReducedMotion
+        ? { initial: { opacity: 1, y: 0 }, whileInView: { opacity: 1, y: 0 } }
+        : { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 } };
+
+    const lineMotionProps = prefersReducedMotion
+        ? { initial: { scaleX: 1 }, whileInView: { scaleX: 1 } }
+        : { initial: { scaleX: 0 }, whileInView: { scaleX: 1 } };
+
+    const containerMotionProps = prefersReducedMotion
+        ? { initial: 'visible' as const, whileInView: 'visible' as const }
+        : { ...inViewProps };
+
     return (
         <section
             id="features"
@@ -72,16 +88,14 @@ export function Features() {
             <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
                 <motion.div
                     className="mx-auto max-w-3xl"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    {...headingMotionProps}
                     viewport={{ once: true, margin: '-80px' }}
                     transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div className="flex items-center gap-3">
                         <motion.span
                             className="h-px origin-left w-12 bg-primary/50"
-                            initial={{ scaleX: 0 }}
-                            whileInView={{ scaleX: 1 }}
+                            {...lineMotionProps}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                             aria-hidden
@@ -101,17 +115,22 @@ export function Features() {
 
                 <motion.div
                     className="mt-16 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-12"
-                    {...inViewProps}
+                    {...containerMotionProps}
+                    viewport={{ once: true, margin: '-80px' }}
                     variants={staggerCards}
                 >
                     {features.map((feature) => (
                         <motion.div
                             key={feature.title}
-                            variants={fadeUp}
-                            whileHover={{
-                                y: -6,
-                                transition: { type: 'spring', stiffness: 400, damping: 28 },
-                            }}
+                            variants={prefersReducedMotion ? undefined : fadeUp}
+                            whileHover={
+                                prefersReducedMotion
+                                    ? undefined
+                                    : {
+                                          y: -6,
+                                          transition: { type: 'spring', stiffness: 400, damping: 28 },
+                                      }
+                            }
                             className={[
                                 'group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm transition-colors duration-300 hover:border-primary/35 hover:shadow-lg dark:border-border/50 dark:hover:shadow-black/30',
                                 feature.tall ? 'sm:col-span-2 sm:p-8' : '',
@@ -123,12 +142,16 @@ export function Features() {
                             <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full border border-primary/10 opacity-60 transition-opacity group-hover:opacity-100" />
                             <motion.div
                                 className={[
-                                    'inline-flex rounded-xl border border-primary/15 bg-primary/10 p-3 text-primary transition-colors group-hover:border-primary/35 group-hover:bg-primary/15',
+                                    'inline-flex rounded-xl border border-primary/15 bg-primary/10 p-3 text-primary transition-colors duration-200 group-hover:border-primary/0 group-hover:bg-primary group-hover:text-white',
                                     feature.tall ? 'p-4' : '',
                                 ]
                                     .filter(Boolean)
                                     .join(' ')}
-                                whileHover={{ rotate: [0, -4, 4, 0], scale: 1.05 }}
+                                whileHover={
+                                    prefersReducedMotion
+                                        ? undefined
+                                        : { rotate: [0, -4, 4, 0], scale: 1.05 }
+                                }
                                 transition={{ duration: 0.45 }}
                             >
                                 <feature.icon

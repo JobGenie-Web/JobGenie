@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import { AuthToolbar } from '@/components/layout/AuthToolbar';
+import { AuthCardAnimator } from '@/components/layout/AuthCardAnimator';
+import { Card } from '@/components/ui/card';
 
 const DEFAULT_BULLETS = [
     'Verified employers & credential-backed candidates',
@@ -41,7 +43,7 @@ export function AuthShell({
     const mw = formMaxWidth[formWidth];
 
     return (
-        <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex min-h-screen flex-col bg-background mesh-bg">
             <AuthToolbar />
 
             <div className="grid flex-1 lg:grid-cols-[minmax(280px,440px)_minmax(0,1fr)] lg:items-stretch">
@@ -89,11 +91,11 @@ export function AuthShell({
                         {bare ? (
                             children
                         ) : (
-                        <div
-                                className={`rounded-2xl border border-border/80 bg-card p-6 shadow-[0_16px_48px_-24px_rgba(0,0,0,0.18)] dark:border-border/60 dark:bg-card dark:shadow-black/35 sm:p-8 w-full`}
-                            >
+                        <AuthCardAnimator>
+                            <Card variant="glass" className="p-6 sm:p-8 w-full">
                                 {children}
-                            </div>
+                            </Card>
+                        </AuthCardAnimator>
                         )}
                     </div>
                 </main>

@@ -26,14 +26,13 @@ export function MISHeader({ user, pageTitle, pageDescription }: MISHeaderProps) 
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 bg-background/80 backdrop-blur-md px-4 border-b">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/90 px-4 backdrop-blur-sm">
             {/* Modern Circular Toggle */}
             <button
                 onClick={handleToggle}
                 className={cn(
                     "group relative flex h-9 w-9 items-center justify-center flex-shrink-0",
                     "rounded-full bg-primary/10 hover:bg-primary/20",
-                    "transition-all duration-300 ease-out",
                     "active:scale-90",
                     "focus:outline-none"
                 )}

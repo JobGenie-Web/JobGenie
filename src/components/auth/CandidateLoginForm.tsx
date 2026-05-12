@@ -68,15 +68,17 @@ export function CandidateLoginForm() {
         <form action={formAction} className="space-y-5">
             {/* Success/Error Message */}
             {state?.message && (
-                <div
-                    className={cn(
-                        "rounded-lg p-3 text-sm",
-                        state.success
-                            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                            : "bg-destructive/10 text-destructive"
-                    )}
-                >
-                    {state.message}
+                <div>
+                    <div
+                        className={cn(
+                            "rounded-lg p-3 text-sm",
+                            state.success
+                                ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                                : "bg-destructive/10 text-destructive"
+                        )}
+                    >
+                        {state.message}
+                    </div>
                 </div>
             )}
 
@@ -126,7 +128,7 @@ export function CandidateLoginForm() {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+            <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isPending}>
                 {isPending ? (
                     <>
                         <Loader2 className="h-4 w-4 animate-spin" />

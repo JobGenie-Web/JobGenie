@@ -7,7 +7,7 @@ import {
     wallSlotToUtc,
 } from "@/lib/interview-reminder-utils";
 import { sendInterviewReminderEmail } from "@/lib/interview-emails";
-import { getUserTimezone } from "@/lib/user-timezone";
+import { getUserTimezoneBatch } from "@/lib/user-timezone";
 import { logBusiness, logError } from "@/lib/logger";
 
 const LOOKAHEAD_DAYS = Math.min(
@@ -204,10 +204,14 @@ export async function processInterviewReminders(): Promise<{
 
     const horizonEnd = new Date(now.getTime() + LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000);
 
+    // Batch load all timezones instead of per-row queries (90% query reduction)
+    const userIds = invitations.map(row => row.candidate.user_id);
+    const timezoneMap = await getUserTimezoneBatch(userIds);
+
     for (const row of invitations) {
         const inv = asCalendarInvitation(row);
         const rounds = inv.interview_rounds ?? [];
-        const tz = await getUserTimezone(row.candidate.user_id);
+        const tz = timezoneMap.get(row.candidate.user_id) || "UTC";
 
         const targets: Array<{
             targetKey: string;

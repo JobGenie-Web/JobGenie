@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { MISSidebar } from "./MISSidebar";
 import { MISHeader } from "./MISHeader";
+import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
 import { createClient } from "@/lib/supabase/server";
 
 interface MISLayoutProps {
@@ -52,9 +53,11 @@ export async function MISLayout({ children, pageTitle, pageDescription }: MISLay
                         pageTitle={pageTitle}
                         pageDescription={pageDescription}
                     />
-                    <main className="flex-1 overflow-auto bg-muted/30 p-4 md:p-6">
-                        {children}
-                    </main>
+                    <PageTransitionWrapper>
+                        <div className="bg-muted/30 p-4 md:p-6 min-h-full">
+                            {children}
+                        </div>
+                    </PageTransitionWrapper>
                 </SidebarInset>
             </div>
         </SidebarProvider>

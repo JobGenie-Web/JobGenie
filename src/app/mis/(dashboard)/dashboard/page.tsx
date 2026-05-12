@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { Users, UserSquare, Building2, Briefcase, BarChart3, Shield, FileText, Settings } from "lucide-react";
 import { MISLayout } from "@/components/mis";
 import { createClient } from "@/lib/supabase/server";
+import { StatCardContainer } from "@/components/shared/StatCardContainer";
+import { MISDashboardCard } from "@/components/mis/MISDashboardCard";
 
 export default async function MISDashboardPage() {
     const supabase = await createClient();
@@ -98,16 +99,16 @@ export default async function MISDashboardPage() {
             pageDescription="Welcome to the Management Information System dashboard."
         >
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCardContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {dashboardCards.map((card) => {
                         const Icon = card.icon;
                         const colors = colorClasses[card.color];
 
                         return (
-                            <Link
+                            <MISDashboardCard
                                 key={card.href}
                                 href={card.href}
-                                className={`group bg-card border rounded-lg p-6 transition-all hover:shadow-md ${colors.hover}`}
+                                hoverClass={colors.hover}
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className={`p-2 ${colors.bg} rounded-lg`}>
@@ -123,10 +124,10 @@ export default async function MISDashboardPage() {
                                 <p className="text-sm text-muted-foreground">
                                     {card.description}
                                 </p>
-                            </Link>
+                            </MISDashboardCard>
                         );
                     })}
-                </div>
+                </StatCardContainer>
             </div>
         </MISLayout>
     );

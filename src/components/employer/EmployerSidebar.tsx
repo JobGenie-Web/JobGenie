@@ -118,12 +118,13 @@ export function EmployerSidebar() {
     }, []);
 
     return (
-        <Sidebar collapsible="icon" className="shadow-sm">
+        <Sidebar collapsible="icon" className={cn("shadow-sm", "sidebar-portal")}>
             {/* Header with Logo - height matches the header (h-16 = 64px) */}
             <SidebarHeader className="h-16 px-4 flex items-center">
                 <Link href="/employer/dashboard" className="flex items-center gap-3">
                     {/* Logo */}
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground overflow-hidden">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden"
+                         style={{ background: "var(--gradient-primary)" }}>
                         <Image
                             src="/logo.jpg"
                             alt="JobGenie"
@@ -134,7 +135,7 @@ export function EmployerSidebar() {
                         />
                     </div>
                     {!isCollapsed && (
-                        <span className="text-lg font-semibold text-sidebar-foreground">
+                        <span className="sidebar-brand-wordmark text-lg font-semibold tracking-tight">
                             JobGenie
                         </span>
                     )}
@@ -190,9 +191,9 @@ export function EmployerSidebar() {
                                                 isActive={isActive}
                                                 size="lg"
                                                 className={cn(
-                                                    "transition-colors",
+                                                    "transition-colors duration-150 hover:bg-sidebar-accent/8",
                                                     "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3",
-                                                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground border-r-3 border-green-500"
+                                                    isActive && "sidebar-item-active"
                                                 )}
                                             >
                                                 <Link href={item.href} className="gap-3 flex items-center justify-between w-full">

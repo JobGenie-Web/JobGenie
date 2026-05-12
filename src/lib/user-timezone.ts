@@ -24,6 +24,45 @@ export async function getUserTimezone(userId: string | null | undefined): Promis
     }
 }
 
+/**
+ * Batch lookup timezones for multiple user IDs in a single query.
+ * Returns a map of userId -> timezone (defaults to "UTC" for missing users).
+ * Performance: ~1 query instead of N queries.
+ */
+export async function getUserTimezoneBatch(userIds: string[]): Promise<Map<string, string>> {
+    const result = new Map<string, string>();
+    
+    // Initialize all with UTC default
+    userIds.forEach(id => {
+        if (id) result.set(id, "UTC");
+    });
+    
+    if (userIds.length === 0) return result;
+    
+    try {
+        const sql = getServerSql();
+        if (!sql) return result;
+        
+        const uniqueIds = Array.from(new Set(userIds.filter(id => id)));
+        if (uniqueIds.length === 0) return result;
+        
+        const rows = await sql`
+            SELECT "id", "timezone"
+            FROM "users"
+            WHERE "id" = ANY(${uniqueIds}::uuid[])
+        `;
+        
+        (rows as unknown as Array<{ id: string; timezone?: string | null }>).forEach(row => {
+            const tz = row.timezone?.trim();
+            result.set(row.id, tz && tz.length > 0 ? tz : "UTC");
+        });
+        
+        return result;
+    } catch {
+        return result;
+    }
+}
+
 /** Look up timezone by user email (useful for recipient formatting). */
 export async function getUserTimezoneByEmail(
     email: string | null | undefined

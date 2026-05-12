@@ -40,7 +40,7 @@ export function SignupCTA() {
                             ))}
                         </ul>
 
-                        <Button asChild size="lg" className="group/btn gap-2">
+                        <Button asChild variant="gradient" size="lg" className="group/btn gap-2">
                             <Link href="/candidate/signup">
                                 Get Started Free
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
@@ -81,7 +81,7 @@ export function SignupCTA() {
                             ))}
                         </ul>
 
-                        <Button asChild size="lg" className="group/btn gap-2">
+                        <Button asChild variant="gradient" size="lg" className="group/btn gap-2">
                             <Link href="/employer/signup">
                                 Start Hiring
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />

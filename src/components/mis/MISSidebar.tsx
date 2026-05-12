@@ -96,7 +96,8 @@ export function MISSidebar() {
             <SidebarHeader className="h-16 px-4 flex items-center">
                 <Link href="/mis/dashboard" className="flex items-center gap-3">
                     {/* Logo */}
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground overflow-hidden">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden"
+                         style={{ background: "var(--gradient-primary)" }}>
                         <Image
                             src="/logo.jpg"
                             alt="JobGenie"
@@ -136,9 +137,9 @@ export function MISSidebar() {
                                                 isActive={isActive}
                                                 size="lg"
                                                 className={cn(
-                                                    "transition-colors",
+                                                    "transition-colors duration-150 hover:bg-sidebar-accent/8",
                                                     "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3",
-                                                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground border-r-3 border-green-500"
+                                                    isActive && "sidebar-item-active"
                                                 )}
                                             >
                                                 <Link href={item.href} className="gap-3">

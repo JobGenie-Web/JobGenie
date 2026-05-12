@@ -346,9 +346,19 @@ export default function InvitationsClient() {
     }
 
     return (
-        <div className="h-[calc(100vh-120px)] flex flex-col space-y-4">
-            {/* Status Filter Tabs - Compact */}
-            <div className="flex flex-wrap gap-2 flex-shrink-0">
+        <div className="flex h-[calc(100vh-7rem)] flex-col gap-6">
+            <div className="relative shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-5 shadow-sm ring-1 ring-border/40 md:p-6">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/[0.06] blur-3xl dark:bg-primary/[0.09]" aria-hidden />
+                <div className="relative">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Pipeline</p>
+                    <h2 className="mt-1 text-xl font-bold tracking-tight md:text-2xl">Invitation workspace</h2>
+                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                        Pick a thread on the left — confirm times, links, and status without losing context.
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-border/60 bg-muted/20 p-1 dark:bg-muted/10">
                 {[
                     { key: 'all', label: 'All' },
                     { key: 'pending', label: 'Pending' },
@@ -360,10 +370,12 @@ export default function InvitationsClient() {
                     <button
                         key={status.key}
                         onClick={() => setFilter(status.key)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filter === status.key
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted hover:bg-muted/80'
-                            }`}
+                        className={cn(
+                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-200",
+                            filter === status.key
+                                ? "border border-primary/35 bg-primary/15 text-foreground shadow-none dark:bg-primary/20"
+                                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+                        )}
                     >
                         {status.label} ({statusCounts[status.key as keyof typeof statusCounts]})
                     </button>
@@ -372,10 +384,10 @@ export default function InvitationsClient() {
 
             {/* Split View Layout */}
             {filteredInvitations.length === 0 ? (
-                <Card>
-                    <CardContent className="py-12 text-center">
-                        <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No invitations found</h3>
+                <Card variant="glass" className="border-dashed">
+                    <CardContent className="py-14 text-center">
+                        <Mail className="mx-auto mb-4 h-12 w-12 text-primary/60" />
+                        <h3 className="mb-2 text-lg font-semibold">No invitations found</h3>
                         <p className="text-muted-foreground">
                             {filter === 'all'
                                 ? "You haven't sent any interview invitations yet."
@@ -384,21 +396,22 @@ export default function InvitationsClient() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 overflow-hidden">
+                <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-3">
                     {/* Left Side - Compact Cards List */}
-                    <div className="lg:col-span-1 space-y-2 overflow-y-auto p-1 scrollbar-hide">
+                    <div className="scrollbar-hide space-y-2 overflow-y-auto p-1 lg:col-span-1">
                         {filteredInvitations.map((invitation) => {
                             const badge = getInvitationStatusBadge(invitation);
                             return (
                             <Card
                                 key={invitation.id}
+                                variant="glass"
                                 className={cn(
-                                    "cursor-pointer transition-all hover:shadow-md",
-                                    selectedInvitation?.id === invitation.id && "ring-2 ring-primary"
+                                    "cursor-pointer border-border/50 hover:border-primary/30",
+                                    selectedInvitation?.id === invitation.id && "ring-2 ring-primary/50"
                                 )}
                                 onClick={() => handleSelectInvitation(invitation)}
                             >
-                                <CardContent className="p-3">
+                                <CardContent className="p-3.5">
                                     <div className="flex items-start gap-2.5">
                                         <Avatar className="h-10 w-10 flex-shrink-0">
                                             <AvatarImage src={invitation.candidate.profile_image_url || undefined} />
@@ -433,7 +446,7 @@ export default function InvitationsClient() {
                     <div className="lg:col-span-2 overflow-hidden">
                         {selectedInvitation ? (
                             <div className="h-full overflow-y-auto scrollbar-hide">
-                                <Card className="overflow-hidden">
+                                <Card variant="glass" className="overflow-hidden border-primary/15 shadow-lg">
                                     <CardHeader className="bg-muted/50 py-3 px-4">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex items-start gap-3">

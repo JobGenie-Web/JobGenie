@@ -4,12 +4,16 @@ import { ApprovalStatusNotification } from '@/components/candidate/ApprovalStatu
 import { RestrictionToastListener } from '@/components/candidate/RestrictionToastListener';
 import { getCandidateDashboardData } from '@/app/actions/candidate-dashboard-data';
 import { DashboardStatsCard } from '@/components/candidate/dashboard/DashboardStatsCard';
+import { StatCardContainer } from '@/components/candidate/dashboard/StatCardContainer';
 import { RecommendedJobsWidget } from '@/components/candidate/dashboard/RecommendedJobsWidget';
 import { ProfileStrengthWidget } from '@/components/candidate/dashboard/ProfileStrengthWidget';
 import { UpgradeProCard } from '@/components/candidate/dashboard/UpgradeProCard';
 import { InterviewCalendarWidget } from '@/components/candidate/dashboard/InterviewCalendarWidget';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { PortalSectionTitle } from '@/components/shared/PortalSectionTitle';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default async function CandidateDashboardPage() {
     // Fetch approval notification state (for the modal)
@@ -61,49 +65,51 @@ export default async function CandidateDashboardPage() {
 
             {/* ─── Approve Pending Banner ──────────────────────────────────── */}
             {isPending && (
-                <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 p-3 flex items-start gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
-                        <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <Card
+                    variant="glass"
+                    className="mb-6 flex items-start gap-4 border-primary/25 bg-gradient-to-br from-primary/[0.08] to-card/90 p-4 shadow-md dark:from-primary/15 dark:to-card/40"
+                >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/25">
+                        <AlertTriangle className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                            Approval Pending
-                        </p>
-                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                            Your profile is currently under review by our masterful team. You can browse jobs, but applications are restricted until approval is complete est. 24h.
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">Approval pending</p>
+                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                            Your profile is under review. You can browse jobs, but applications stay paused until MIS approves you — typically within 24 hours.
                         </p>
                     </div>
-                    <Link
-                        href="/candidate/profile"
-                        className="flex-shrink-0 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline whitespace-nowrap"
-                    >
-                        Check Status
-                    </Link>
-                </div>
+                    <Button variant="gradient" size="sm" className="shrink-0" asChild>
+                        <Link href="/candidate/profile">Check status</Link>
+                    </Button>
+                </Card>
             )}
 
             {!data ? (
-                <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                <Card variant="glass" className="p-10 text-center">
                     <p className="text-muted-foreground">Unable to load dashboard data. Please refresh.</p>
-                </div>
+                </Card>
             ) : (
-                <div className="space-y-5">
+                <div className="space-y-8 md:space-y-10">
 
-                    {/* ─── Row 1: My Application Statuses ─────────────────────── */}
                     <div>
-                        <h2 className="text-sm font-semibold text-foreground mb-3">My Application Statuses</h2>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <PortalSectionTitle
+                            tone="candidate"
+                            eyebrow="Pipeline"
+                            title="Application pulse"
+                            description="Live counts for where you are in the hiring journey."
+                        />
+                        <StatCardContainer className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                             <DashboardStatsCard
                                 title="Under Review"
                                 value={data.underReviewApplications}
                                 icon={<FileText className="h-5 w-5" />}
-                                colorScheme="blue"
+                                colorScheme="green"
                             />
                             <DashboardStatsCard
                                 title="Interviews"
                                 value={data.interviews}
                                 icon={<Users className="h-5 w-5" />}
-                                colorScheme="purple"
+                                colorScheme="cyan"
                             />
                             <DashboardStatsCard
                                 title="Offers Received"
@@ -115,13 +121,13 @@ export default async function CandidateDashboardPage() {
                                 title="Saved Jobs"
                                 value={data.savedJobs}
                                 icon={<Bookmark className="h-5 w-5" />}
-                                colorScheme="amber"
+                                colorScheme="cyan"
                             />
-                        </div>
+                        </StatCardContainer>
                     </div>
 
                     {/* ─── Row 2: Main two-column layout ──────────────────────── */}
-                    <div className="grid gap-5 lg:grid-cols-5">
+                    <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
 
                         {/* ── Left column (3/5): Recommended Jobs ─────────────── */}
                         <div className="lg:col-span-3 flex flex-col gap-5">

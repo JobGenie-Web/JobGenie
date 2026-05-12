@@ -5,7 +5,6 @@ import { Shield, Users, Key, Edit, Trash2, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -114,13 +113,16 @@ export function RolesTable({ roles }: RolesTableProps) {
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <tbody>
                         {roles.map((role) => {
                             const permissionCount = role.role_permissions?.[0]?.count || 0;
                             const userCount = role.mis_users?.[0]?.count || 0;
 
                             return (
-                                <TableRow key={role.id}>
+                                <TableRow
+                                    key={role.id}
+                                    className="border-b transition-colors duration-150 hover:bg-muted/60"
+                                >
                                     <TableCell className="font-medium">
                                         {role.name}
                                     </TableCell>
@@ -182,7 +184,7 @@ export function RolesTable({ roles }: RolesTableProps) {
                                 </TableRow>
                             );
                         })}
-                    </TableBody>
+                    </tbody>
                 </Table>
             </div>
         </div>

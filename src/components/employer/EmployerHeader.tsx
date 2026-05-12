@@ -21,25 +21,21 @@ export function EmployerHeader({ user, pageTitle, pageDescription }: EmployerHea
 
     const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
         toggleSidebar();
-        // Remove focus to prevent hover state from sticking
         e.currentTarget.blur();
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 bg-background/80 backdrop-blur-md px-4 border-b">
-            {/* Modern Circular Toggle */}
+        <header className="sticky top-0 z-40 flex h-[4.25rem] items-center gap-4 border-b border-primary/10 bg-card/92 px-4 shadow-[inset_0_-1px_0_oklch(var(--accent)/0.14)] backdrop-blur-sm dark:bg-card/88 md:px-6">
             <button
                 onClick={handleToggle}
                 className={cn(
-                    "group relative flex h-9 w-9 items-center justify-center flex-shrink-0",
-                    "rounded-full bg-primary/10 hover:bg-primary/20",
-                    "transition-all duration-300 ease-out",
-                    "active:scale-90",
-                    "focus:outline-none"
+                    "group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    "bg-gradient-to-br from-accent/22 via-primary/14 to-primary/20 ring-1 ring-accent/30",
+                    "hover:from-accent/30 hover:via-primary/18 hover:to-primary/26",
+                    "active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 )}
                 aria-label="Toggle sidebar"
             >
-                {/* Arrow Icon with rotation */}
                 <svg
                     className={cn(
                         "h-4 w-4 text-primary transition-transform duration-300",
@@ -58,23 +54,23 @@ export function EmployerHeader({ user, pageTitle, pageDescription }: EmployerHea
                 </svg>
             </button>
 
-            {/* Page Title Area */}
-            {pageTitle && (
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-bold truncate">{pageTitle}</h1>
-                    {pageDescription && (
-                        <p className="text-sm text-muted-foreground truncate">
-                            {pageDescription}
-                        </p>
-                    )}
+            {pageTitle ? (
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
+                        Employer
+                    </p>
+                    <h1 className="truncate bg-gradient-to-r from-foreground via-foreground to-accent bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl">
+                        {pageTitle}
+                    </h1>
+                    {pageDescription ? (
+                        <p className="truncate text-sm text-muted-foreground md:text-[15px]">{pageDescription}</p>
+                    ) : null}
                 </div>
+            ) : (
+                <div className="flex-1" />
             )}
 
-            {/* Spacer if no title */}
-            {!pageTitle && <div className="flex-1" />}
-
-            {/* Right Side - User Menu */}
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
                 <EmployerUserMenu user={user} />
             </div>
         </header>

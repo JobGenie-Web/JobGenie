@@ -64,13 +64,17 @@ export function AdminProfilesClient({ admins }: AdminProfilesClientProps) {
 
     if (admins.length === 0) {
         return (
-            <div className="flex items-center justify-center h-[600px]">
-                <div className="text-center">
-                    <Shield className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No Admins Found</h3>
-                    <p className="text-muted-foreground">There are currently no administrators in your company.</p>
+            <Card variant="glass" className="flex min-h-[420px] items-center justify-center border-dashed border-primary/20">
+                <div className="px-6 py-16 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/12 ring-1 ring-primary/20">
+                        <Shield className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold tracking-tight">No admins found</h3>
+                    <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                        There are currently no administrators in your company.
+                    </p>
                 </div>
-            </div>
+            </Card>
         );
     }
 
@@ -89,8 +93,8 @@ export function AdminProfilesClient({ admins }: AdminProfilesClientProps) {
                             return (
                                 <Card
                                     key={admin.id}
-                                    className={`p-3 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50 ${isSelected
-                                        ? 'border-primary shadow-md bg-primary/5 dark:bg-primary/10'
+                                    className={`p-3 cursor-pointer ${isSelected
+                                        ? 'border-primary shadow-sm bg-primary/5 dark:bg-primary/10'
                                         : 'border-border hover:bg-accent/50'
                                         }`}
                                     onClick={() => handleAdminSelect(admin.id)}
@@ -137,8 +141,8 @@ export function AdminProfilesClient({ admins }: AdminProfilesClientProps) {
                             return (
                                 <Card
                                     key={admin.id}
-                                    className={`p-4 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50 ${isSelected
-                                        ? 'border-primary shadow-md bg-primary/5 dark:bg-primary/10'
+                                    className={`p-4 cursor-pointer ${isSelected
+                                        ? 'border-primary shadow-sm bg-primary/5 dark:bg-primary/10'
                                         : 'border-border hover:bg-accent/50'
                                         }`}
                                     onClick={() => handleAdminSelect(admin.id)}

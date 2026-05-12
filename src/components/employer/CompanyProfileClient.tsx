@@ -34,13 +34,13 @@ export function CompanyProfileClient({ company, isSuperAdmin }: CompanyProfileCl
 
     return (
         <>
-            <div className="max-w-7xl mx-auto">
-                {/* LinkedIn-Style Header with Cover */}
-                <Card className="overflow-hidden mb-4">
+            <div className="w-full">
+                <Card variant="glass" className="mb-6 overflow-hidden border-primary/15">
                     {/* Cover Photo Area */}
-                    <div className="h-8 relative">
-                        <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-                    </div>
+                    <div
+                        className="relative h-28 overflow-hidden bg-gradient-to-r from-primary/35 via-accent/25 to-primary/10"
+                        aria-hidden
+                    />
 
                     {/* Company Info Section */}
                     <CardContent className="px-6 pb-4">

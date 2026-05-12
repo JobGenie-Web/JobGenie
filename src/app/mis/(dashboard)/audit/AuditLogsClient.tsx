@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Dialog,
@@ -390,7 +390,7 @@ export function AuditLogsClient() {
                                     <TableHead className="w-24" />
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <tbody>
                                 {eventsLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={9} className="text-center py-8">
@@ -408,7 +408,10 @@ export function AuditLogsClient() {
                                     </TableRow>
                                 ) : (
                                     eventLogs.map((log) => (
-                                        <TableRow key={log.id}>
+                                        <TableRow
+                                            key={log.id}
+                                            className="border-b transition-colors duration-150 hover:bg-muted/60"
+                                        >
                                             <TableCell className="text-xs align-top">
                                                 {formatTimestamp(
                                                     log.created_at,
@@ -467,7 +470,7 @@ export function AuditLogsClient() {
                                         </TableRow>
                                     ))
                                 )}
-                            </TableBody>
+                            </tbody>
                         </Table>
                     </div>
                 </TabsContent>
@@ -513,7 +516,7 @@ export function AuditLogsClient() {
                                     <TableHead>Status</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <tbody>
                                 {errorsLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-8">
@@ -531,7 +534,10 @@ export function AuditLogsClient() {
                                     </TableRow>
                                 ) : (
                                     errorLogs.map((error) => (
-                                        <TableRow key={error.id}>
+                                        <TableRow
+                                            key={error.id}
+                                            className="border-b transition-colors duration-150 hover:bg-muted/60"
+                                        >
                                             <TableCell className="text-xs">
                                                 {formatTimestamp(
                                                     error.created_at,
@@ -557,7 +563,7 @@ export function AuditLogsClient() {
                                         </TableRow>
                                     ))
                                 )}
-                            </TableBody>
+                            </tbody>
                         </Table>
                     </div>
                 </TabsContent>

@@ -101,18 +101,18 @@ export function getInvitationJourneyDisplay(
 export function journeyVariantToCandidateClasses(v: JourneyDisplay["variant"]): string {
     switch (v) {
         case "success":
-            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
+            return "border border-primary/25 bg-primary/10 text-primary dark:border-primary/30 dark:bg-primary/[0.14] dark:text-primary";
         case "warning":
-            return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+            return "border border-amber-500/25 bg-amber-500/10 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100/90";
         case "danger":
-            return "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400";
+            return "border border-destructive/30 bg-destructive/10 text-destructive dark:bg-destructive/15 dark:text-destructive";
         case "info":
-            return "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300";
+            return "border border-accent/25 bg-accent/10 text-accent-foreground dark:border-accent/30 dark:bg-accent/[0.12] dark:text-accent-foreground";
         case "muted":
-            return "bg-muted text-muted-foreground";
+            return "border border-border/70 bg-muted text-muted-foreground";
         case "pending":
         default:
-            return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+            return "border border-border bg-muted/90 text-foreground dark:bg-muted/80 dark:text-muted-foreground";
     }
 }
 

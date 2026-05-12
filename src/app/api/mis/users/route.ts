@@ -34,11 +34,23 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Fetch all MIS users
-        const { data: misUsers, error: fetchError } = await adminClient
-            .from("mis_user")
-            .select("user_id, first_name, last_name, email, created_at")
-            .order("created_at", { ascending: false });
+        // Get pagination parameters with defaults
+        const url = new URL(request.url);
+        const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+        const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10)));
+        const offset = (page - 1) * limit;
+
+        // Fetch total count and paginated results in parallel for efficiency
+        const [{ count: totalCount }, { data: misUsers, error: fetchError }] = await Promise.all([
+            adminClient
+                .from("mis_user")
+                .select("user_id", { count: 'exact', head: true }),
+            adminClient
+                .from("mis_user")
+                .select("user_id, first_name, last_name, email, created_at")
+                .order("created_at", { ascending: false })
+                .range(offset, offset + limit - 1),
+        ]);
 
         if (fetchError) {
             console.error("Error fetching MIS users:", fetchError);
@@ -48,10 +60,22 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             users: misUsers || [],
+            pagination: {
+                page,
+                limit,
+                offset,
+                total: totalCount || 0,
+                pages: Math.ceil((totalCount || 0) / limit),
+            },
         });
+
+        // Add Cache-Control header for authenticated endpoints (short TTL for user-specific data)
+        response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=120');
+
+        return response;
     } catch (error) {
         console.error("Error fetching MIS users:", error);
         await logError({ source: "api/mis/users:GET", errorType: "APIError", message: error instanceof Error ? error.message : String(error) });

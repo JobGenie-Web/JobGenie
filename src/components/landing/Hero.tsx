@@ -15,6 +15,7 @@ import {
     Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     fadeUp,
     inViewProps,
@@ -64,18 +65,21 @@ export function Hero() {
 
     return (
         <section id="about" className="relative overflow-hidden">
-            <div className="landing-atmosphere relative">
+            <div className="landing-atmosphere mesh-bg relative">
                 <div
-                    className="landing-noise pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-multiply dark:opacity-50 dark:mix-blend-overlay"
+                    className="landing-noise pointer-events-none absolute inset-0 opacity-[0.2] mix-blend-normal dark:opacity-[0.26]"
                     aria-hidden
+                    style={{ willChange: 'auto', backfaceVisibility: 'hidden' }}
                 />
                 <div
-                    className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full blur-3xl landing-blob-a opacity-90"
+                    className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full blur-2xl landing-blob-a opacity-90"
                     aria-hidden
+                    style={{ backfaceVisibility: 'hidden' }}
                 />
                 <div
-                    className="pointer-events-none absolute -bottom-32 -right-32 h-[380px] w-[380px] rounded-full blur-3xl landing-blob-b opacity-80"
+                    className="pointer-events-none absolute -bottom-32 -right-32 h-[380px] w-[380px] rounded-full blur-2xl landing-blob-b opacity-80"
                     aria-hidden
+                    style={{ backfaceVisibility: 'hidden' }}
                 />
 
                 <LandingWatermarks variant="hero" />
@@ -92,21 +96,9 @@ export function Hero() {
                                 variants={fadeUp}
                                 className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
                             >
-                                <motion.span
-                                    animate={
-                                        reduce
-                                            ? undefined
-                                            : { rotate: [0, 12, -8, 0], scale: [1, 1.08, 1] }
-                                    }
-                                    transition={{
-                                        duration: 3.2,
-                                        repeat: Infinity,
-                                        repeatDelay: 4,
-                                        ease: 'easeInOut',
-                                    }}
-                                >
-                                    <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                                </motion.span>
+                                <span className="inline-flex text-primary" aria-hidden>
+                                    <Sparkles className="h-3.5 w-3.5 motion-safe:opacity-90" />
+                                </span>
                                 Talent OS
                             </motion.p>
 
@@ -115,28 +107,9 @@ export function Hero() {
                                 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]"
                             >
                                 Hiring that stays{' '}
-                                <motion.span
-                                    className="text-primary"
-                                    animate={
-                                        reduce
-                                            ? undefined
-                                            : {
-                                                  textShadow: [
-                                                      '0 0 0px transparent',
-                                                      '0 0 24px color-mix(in oklch, var(--primary) 35%, transparent)',
-                                                      '0 0 0px transparent',
-                                                  ],
-                                              }
-                                    }
-                                    transition={{
-                                        duration: 4,
-                                        repeat: Infinity,
-                                        repeatDelay: 2,
-                                        ease: 'easeInOut',
-                                    }}
-                                >
+                                <span className="text-primary underline decoration-primary/35 decoration-2 underline-offset-4">
                                     clear
-                                </motion.span>
+                                </span>
                                 <span className="text-muted-foreground">,</span> end to end.
                             </motion.h1>
 
@@ -159,8 +132,9 @@ export function Hero() {
                                 >
                                     <Button
                                         asChild
+                                        variant="gradient"
                                         size="lg"
-                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold shadow-md shadow-primary/20"
+                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
                                     >
                                         <Link href="/candidate/signup" className="gap-2">
                                             Join as candidate
@@ -175,9 +149,9 @@ export function Hero() {
                                 >
                                     <Button
                                         asChild
-                                        variant="outline"
+                                        variant="gradient"
                                         size="lg"
-                                        className="h-12 rounded-xl border-border bg-card px-8 text-[15px] font-semibold shadow-sm hover:bg-muted/80"
+                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
                                     >
                                         <Link href="/employer/signup" className="gap-2">
                                             Register company
@@ -212,28 +186,11 @@ export function Hero() {
                             transition={{ delay: 0.12 }}
                             className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none"
                         >
-                            <motion.div
-                                className="rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] dark:border-border/80 dark:shadow-black/40"
-                                animate={
+                            <div
+                                className={
                                     reduce
-                                        ? undefined
-                                        : {
-                                              y: [0, -7, 0],
-                                          }
-                                }
-                                transition={{
-                                    duration: 5.5,
-                                    repeat: Infinity,
-                                    ease: 'easeInOut',
-                                }}
-                                whileHover={
-                                    reduce
-                                        ? undefined
-                                        : {
-                                              scale: 1.02,
-                                              boxShadow:
-                                                  '0 28px 60px -24px color-mix(in oklch, var(--primary) 22%, transparent)',
-                                          }
+                                        ? 'rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 dark:border-border/80 dark:shadow-black/40 motion-reduce:transform-none'
+                                        : 'landing-hero-card-float rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-[1.02] dark:border-border/80 dark:shadow-black/40'
                                 }
                             >
                                 <div className="flex items-start justify-between gap-4">
@@ -281,7 +238,7 @@ export function Hero() {
                                         Verified orgs
                                     </span>
                                 </div>
-                            </motion.div>
+                            </div>
                         </motion.div>
                     </div>
 
@@ -306,85 +263,87 @@ export function Hero() {
                     </motion.div>
 
                     {/* Pathways */}
-                    <div className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8">
+                    <div className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8 md:items-stretch">
                         <motion.article
                             {...inViewProps}
                             variants={scaleIn}
-                            whileHover={reduce ? undefined : { y: -4 }}
-                            className="rounded-3xl border border-border bg-muted/45 p-8 dark:bg-muted/20"
+                            whileHover={reduce ? undefined : { y: -3 }}
+                            className="flex h-full min-h-0 rounded-3xl"
                         >
-                            <div className="flex items-center justify-between gap-3">
-                                <motion.div
-                                    whileHover={{ rotate: [0, -6, 6, 0] }}
-                                    transition={{ duration: 0.5 }}
-                                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
-                                >
-                                    <Users className="h-6 w-6" strokeWidth={1.75} />
-                                </motion.div>
-                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Candidates
-                                </span>
-                            </div>
-                            <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                Your profile, one timeline.
-                            </h2>
-                            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                                Verified identity and applications that stay readable for hiring teams.
-                            </p>
-                            <Button
-                                asChild
-                                variant="link"
-                                className="mt-6 h-auto p-0 text-base font-semibold text-primary"
+                            <Card
+                                variant="glass"
+                                className="flex h-full w-full flex-col rounded-3xl p-8"
                             >
-                                <Link href="/candidate/signup" className="gap-1">
-                                    Create account
-                                    <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            </Button>
+                                <div className="flex items-center justify-between gap-3">
+                                    <motion.div
+                                        whileHover={{ rotate: [0, -6, 6, 0] }}
+                                        transition={{ duration: 0.5 }}
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+                                    >
+                                        <Users className="h-6 w-6" strokeWidth={1.75} />
+                                    </motion.div>
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Candidates
+                                    </span>
+                                </div>
+                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
+                                    Your profile, one timeline.
+                                </h2>
+                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                                    Verified identity and applications that stay readable for hiring teams.
+                                </p>
+                                <Button
+                                    asChild
+                                    variant="link"
+                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
+                                >
+                                    <Link href="/candidate/signup" className="gap-1">
+                                        Create account
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </Card>
                         </motion.article>
 
                         <motion.article
                             {...inViewProps}
-                            variants={{
-                                hidden: { opacity: 0, scale: 0.96, y: 16 },
-                                visible: {
-                                    opacity: 1,
-                                    scale: 1,
-                                    y: 0,
-                                    transition: { duration: 0.55, ease: landingEase, delay: 0.12 },
-                                },
-                            }}
-                            whileHover={reduce ? undefined : { y: -4 }}
-                            className="rounded-3xl border border-border bg-card p-8 shadow-sm dark:bg-card/90"
+                            variants={scaleIn}
+                            whileHover={reduce ? undefined : { y: -3 }}
+                            className="flex h-full min-h-0 rounded-3xl"
                         >
-                            <div className="flex items-center justify-between gap-3">
-                                <motion.div
-                                    whileHover={{ rotate: [0, -6, 6, 0] }}
-                                    transition={{ duration: 0.5 }}
-                                    className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-primary/35 bg-background text-primary dark:bg-card"
-                                >
-                                    <Building2 className="h-6 w-6" strokeWidth={1.75} />
-                                </motion.div>
-                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Employers
-                                </span>
-                            </div>
-                            <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                Hiring ops in one trail.
-                            </h2>
-                            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                                Verification, interviews, and outcomes linked for recruiting and leadership.
-                            </p>
-                            <Button
-                                asChild
-                                variant="link"
-                                className="mt-6 h-auto p-0 text-base font-semibold text-primary"
+                            <Card
+                                variant="glass"
+                                className="flex h-full w-full flex-col rounded-3xl p-8"
                             >
-                                <Link href="/employer/signup" className="gap-1">
-                                    Register company
-                                    <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            </Button>
+                                <div className="flex items-center justify-between gap-3">
+                                    <motion.div
+                                        whileHover={{ rotate: [0, -6, 6, 0] }}
+                                        transition={{ duration: 0.5 }}
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+                                    >
+                                        <Building2 className="h-6 w-6" strokeWidth={1.75} />
+                                    </motion.div>
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Employers
+                                    </span>
+                                </div>
+                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
+                                    Hiring ops in one trail.
+                                </h2>
+                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                                    Verification, interviews, and outcomes linked for recruiting and leadership.
+                                </p>
+                                <Button
+                                    asChild
+                                    variant="link"
+                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
+                                >
+                                    <Link href="/employer/signup" className="gap-1">
+                                        Register company
+                                        <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </Card>
                         </motion.article>
                     </div>
                 </div>

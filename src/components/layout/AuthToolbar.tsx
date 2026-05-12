@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export function AuthToolbar() {
     return (
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background/90 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75 sm:h-[3.75rem] sm:px-6">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background/92 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-background/88 sm:h-[3.75rem] sm:px-6">
             <Link
                 href="/"
                 className="flex items-center gap-2.5 transition-opacity hover:opacity-90"

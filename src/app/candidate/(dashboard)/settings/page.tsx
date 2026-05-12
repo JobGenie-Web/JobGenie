@@ -1,5 +1,6 @@
-import { Settings } from 'lucide-react';
-import { CandidateLayout } from '@/components/candidate';
+import { Settings } from "lucide-react";
+import { CandidateLayout } from "@/components/candidate";
+import { PortalRichPlaceholder } from "@/components/shared/PortalRichPlaceholder";
 
 export default function SettingsPage() {
     return (
@@ -7,15 +8,13 @@ export default function SettingsPage() {
             pageTitle="Settings"
             pageDescription="Manage your account preferences and notifications"
         >
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-                <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted p-4">
-                    <Settings className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Settings Coming Soon</h3>
-                <p className="text-muted-foreground">
-                    This page is under development. Check back soon!
-                </p>
-            </div>
+            <PortalRichPlaceholder
+                icon={Settings}
+                title="Settings are almost ready"
+                description="Profile and resume controls already live under My Profile and My Resumes. For hiring updates, Invitations and Calendar stay the fastest path today."
+                primaryAction={{ label: "Edit profile", href: "/candidate/profile" }}
+                secondaryAction={{ label: "Manage resumes", href: "/candidate/resumes" }}
+            />
         </CandidateLayout>
     );
 }

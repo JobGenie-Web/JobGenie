@@ -1,9 +1,5 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { fadeUp, inViewProps } from '@/lib/motion/landing';
 
 const columns = {
     product: [
@@ -26,11 +22,7 @@ export function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <motion.footer
-            className="border-t border-border/60 bg-muted/30 dark:bg-muted/10"
-            {...inViewProps}
-            variants={fadeUp}
-        >
+        <footer className="border-t border-border/60 bg-muted/30 dark:bg-muted/10">
             <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-6 lg:px-10">
                 <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
                     <div className="lg:col-span-5">
@@ -124,6 +116,6 @@ export function Footer() {
                     </div>
                 </div>
             </div>
-        </motion.footer>
+        </footer>
     );
 }

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { EmployerSidebar } from "./EmployerSidebar";
 import { EmployerHeader } from "./EmployerHeader";
+import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
+import { PortalMain } from "@/components/layout/PortalMain";
 import { Toaster } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/server";
 
@@ -66,9 +68,11 @@ export async function EmployerLayout({ children, pageTitle, pageDescription }: E
                         pageTitle={pageTitle}
                         pageDescription={pageDescription}
                     />
-                    <main className="flex-1 overflow-auto bg-muted/30 p-4 md:p-6">
-                        {children}
-                    </main>
+                    <PageTransitionWrapper>
+                        <PortalMain variant="employer" className="p-5 md:p-8 lg:p-10">
+                            {children}
+                        </PortalMain>
+                    </PageTransitionWrapper>
                 </SidebarInset>
             </div>
             <Toaster />

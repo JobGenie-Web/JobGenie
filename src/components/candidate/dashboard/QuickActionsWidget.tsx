@@ -109,13 +109,12 @@ export function QuickActionsWidget({
                             href={action.href}
                             className={cn(
                                 "group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-4",
-                                "hover:border-primary/30 hover:shadow-sm hover:bg-muted/20",
-                                "transition-all duration-200"
+                                "hover:border-primary/30 hover:bg-muted/20"
                             )}
                         >
                             {/* Icon */}
                             <div className={cn(
-                                "flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+                                "flex h-10 w-10 items-center justify-center rounded-xl",
                                 action.iconBg, action.iconColor
                             )}>
                                 <Icon className="h-5 w-5" />
@@ -135,7 +134,7 @@ export function QuickActionsWidget({
                             )}
 
                             {/* Arrow */}
-                            <ArrowRight className="absolute top-3.5 right-3.5 h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-colors" />
+                            <ArrowRight className="absolute top-3.5 right-3.5 h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground/50" />
                         </Link>
                     );
                 })}

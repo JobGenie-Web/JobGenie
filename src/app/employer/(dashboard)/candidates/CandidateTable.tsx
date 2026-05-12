@@ -5,7 +5,6 @@ import { Users, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -22,6 +21,7 @@ import { MultiCombobox } from "@/components/ui/multi-combobox";
 import { Input } from "@/components/ui/input";
 import { CandidateDetailModal } from "./CandidateDetailModal";
 import { cn, formatIndustry } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { resolveIndustryIdsForProfile } from "@/lib/job-designations-resolve";
 import {
     getInvitationJourneyDisplay,
@@ -222,7 +222,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
     return (
         <div className="space-y-6">
             {/* Search/Filter Section */}
-            <div className="rounded-lg border bg-card p-6">
+            <Card variant="glass" className="gap-0 rounded-3xl border-primary/10 p-6">
                 <div className="space-y-4">
                     <div>
                         <h2 className="text-lg font-semibold mb-1">Search Candidates</h2>
@@ -378,11 +378,11 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                         </div>
                     )}
                 </div>
-            </div>
+            </Card>
 
             {/* Candidates Table - Only shown after search */}
             {hasSearched && (
-                <div className="rounded-lg border bg-card">
+                <Card variant="glass" className="gap-0 overflow-hidden rounded-3xl border-primary/10">
                     <div className="p-6">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -415,11 +415,11 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
-                                    <TableBody>
+                                    <tbody>
                                         {filteredCandidates.map((candidate) => (
                                             <TableRow
                                                 key={candidate.id}
-                                                className="cursor-pointer hover:bg-muted/50"
+                                                className="cursor-pointer border-b transition-colors duration-150 hover:bg-muted/60"
                                                 onClick={() => setSelectedCandidateId(candidate.id)}
                                             >
                                                 <TableCell className="font-medium">
@@ -446,7 +446,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                         variant="outline"
                                                         className={cn(
                                                             candidate.availability_status === 'available' && "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400",
-                                                            candidate.availability_status === 'open_to_opportunities' && "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                                                            candidate.availability_status === 'open_to_opportunities' && "border-primary/35 bg-primary/10 text-primary dark:border-primary/45 dark:bg-primary/15 dark:text-primary",
                                                             candidate.availability_status === 'not_looking' && "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
                                                         )}
                                                     >
@@ -488,12 +488,12 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                                                 </TableCell>
                                             </TableRow>
                                         ))}
-                                    </TableBody>
+                                    </tbody>
                                 </Table>
                             </div>
                         )}
                     </div>
-                </div>
+                </Card>
             )}
 
             {/* Candidate Detail Modal */}

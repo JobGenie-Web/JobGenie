@@ -113,10 +113,10 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" variant="gradient" className="w-full" disabled={isPending}>
                 {isPending ? (
                     <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
                         Updating Password...
                     </>
                 ) : (

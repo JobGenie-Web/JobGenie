@@ -1,11 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -18,7 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Clock, Search, XCircle, Building } from "lucide-react";
+import { CheckCircle2, Clock, Search, XCircle } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { EmployerApprovalActions } from "@/components/mis/EmployerApprovalActions";
@@ -89,7 +87,7 @@ export function EmployerTable({ companies }: EmployerTableProps) {
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <tbody>
                         {filteredCompanies.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
@@ -100,7 +98,7 @@ export function EmployerTable({ companies }: EmployerTableProps) {
                             filteredCompanies.map((company) => (
                                 <TableRow
                                     key={company.id}
-                                    className="cursor-pointer hover:bg-muted/50"
+                                    className="border-b transition-colors duration-150 hover:bg-muted/60 cursor-pointer"
                                     onClick={() => setSelectedCompanyId(company.id)}
                                 >
                                     <TableCell className="font-medium">
@@ -145,7 +143,7 @@ export function EmployerTable({ companies }: EmployerTableProps) {
                                 </TableRow>
                             ))
                         )}
-                    </TableBody>
+                    </tbody>
                 </Table>
             </div>
 

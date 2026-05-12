@@ -17,6 +17,29 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      // Cache static reference data endpoints (industries, job designations don't change frequently)
+      {
+        source: '/api/industries',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/api/job-designations',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=43200, stale-while-revalidate=86400' },
+        ],
+      },
+      {
+        source: '/api/seniority-levels',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -20,7 +20,6 @@ export default async function CompanyProfilePage() {
         redirect("/login");
     }
 
-    // Check if user is super admin
     const { data: employerInfo } = await supabase
         .from("employers")
         .select("is_super_admin")
@@ -40,10 +39,7 @@ export default async function CompanyProfilePage() {
             pageTitle="Company Profile"
             pageDescription="View and manage your company information"
         >
-            <CompanyProfileClient
-                company={companyProfile}
-                isSuperAdmin={isSuperAdmin}
-            />
+            <CompanyProfileClient company={companyProfile} isSuperAdmin={isSuperAdmin} />
         </EmployerLayout>
     );
 }

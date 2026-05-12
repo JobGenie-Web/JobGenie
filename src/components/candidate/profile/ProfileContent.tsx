@@ -19,7 +19,7 @@ function ProfileSkeleton() {
     return (
         <div className="space-y-6">
             {/* Header Skeleton */}
-            <Card className="overflow-hidden">
+            <Card variant="glass" className="overflow-hidden">
                 <Skeleton className="h-32 w-full" />
                 <div className="px-6 pb-6">
                     <Skeleton className="h-32 w-32 rounded-full -mt-16 mb-4 border-4 border-background" />
@@ -34,7 +34,7 @@ function ProfileSkeleton() {
 
             {/* Other Sections Skeletons */}
             {[1, 2, 3].map((i) => (
-                <Card key={i}>
+                <Card variant="glass" key={i}>
                     <div className="p-6">
                         <Skeleton className="h-6 w-32 mb-4" />
                         <Skeleton className="h-20 w-full" />
@@ -47,7 +47,7 @@ function ProfileSkeleton() {
 
 function ErrorState({ message }: { message: string }) {
     return (
-        <Card>
+        <Card variant="glass" className="border-destructive/20">
             <CardContent className="flex flex-col items-center justify-center py-12">
                 <div className="p-4 rounded-full bg-destructive/10 mb-4">
                     <AlertCircle className="h-8 w-8 text-destructive" />
@@ -109,7 +109,7 @@ export function ProfileContent() {
     }
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto">
+        <div className="w-full space-y-6">
             {/* Profile Header */}
             <ProfileHeader profile={profile} onProfileUpdated={refreshProfile} />
 

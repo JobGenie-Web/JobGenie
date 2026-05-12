@@ -15,6 +15,7 @@ import {
 import { Loader2, Video, MapPin, CheckCircle2, Clock4, Ban, ExternalLink, X, Calendar as CalendarIcon, Building2, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { getInvitationJourneyDisplay, normalizeEmbeddedOffer } from "@/lib/invitation-journey-status";
 
@@ -69,17 +70,17 @@ function EventDetailModal({ event, onClose }: EventDetailModalProps) {
     const colorClasses = {
         success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
         danger: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-        warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        info: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-        muted: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-        pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    }[journey.variant] || "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+        warning: "bg-primary/15 text-primary dark:bg-primary/20 dark:text-primary",
+        info: "bg-accent/15 text-accent dark:bg-accent/20 dark:text-accent-foreground",
+        muted: "bg-muted text-muted-foreground",
+        pending: "bg-primary/12 text-primary dark:bg-primary/18 dark:text-primary",
+    }[journey.variant] || "bg-muted text-muted-foreground";
 
     return (
         <>
             <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 px-4 animate-in fade-in zoom-in-95 duration-150">
-                <div className="rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+                <div className="glass-card overflow-hidden rounded-2xl border border-border shadow-2xl">
                     {/* Header */}
                     <div className="flex items-start justify-between px-5 py-4 border-b border-border gap-3">
                         <div className="min-w-0">
@@ -193,21 +194,21 @@ function EventDetailModal({ event, onClose }: EventDetailModalProps) {
 // Legend component
 function CalendarLegend() {
     return (
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-sm bg-emerald-500 inline-block" /> Confirmed
+                <span className="inline-block h-3 w-3 rounded-sm bg-emerald-500" /> Confirmed
             </span>
             <span className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-sm bg-blue-500 inline-block" /> Accepted
+                <span className="inline-block h-3 w-3 rounded-sm bg-teal-500" /> Active pipeline
             </span>
             <span className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-sm bg-amber-500 inline-block" /> Pending
+                <span className="inline-block h-3 w-3 rounded-sm bg-lime-500" /> Needs action
             </span>
             <span className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-sm bg-red-500 inline-block" /> Declined
+                <span className="inline-block h-3 w-3 rounded-sm bg-red-500" /> Declined
             </span>
             <span className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-sm bg-gray-400 inline-block" /> Canceled
+                <span className="inline-block h-3 w-3 rounded-sm bg-slate-500" /> Canceled
             </span>
         </div>
     );
@@ -251,9 +252,12 @@ export default function CandidateCalendarClient() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <Card variant="glass" className="flex min-h-[280px] items-center justify-center border-dashed border-primary/20">
+                <div className="flex flex-col items-center gap-3 py-16">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Syncing your interview timeline…</p>
+                </div>
+            </Card>
         );
     }
 
@@ -261,54 +265,61 @@ export default function CandidateCalendarClient() {
     const upcomingCount = events.filter(e => !e.resource.isCanceled && e.start >= new Date()).length;
 
     return (
-        <div className="space-y-4">
-            {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-xl border bg-card px-4 py-3">
-                    <p className="text-xs text-muted-foreground">Total Events</p>
-                    <p className="text-2xl font-bold text-foreground">{events.length}</p>
-                </div>
-                <div className="rounded-xl border bg-card px-4 py-3">
-                    <p className="text-xs text-muted-foreground">Upcoming</p>
-                    <p className="text-2xl font-bold text-primary">{upcomingCount}</p>
-                </div>
-                <div className="rounded-xl border bg-card px-4 py-3">
-                    <p className="text-xs text-muted-foreground">Confirmed</p>
-                    <p className="text-2xl font-bold text-emerald-600">{confirmedCount}</p>
-                </div>
-                <div className="rounded-xl border bg-card px-4 py-3">
-                    <p className="text-xs text-muted-foreground">Invitations</p>
-                    <p className="text-2xl font-bold text-foreground">{invitations.length}</p>
-                </div>
+        <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Card variant="glass" className="gap-0 py-4">
+                    <div className="px-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total events</p>
+                        <p className="text-2xl font-bold tabular-nums text-foreground">{events.length}</p>
+                    </div>
+                </Card>
+                <Card variant="glass" className="gap-0 py-4">
+                    <div className="px-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Upcoming</p>
+                        <p className="text-2xl font-bold tabular-nums text-primary">{upcomingCount}</p>
+                    </div>
+                </Card>
+                <Card variant="glass" className="gap-0 py-4">
+                    <div className="px-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Confirmed</p>
+                        <p className="text-2xl font-bold tabular-nums text-primary">{confirmedCount}</p>
+                    </div>
+                </Card>
+                <Card variant="glass" className="gap-0 py-4">
+                    <div className="px-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Invitations</p>
+                        <p className="text-2xl font-bold tabular-nums text-foreground">{invitations.length}</p>
+                    </div>
+                </Card>
             </div>
 
-            {/* Legend */}
-            <div className="rounded-xl border bg-card px-4 py-3">
-                <CalendarLegend />
-            </div>
+            <Card variant="glass" className="gap-0 py-4">
+                <div className="px-4">
+                    <CalendarLegend />
+                </div>
+            </Card>
 
-            {/* Calendar */}
-            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <Card variant="glass" className="gap-0 overflow-hidden shadow-md">
                 <div
                     className="p-4"
                     style={{ height: 680 }}
                 >
                     {events.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-                            <div className="h-14 w-14 rounded-xl bg-muted/50 flex items-center justify-center">
-                                <CalendarIcon className="h-7 w-7 text-muted-foreground" />
+                        <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 ring-1 ring-primary/20">
+                                <CalendarIcon className="h-8 w-8 text-primary" />
                             </div>
-                            <div>
-                                <p className="text-base font-semibold text-foreground">No interviews scheduled</p>
-                                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                                    Once you receive and accept interview invitations, they will appear here.
+                            <div className="max-w-sm space-y-2">
+                                <p className="text-base font-semibold text-foreground">No interviews on the calendar yet</p>
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                    Accept an invitation with proposed slots and confirmed times will mirror here automatically.
                                 </p>
                             </div>
                             <Link
                                 href="/candidate/invitations"
-                                className="text-sm font-semibold text-primary hover:underline"
+                                className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
                             >
-                                View all invitations →
+                                Open invitations
                             </Link>
                         </div>
                     ) : (
@@ -341,7 +352,7 @@ export default function CandidateCalendarClient() {
                         />
                     )}
                 </div>
-            </div>
+            </Card>
 
             {/* Event detail modal */}
             {selectedEvent && (

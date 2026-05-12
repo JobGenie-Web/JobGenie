@@ -4,7 +4,6 @@ import { formatTimestamp } from "@/lib/date-utils";
 import { Users, Shield } from "lucide-react";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -33,6 +32,7 @@ interface MISUserTableProps {
 }
 
 export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
+
     // Loading state
     if (isLoading) {
         return (
@@ -47,7 +47,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                             <TableHead>Created Date</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <tbody>
                         {[1, 2, 3].map((i) => (
                             <TableRow key={i}>
                                 <TableCell>
@@ -64,7 +64,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                                 </TableCell>
                             </TableRow>
                         ))}
-                        </TableBody>
+                        </tbody>
                     </Table>
                 </div>
             </div>
@@ -81,7 +81,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No MIS Users Yet</h3>
                     <p className="text-sm text-muted-foreground max-w-sm">
-                        Get started by adding your first MIS user. Click the "Add MIS User" button above to send an invitation.
+                        Get started by adding your first MIS user. Click the &quot;Add MIS User&quot; button above to send an invitation.
                     </p>
                 </div>
             </div>
@@ -101,9 +101,12 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                             <TableHead>Created Date</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <tbody>
                         {users.map((user) => (
-                            <TableRow key={user.user_id}>
+                            <TableRow
+                                key={user.user_id}
+                                className="border-b transition-colors duration-150 hover:bg-muted/60"
+                            >
                                 <TableCell className="font-medium">
                                     <div className="flex items-center gap-2">
                                         {user.first_name} {user.last_name}
@@ -130,7 +133,7 @@ export function MISUserTable({ users, isLoading = false }: MISUserTableProps) {
                                 </TableCell>
                             </TableRow>
                         ))}
-                    </TableBody>
+                    </tbody>
                 </Table>
             </div>
         </div>

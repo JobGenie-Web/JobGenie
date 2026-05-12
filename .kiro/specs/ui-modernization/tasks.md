@@ -8,7 +8,7 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
 
 ## Tasks
 
-- [ ] 1. Extend `globals.css` with OKLCH design tokens and utility classes
+- [x] 1. Extend `globals.css` with OKLCH design tokens and utility classes
   - Add `--accent-violet`, `--accent-amber`, `--accent-rose`, `--accent-sky` custom properties to both `:root` and `.dark` scopes using `oklch()` syntax
   - Add `--gradient-primary` and `--gradient-accent` CSS custom properties as `linear-gradient` values
   - Add `--shadow-glass`, `--shadow-glow-primary`, and `--shadow-glow-accent` shadow tokens
@@ -29,14 +29,14 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
     - Parse the compiled CSS and assert `--background` chroma ≤ 0.008 in light mode, lightness 0.12–0.16 in dark mode, and `--sidebar` lightness 0.12–0.14 in dark mode
     - **Validates: Requirements 9.1, 9.2, 9.4**
 
-- [ ] 2. Add `variant="glass"` to the `Card` component
+- [x] 2. Add `variant="glass"` to the `Card` component
   - Add `CardProps` interface extending `React.ComponentProps<"div">` with optional `variant?: "default" | "glass"` prop
   - Update the `Card` function signature to destructure `variant = "default"` and apply `cn(..., variant === "glass" && "glass-card", className)`
   - Ensure all sub-components (`CardHeader`, `CardTitle`, `CardContent`, `CardFooter`, `CardDescription`) remain structurally unchanged
   - Verify existing usages without the prop continue to render identically (additive change only)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 13.2_
 
-- [ ] 3. Add `variant="gradient"` to the `Button` component
+- [x] 3. Add `variant="gradient"` to the `Button` component
   - Add a `gradient` entry to the `cva` variant map in `button.tsx` with the `bg-[linear-gradient(135deg,var(--primary),var(--accent))]` background, `before:` pseudo-element overlay for hover brightening, `min-h-[44px] min-w-[44px]` touch target, and `disabled:opacity-60` state
   - Ensure the hover transition completes within 200ms and the disabled state suppresses the hover animation
   - Verify white foreground text is applied and the variant works in both light and dark themes
@@ -47,7 +47,7 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
     - Compute contrast ratio of white text against the darkest gradient point (`--primary`) in both light and dark themes and assert ≥ 4.5:1
     - **Validates: Requirements 2.3, 3.4**
 
-- [ ] 4. Create the shared Framer Motion variant library
+- [x] 4. Create the shared Framer Motion variant library
   - Create `src/lib/motion/variants.ts` and export: `ease`, `pageVariants`, `cardVariants`, `statCardVariants`, `listItemVariants`, `tableRowVariants`, `authCardVariants`, `statCardContainerVariants`, `tableContainerVariants`
   - Export `reducedMotionVariants` record mapping each variant name to an opacity-only version with 100ms duration
   - Export `getVariants(name, prefersReducedMotion: boolean): Variants` helper function
@@ -64,40 +64,40 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
     - For each variant returned by `getVariants(name, true)`, assert no `y`, `x`, or `scale` properties appear in `initial` or `animate`, and all transition durations are ≤ 100ms
     - **Validates: Requirements 6.5, 7.4, 8.4, 11.6**
 
-- [ ] 5. Checkpoint — Ensure all tests pass
+- [x] 5. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Create `PageTransitionWrapper` client component
+- [x] 6. Create `PageTransitionWrapper` client component
   - Create `src/components/layout/PageTransitionWrapper.tsx` as a `"use client"` component
   - Use `usePathname()` as the `key` prop on `motion.div` inside `AnimatePresence mode="wait"`
   - Call `getVariants("pageVariants", prefersReducedMotion ?? false)` and apply `variants`, `initial="initial"`, `animate="animate"`, `exit="exit"` to the `motion.div`
   - Apply `className="flex-1 overflow-auto"` to the wrapper `motion.div`
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 13.6_
 
-- [ ] 7. Create `AuthCardAnimator` client component
+- [x] 7. Create `AuthCardAnimator` client component
   - Create `src/components/layout/AuthCardAnimator.tsx` as a `"use client"` component
   - Use `getVariants("authCardVariants", prefersReducedMotion ?? false)` and wrap children in a `motion.div` with `initial="initial"` and `animate="animate"`
   - Accept `children` and optional `className` props
   - _Requirements: 10.5, 13.6_
 
-- [ ] 8. Apply page transitions to all three portal layouts
+- [x] 8. Apply page transitions to all three portal layouts
   - In `MISLayout`, replace the `<main>` element with `<PageTransitionWrapper>` wrapping a `<div className="bg-muted/30 p-4 md:p-6 min-h-full">`
   - Apply the same change to `CandidateLayout` and `EmployerLayout`
   - Verify the sidebar and header remain outside the wrapper and do not animate on route change
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 9. Modernize `MISSidebar`
+- [x] 9. Modernize `MISSidebar`
   - Replace the logo container `bg-primary` class with `style={{ background: "var(--gradient-primary)" }}`
   - Replace the active item's `bg-sidebar-accent border-r-3 border-green-500` classes with the `sidebar-item-active` utility class
   - Add `hover:bg-sidebar-accent/8 transition-colors duration-150` to the `SidebarMenuButton` base classes for hover state
   - Ensure `sidebar-item-active` is applied unconditionally (not gated on `!isCollapsed`) so the gradient and glow persist in collapsed/icon-only mode
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ] 10. Modernize `CandidateSidebar`
+- [x] 10. Modernize `CandidateSidebar`
   - Apply the same sidebar changes as task 9 (gradient logo container, `sidebar-item-active` class, hover transition, collapsed-state preservation)
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ] 11. Modernize `EmployerSidebar`
+- [x] 11. Modernize `EmployerSidebar`
   - Apply the same sidebar changes as task 9 (gradient logo container, `sidebar-item-active` class, hover transition, collapsed-state preservation)
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
@@ -106,10 +106,10 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
     - For each portal sidebar, assert that exactly one nav item has `sidebar-item-active` applied when a route is active, and no other item in the same sidebar has that class simultaneously
     - **Validates: Requirements 5.1, 5.2**
 
-- [ ] 12. Checkpoint — Ensure all tests pass
+- [x] 12. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Modernize `DashboardStatsCard` with Framer Motion animations
+- [x] 13. Modernize `DashboardStatsCard` with Framer Motion animations
   - Wrap the outer `div` in `motion.div` using `statCardVariants` (via `getVariants`) with `initial="initial"` and `animate="animate"`
   - Add `whileHover={{ y: -2, boxShadow: "var(--shadow-glow-primary)" }}` to the `motion.div`
   - Replace flat `iconBg` color map entries with OKLCH gradient backgrounds using the new accent tokens (`--accent-sky`, `--primary`, `--accent-amber`, `--accent-violet`, `--accent-rose`)
@@ -117,7 +117,7 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
   - Wrap the stat card grid/row in a `motion.div` with `statCardContainerVariants` to achieve stagger effect
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 14. Apply animated table rows to MIS portal tables
+- [-] 14. Apply animated table rows to MIS portal tables
   - In `MISUserTable` (and other MIS data tables), replace `<tbody>` with `<motion.tbody variants={tableContainerVariants} initial="initial" animate="animate">`
   - Replace `<TableRow>` (or `<tr>`) with `<motion.tr>` using `getVariants("tableRowVariants", prefersReducedMotion ?? false)` for rows at index < 20, and `variants={undefined}` for rows at index ≥ 20
   - Add `className="border-b transition-colors duration-150 hover:bg-muted/60"` to each `motion.tr` for the CSS hover state
@@ -128,11 +128,11 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
     - For a table rendered with N > 20 rows, assert rows at index ≥ 20 have `variants={undefined}` and rows at index < 20 have `tableRowVariants` applied
     - **Validates: Requirements 7.3**
 
-- [ ] 15. Apply animated table rows to Candidate and Employer portal tables
+- [x] 15. Apply animated table rows to Candidate and Employer portal tables
   - Apply the same `motion.tbody` / `motion.tr` pattern from task 14 to `CandidateTable` and any Employer portal data tables
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 16. Modernize `AuthShell.tsx` and auth form components
+- [x] 16. Modernize `AuthShell.tsx` and auth form components
   - Add `mesh-bg` class to the outer container `div` in `AuthShell.tsx`
   - Replace the form card `div` with `<Card variant="glass">` and wrap it in `<AuthCardAnimator>`
   - Update the submit button in `CandidateLoginForm`, `MISLoginForm`, `ForgotPasswordForm`, `SetupPasswordForm`, `ResetPasswordForm`, and `UniversalLoginForm` to `variant="gradient"`
@@ -140,19 +140,19 @@ Purely visual upgrade across all three portals (MIS, Candidate, Employer) and th
   - In each auth form component's loading state, replace the static spinner with a `<motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>` wrapping `<Loader2>`
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6_
 
-- [ ] 17. Modernize `Hero.tsx` on the landing page
+- [x] 17. Modernize `Hero.tsx` on the landing page
   - Add `mesh-bg` class to the outer `<section>` wrapper alongside the existing `landing-atmosphere` class
   - Update the two hero pathway cards (`motion.article`) to use `<Card variant="glass">` with `whileHover` adding `borderColor: "oklch(var(--primary) / 0.6)"` and `boxShadow: "var(--shadow-glow-primary)"`
   - Update the "Get Started Free" and "Start Hiring" CTA buttons to `variant="gradient"`
   - _Requirements: 11.1, 11.2, 11.3_
 
-- [ ] 18. Modernize `Features.tsx` on the landing page
+- [x] 18. Modernize `Features.tsx` on the landing page
   - Update the `viewport` prop on feature card `whileInView` animations to `{ once: true, margin: "-80px" }`
   - Update feature card icon containers to add `group-hover:bg-primary group-hover:text-white group-hover:border-primary/0 transition-colors duration-200` for the solid fill hover transition
   - Ensure `prefers-reduced-motion` guard renders all elements in final visible state without motion
   - _Requirements: 11.4, 11.5, 11.6_
 
-- [ ] 19. Final checkpoint — Ensure all tests pass
+- [x] 19. Final checkpoint — Ensure all tests pass
   - Run `next build` and confirm it completes without TypeScript or ESLint errors introduced by the modernization
   - Ensure all tests pass, ask the user if questions arise.
 

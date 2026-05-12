@@ -63,16 +63,18 @@ export function EmployerSetupPasswordForm({ token }: { token: string }) {
 
             {/* Success/Error Message */}
             {state?.message && (
-                <div
-                    className={cn(
-                        "rounded-lg p-4 text-sm flex items-start gap-3",
-                        state.success
-                            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800"
-                            : "bg-destructive/10 text-destructive border border-destructive/20"
-                    )}
-                >
-                    {state.success && <CheckCircle2 className="h-5 w-5 mt-0.5" />}
-                    <span>{state.message}</span>
+                <div>
+                    <div
+                        className={cn(
+                            "rounded-lg p-4 text-sm flex items-start gap-3",
+                            state.success
+                                ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800"
+                                : "bg-destructive/10 text-destructive border border-destructive/20"
+                        )}
+                    >
+                        {state.success && <CheckCircle2 className="h-5 w-5 mt-0.5" />}
+                        <span>{state.message}</span>
+                    </div>
                 </div>
             )}
 
@@ -149,10 +151,10 @@ export function EmployerSetupPasswordForm({ token }: { token: string }) {
             </FormField>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+            <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isPending}>
                 {isPending ? (
                     <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
                         Setting Up Password...
                     </>
                 ) : (

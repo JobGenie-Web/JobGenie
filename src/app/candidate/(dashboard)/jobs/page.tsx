@@ -1,5 +1,6 @@
-import { Briefcase } from 'lucide-react';
-import { CandidateLayout } from '@/components/candidate';
+import { Briefcase } from "lucide-react";
+import { CandidateLayout } from "@/components/candidate";
+import { PortalRichPlaceholder } from "@/components/shared/PortalRichPlaceholder";
 
 export default function JobsPage() {
     return (
@@ -7,15 +8,13 @@ export default function JobsPage() {
             pageTitle="Browse Jobs"
             pageDescription="Discover new opportunities that match your skills"
         >
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-                <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted p-4">
-                    <Briefcase className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Jobs Coming Soon</h3>
-                <p className="text-muted-foreground">
-                    Browse available jobs once employers start posting.
-                </p>
-            </div>
+            <PortalRichPlaceholder
+                icon={Briefcase}
+                title="Job board goes live soon"
+                description="Employers are onboarding now. While listings are being prepared, use Invitations to manage active interviews and your Dashboard for status at a glance."
+                primaryAction={{ label: "Go to invitations", href: "/candidate/invitations" }}
+                secondaryAction={{ label: "Back to overview", href: "/candidate/dashboard" }}
+            />
         </CandidateLayout>
     );
 }

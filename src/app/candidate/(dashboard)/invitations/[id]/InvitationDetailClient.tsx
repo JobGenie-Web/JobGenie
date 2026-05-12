@@ -330,12 +330,12 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     );
 
     const heroVariantClass: Record<typeof journey.variant, string> = {
-        pending: "bg-amber-500",
-        info: "bg-sky-500",
-        success: "bg-green-500",
-        warning: "bg-orange-500",
-        danger: "bg-red-500",
-        muted: "bg-gray-500",
+        pending: "bg-gradient-to-r from-primary/95 to-primary text-primary-foreground",
+        info: "bg-gradient-to-r from-accent to-primary text-primary-foreground",
+        success: "bg-gradient-to-r from-emerald-600 to-primary text-white",
+        warning: "bg-gradient-to-r from-primary to-emerald-800 text-primary-foreground",
+        danger: "bg-red-600 text-white",
+        muted: "bg-muted-foreground/80 text-primary-foreground",
     };
 
     let StatusIcon = AlertCircle;
@@ -359,8 +359,8 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
     return (
         <div className="max-w-5xl mx-auto ">
             {/* Hero Section - Company & Job */}
-            <Card className="overflow-hidden mb-6">
-                <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-6">
+            <Card variant="glass" className="mb-6 overflow-hidden border-primary/20 shadow-xl ring-1 ring-primary/10">
+                <div className="relative bg-gradient-to-br from-primary/[0.09] via-card to-accent/[0.07] p-6 md:p-8">
                     <div className="flex items-start gap-6">
                         {/* Company Logo */}
                         {invitation.company.logo_url && (
@@ -602,7 +602,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             <Separator />
                                             <div className="flex items-center gap-3">
                                                 {invitation.interview_mode === 'online' ? (
-                                                    <Video className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                                    <Video className="h-5 w-5 shrink-0 text-primary" />
                                                 ) : (
                                                     <MapPinned className="h-5 w-5 text-primary flex-shrink-0" />
                                                 )}
@@ -816,23 +816,23 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
 
             {/* PENDING CONFIRMATION STATUS */}
             {isPendingConfirmation && invitation.selected_time_slot && (
-                <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
+                <Card className="border-primary/25 bg-primary/[0.04] dark:bg-primary/10">
                     <CardContent className="p-6">
-                        <div className="flex items-start gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center flex-shrink-0">
-                                <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        <div className="mb-4 flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+                                <Clock className="h-5 w-5 text-primary" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">Awaiting Employer Confirmation</h3>
-                                <p className="text-sm text-orange-600 dark:text-orange-400">
-                                    You've accepted this invitation. The employer will confirm the final details shortly.
+                                <h3 className="mb-1 font-semibold text-foreground">Awaiting employer confirmation</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    You&apos;ve accepted this invitation. The employer will confirm the final details shortly.
                                 </p>
                             </div>
                         </div>
 
-                        <div className="space-y-3 bg-white dark:bg-gray-900 rounded-lg p-4 border border-orange-200">
+                        <div className="space-y-3 rounded-lg border border-primary/20 bg-card/80 p-4 dark:bg-card/40">
                             <div className="flex items-center gap-3">
-                                <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                                <Calendar className="h-5 w-5 shrink-0 text-primary" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Selected Date</p>
                                     <p className="font-semibold">{formatUTCDate(invitation.selected_time_slot.date, "EEEE, MMMM d, yyyy")}</p>
@@ -840,7 +840,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                                <Clock className="h-5 w-5 shrink-0 text-primary" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Selected Time</p>
                                     <p className="font-semibold">{formatUTCTime(invitation.selected_time_slot.date, invitation.selected_time_slot.time)}</p>
@@ -852,9 +852,9 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                     <Separator />
                                     <div className="flex items-center gap-3">
                                         {invitation.interview_mode === 'online' ? (
-                                            <Video className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                                            <Video className="h-5 w-5 shrink-0 text-primary" />
                                         ) : (
-                                            <MapPinned className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                                            <MapPinned className="h-5 w-5 shrink-0 text-primary" />
                                         )}
                                         <div>
                                             <p className="text-sm text-muted-foreground">Preferred Mode</p>
@@ -868,7 +868,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                         <Button
                             variant="outline"
                             size="sm"
-                            className="w-full mt-4 border-orange-200 hover:bg-orange-100 dark:hover:bg-orange-950/30"
+                            className="mt-4 w-full border-primary/25 hover:bg-primary/10"
                             onClick={handleCancelAcceptance}
                             disabled={isSubmitting}
                         >
@@ -1067,7 +1067,7 @@ export default function InvitationDetailClient({ invitationId }: { invitationId:
                                             <span>Interview Mode</span>
                                             <span className="font-semibold text-foreground flex items-center gap-2">
                                                 {selectedMode === 'online' ? (
-                                                    <><Video className="h-4 w-4 text-blue-600" /> Online</>
+                                                    <><Video className="h-4 w-4 text-primary" /> Online</>
                                                 ) : (
                                                     <><MapPinned className="h-4 w-4 text-green-600" /> Physical</>
                                                 )}

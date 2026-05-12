@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmployerLayout } from "@/components/employer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Phone, Briefcase, Building2, MapPin, User } from "lucide-react";
@@ -39,130 +39,158 @@ export default async function EmployerProfilePage() {
             pageTitle="Employer Profile"
             pageDescription="View and manage your personal information"
         >
-            <div className="space-y-6 max-w-4xl">
-                {/* Profile Header Card */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex flex-col md:flex-row gap-6 items-start">
-                            {/* Profile Image */}
-                            <Avatar className="h-24 w-24 border-4 border-border">
-                                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="space-y-6">
+                        <Card variant="glass" className="overflow-hidden border-primary/15">
+                            <CardContent className="relative pt-8">
+                                <div
+                                    className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/25 via-accent/15 to-transparent"
+                                    aria-hidden
+                                />
+                                <div className="relative flex flex-col gap-6 md:flex-row md:items-start">
+                                    <Avatar className="h-24 w-24 border-4 border-background shadow-lg ring-2 ring-primary/20">
+                                        <AvatarFallback className="bg-primary/15 text-2xl font-semibold text-primary">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0 flex-1 space-y-3">
+                                        <div>
+                                            <h2 className="text-2xl font-bold tracking-tight text-foreground">{fullName}</h2>
+                                            {employerProfile.job_title ? (
+                                                <p className="text-muted-foreground">{employerProfile.job_title}</p>
+                                            ) : null}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {employerProfile.department ? (
+                                                <Badge className="border-primary/25 bg-primary/10 text-primary">
+                                                    <Building2 className="mr-1 h-3 w-3" />
+                                                    {employerProfile.department}
+                                                </Badge>
+                                            ) : null}
+                                            {employerProfile.designation ? (
+                                                <Badge variant="outline" className="border-border/80">
+                                                    <User className="mr-1 h-3 w-3" />
+                                                    {employerProfile.designation}
+                                                </Badge>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Basic Info */}
-                            <div className="flex-1 space-y-3">
-                                <div>
-                                    <h2 className="text-2xl font-bold">{fullName}</h2>
-                                    {employerProfile.job_title && (
-                                        <p className="text-muted-foreground">{employerProfile.job_title}</p>
-                                    )}
+                        <Card variant="glass" className="border-primary/10">
+                            <CardHeader>
+                                <CardTitle>Contact information</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12">
+                                        <Mail className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Email address</p>
+                                        <p className="font-medium">{employerProfile.email}</p>
+                                    </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-2">
-                                    {employerProfile.department && (
-                                        <Badge variant="secondary">
-                                            <Building2 className="h-3 w-3 mr-1" />
-                                            {employerProfile.department}
-                                        </Badge>
-                                    )}
-                                    {employerProfile.designation && (
-                                        <Badge variant="outline">
-                                            <User className="h-3 w-3 mr-1" />
-                                            {employerProfile.designation}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                                {employerProfile.phone ? (
+                                    <>
+                                        <Separator />
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12">
+                                                <Phone className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Phone number</p>
+                                                <p className="font-medium">{formatPhoneNumber(employerProfile.phone)}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : null}
 
-                {/* Contact Information */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Contact Information</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Mail className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Email Address</p>
-                                <p className="font-medium">{employerProfile.email}</p>
-                            </div>
-                        </div>
-
-                        {employerProfile.phone && (
-                            <>
                                 <Separator />
-                                <div className="flex items-center gap-3">
-                                    <Phone className="h-5 w-5 text-muted-foreground" />
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12">
+                                        <MapPin className="h-5 w-5 text-primary" />
+                                    </div>
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium">{formatPhoneNumber(employerProfile.phone)}</p>
+                                        <p className="text-sm text-muted-foreground">Address</p>
+                                        <p className="font-medium">{employerProfile.address}</p>
                                     </div>
                                 </div>
-                            </>
+                            </CardContent>
+                        </Card>
+
+                        {(employerProfile.job_title || employerProfile.department || employerProfile.designation) && (
+                            <Card variant="glass" className="border-primary/10">
+                                <CardHeader>
+                                    <CardTitle>Professional details</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {employerProfile.job_title ? (
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12">
+                                                <Briefcase className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Job title</p>
+                                                <p className="font-medium">{employerProfile.job_title}</p>
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    {employerProfile.department ? (
+                                        <>
+                                            <Separator />
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12">
+                                                    <Building2 className="h-5 w-5 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Department</p>
+                                                    <p className="font-medium">{employerProfile.department}</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : null}
+
+                                    {employerProfile.designation ? (
+                                        <>
+                                            <Separator />
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12">
+                                                    <User className="h-5 w-5 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Designation</p>
+                                                    <p className="font-medium">{employerProfile.designation}</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : null}
+                                </CardContent>
+                            </Card>
                         )}
+                    </div>
 
-                        <Separator />
-                        <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Address</p>
-                                <p className="font-medium">{employerProfile.address}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Professional Details */}
-                {(employerProfile.job_title || employerProfile.department || employerProfile.designation) && (
-                    <Card>
+                    <Card variant="glass" className="h-fit border-primary/15 lg:sticky lg:top-24">
                         <CardHeader>
-                            <CardTitle>Professional Details</CardTitle>
+                            <CardTitle className="text-base">At a glance</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {employerProfile.job_title && (
-                                <div className="flex items-center gap-3">
-                                    <Briefcase className="h-5 w-5 text-muted-foreground" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Job Title</p>
-                                        <p className="font-medium">{employerProfile.job_title}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {employerProfile.department && (
-                                <>
-                                    <Separator />
-                                    <div className="flex items-center gap-3">
-                                        <Building2 className="h-5 w-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Department</p>
-                                            <p className="font-medium">{employerProfile.department}</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
-                            {employerProfile.designation && (
-                                <>
-                                    <Separator />
-                                    <div className="flex items-center gap-3">
-                                        <User className="h-5 w-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Designation</p>
-                                            <p className="font-medium">{employerProfile.designation}</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                        <CardContent className="space-y-3 text-sm text-muted-foreground">
+                            <p>
+                                Need to rotate legal contacts or update billing details? Super admins can adjust those
+                                from <span className="font-medium text-foreground">Company Profile</span>.
+                            </p>
+                            <Separator />
+                            <p>
+                                Invitations and calendar alerts use the email and phone listed here—double-check before
+                                scheduling cross-timezone panels.
+                            </p>
                         </CardContent>
                     </Card>
-                )}
-            </div>
+                </div>
         </EmployerLayout>
     );
 }

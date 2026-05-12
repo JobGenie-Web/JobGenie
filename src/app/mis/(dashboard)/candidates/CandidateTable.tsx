@@ -5,7 +5,6 @@ import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -188,9 +187,12 @@ export function CandidateTable({ candidates }: CandidateTableProps) {
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
-                                <TableBody>
+                                <tbody>
                                     {filteredCandidates.map((candidate) => (
-                                        <TableRow key={candidate.id}>
+                                        <TableRow
+                                            key={candidate.id}
+                                            className="border-b transition-colors duration-150 hover:bg-muted/60"
+                                        >
                                             <TableCell className="font-medium">
                                                 {candidate.first_name} {candidate.last_name}
                                             </TableCell>
@@ -215,7 +217,7 @@ export function CandidateTable({ candidates }: CandidateTableProps) {
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                </TableBody>
+                                </tbody>
                             </Table>
                         </div>
                     )}

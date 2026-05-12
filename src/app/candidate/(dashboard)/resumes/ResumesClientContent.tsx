@@ -127,7 +127,7 @@ export function ResumesClientContent() {
                         <Skeleton className="h-4 w-64" />
                     </div>
                 </div>
-                <Card>
+                <Card variant="glass">
                     <CardContent className="p-6">
                         <Skeleton className="h-40 w-full" />
                     </CardContent>
@@ -138,7 +138,7 @@ export function ResumesClientContent() {
 
     return (
         <div className="space-y-6">
-            <Card>
+            <Card variant="glass" className="border-primary/15">
                 <CardHeader>
                     <CardTitle>Current Resume</CardTitle>
                     <CardDescription>
@@ -152,7 +152,7 @@ export function ResumesClientContent() {
                             <p>{error}</p>
                         </div>
                     ) : !resumeData?.resume_url ? (
-                        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                        <div className="rounded-2xl border-2 border-dashed border-primary/25 bg-primary/[0.03] py-12 text-center dark:bg-primary/[0.06]">
                             <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                             <h3 className="text-lg font-medium">No Resume Uploaded</h3>
                             <p className="text-muted-foreground mb-4">
@@ -175,8 +175,8 @@ export function ResumesClientContent() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="flex items-center p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
-                                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mr-4">
+                            <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/40 p-4 backdrop-blur-sm sm:flex-row sm:items-center">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/15">
                                     <FileText className="h-6 w-6 text-primary" />
                                 </div>
                                 <div className="flex-1">
