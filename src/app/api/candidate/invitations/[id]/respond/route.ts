@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logBusiness, logError } from "@/lib/logger";
 
@@ -8,11 +9,11 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
         const { action, selected_time_slot, request_reschedule, reschedule_reason } = await request.json();
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
 
         if (!user) {
             return NextResponse.json(
@@ -20,6 +21,8 @@ export async function POST(
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get candidate record
         const { data: candidate, error: candidateError } = await supabase

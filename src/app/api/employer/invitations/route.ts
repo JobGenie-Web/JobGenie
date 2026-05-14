@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
 import { getUserTimezoneByEmail } from "@/lib/user-timezone";
@@ -9,10 +10,10 @@ import { logBusiness, logError } from "@/lib/logger";
 // GET /api/employer/invitations - Fetch all invitations for the company
 export async function GET(request: Request) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
 
         if (!user) {
             return NextResponse.json(
@@ -20,6 +21,8 @@ export async function GET(request: Request) {
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get employer record
         const { data: employer, error: employerError } = await supabase
@@ -98,10 +101,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
 
         if (!user) {
             return NextResponse.json(
@@ -109,6 +112,8 @@ export async function POST(request: Request) {
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Parse request body
         const body = await request.json();

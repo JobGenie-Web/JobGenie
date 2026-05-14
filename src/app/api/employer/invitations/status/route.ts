@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
 export async function GET(request: Request) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
         const { searchParams } = new URL(request.url);
         const jobId = searchParams.get("jobId");
         const candidateId = searchParams.get("candidateId");
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
         }
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
 
         if (!user) {
             return NextResponse.json(
@@ -25,6 +26,8 @@ export async function GET(request: Request) {
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Check for existing invitation - single optimized query
         const { data: invitation, error } = await supabase

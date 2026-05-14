@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
@@ -10,10 +11,10 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
 
         if (!user) {
             return NextResponse.json(
@@ -21,6 +22,8 @@ export async function GET(
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get candidate record
         const { data: candidate, error: candidateError } = await supabase

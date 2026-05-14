@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logBusiness, logError } from "@/lib/logger";
 import { sendInterviewInvitationEmail } from "@/lib/interview-emails";
@@ -8,7 +9,7 @@ import { getUserTimezoneByEmail } from "@/lib/user-timezone";
 // Create the next interview round after a candidate has been advanced
 export async function POST(request: Request) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
         const body = await request.json();
         const { 
             previous_round_id, 
@@ -43,13 +44,15 @@ export async function POST(request: Request) {
         }
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
         if (!user) {
             return NextResponse.json(
                 { success: false, error: "Unauthorized" },
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get employer record
         const { data: employer, error: employerError } = await supabase
