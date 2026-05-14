@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logBusiness, logError } from "@/lib/logger";
 
@@ -9,7 +10,7 @@ export async function POST(
     { params }: { params: Promise<{ roundId: string }> }
 ) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
         const { roundId } = await params;
         const body = await request.json();
         const { action, selected_time_slot, interview_mode } = body;
@@ -39,13 +40,15 @@ export async function POST(
         }
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
         if (!user) {
             return NextResponse.json(
                 { success: false, error: "Unauthorized" },
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get candidate record
         const { data: candidate, error: candidateError } = await supabase

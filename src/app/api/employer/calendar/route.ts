@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
@@ -8,12 +9,14 @@ export const dynamic = 'force-dynamic';
 // Returns all interview events for the employer's company calendar (invitations + rounds)
 export async function GET() {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
         if (!user) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
+
+        const supabase = createAdminClient();
 
         const { data: employer, error: employerError } = await supabase
             .from('employers')

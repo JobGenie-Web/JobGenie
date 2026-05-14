@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
@@ -9,17 +10,19 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const supabase = await createClient();
+        const authClient = await createClient();
         const { id: invitationId } = await params;
 
         // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await authClient.auth.getUser();
         if (!user) {
             return NextResponse.json(
                 { success: false, error: "Unauthorized" },
                 { status: 401 }
             );
         }
+
+        const supabase = createAdminClient();
 
         // Get employer record
         const { data: employer } = await supabase
