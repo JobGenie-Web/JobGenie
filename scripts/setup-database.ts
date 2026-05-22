@@ -14,17 +14,16 @@
  *   npm run db:setup             — migrate schema THEN apply policies
  *   npm run db:reset             — drop everything, remigrate, apply policies
  *
- * What it applies (in order):
- *   1. prisma/complete_rls_policies.sql
- *      • SECURITY DEFINER helper functions (is_mis_user, is_candidate, is_employer)
- *      • Table-level GRANTs for the authenticated / anon roles
- *      • ALTER TABLE … ENABLE ROW LEVEL SECURITY for all public tables
- *      • Performance indexes for RLS subquery columns
+ * What it applies:
+ *   database/complete_migration.sql
+ *      • Extensions (pg_cron, pg_net)
+ *      • SECURITY DEFINER helper functions
+ *      • Table-level GRANTs
+ *      • ALTER TABLE … ENABLE ROW LEVEL SECURITY for all tables
+ *      • Performance indexes
  *      • All RLS policies for every table
- *   2. supabase/storage_rls_policies.sql
- *      • Ensures all storage buckets exist with correct settings
- *      • All RLS policies for storage.objects (profile-images, company-logos,
- *        resume, resume_copy, br-certificates)
+ *      • Notification system (triggers and functions)
+ *      • Storage RLS policies
  *
  * Environment (loaded from .env / .env.local):
  *   DATABASE_URL — direct Postgres connection string
@@ -44,12 +43,8 @@ loadEnvConfig(process.cwd());
 
 const POLICY_FILES = [
     {
-        label: "Table RLS policies, grants & helper functions",
-        path: join(process.cwd(), "prisma", "complete_rls_policies.sql"),
-    },
-    {
-        label: "Storage bucket RLS policies",
-        path: join(process.cwd(), "supabase", "storage_rls_policies.sql"),
+        label: "Complete database migration (RLS, notifications, storage)",
+        path: join(process.cwd(), "database", "complete_migration.sql"),
     },
 ] as const;
 
