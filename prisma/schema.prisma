@@ -43,9 +43,10 @@ model User {
   deleted_at    DateTime? @db.Timestamptz(6)
 
   // Relations
-  candidate Candidate?
-  employer  Employer?
-  mis_user  MisUser?
+  candidate     Candidate?
+  employer      Employer?
+  mis_user      MisUser?
+  notifications Notification[]
 
   @@index([email])
   @@index([role, status])
@@ -1042,4 +1043,29 @@ model ErrorLog {
   @@index([resolved])
   @@index([created_at])
   @@map("error_logs")
+}
+
+// ============================================
+// REALTIME NOTIFICATIONS (Phase 5)
+// ============================================
+
+model Notification {
+  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String  @db.Uuid
+
+  type    String  @db.Text // notification type: invitation_received, interview_scheduled, etc.
+  title   String  @db.Text
+  body    String? @db.Text
+  data    Json?   // Additional context: {invitation_id, round_id, offer_id, etc.}
+  is_read Boolean @default(false)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  // Indexes matching the SQL migration
+  @@index([user_id, is_read, created_at(sort: Desc)]) // For unread notifications query
+  @@index([user_id, created_at(sort: Desc)])          // For notification history
+  @@map("notifications")
 }

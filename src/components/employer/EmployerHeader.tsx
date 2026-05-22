@@ -2,6 +2,7 @@
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { EmployerUserMenu } from "./EmployerUserMenu";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 interface EmployerHeaderProps {
@@ -71,6 +72,7 @@ export function EmployerHeader({ user, pageTitle, pageDescription }: EmployerHea
             )}
 
             <div className="flex shrink-0 items-center gap-3">
+                <NotificationBell />
                 <EmployerUserMenu user={user} />
             </div>
         </header>
