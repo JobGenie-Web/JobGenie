@@ -2,6 +2,7 @@
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 interface CandidateHeaderProps {
@@ -72,6 +73,7 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
             )}
 
             <div className="flex shrink-0 items-center gap-3">
+                <NotificationBell />
                 <UserMenu user={user} />
             </div>
         </header>
