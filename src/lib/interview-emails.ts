@@ -1,18 +1,6 @@
-import nodemailer from "nodemailer";
+import { resend, EMAIL_FROM } from "./resend";
 import { getBaseUrl } from "./email";
 import { formatUTCDate, formatUTCTime } from "./date-utils";
-
-function createTransporter() {
-    return nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
-    });
-}
 
 /**
  * Send interview invitation email to candidate
@@ -30,7 +18,7 @@ export async function sendInterviewInvitationEmail(
         const baseUrl = getBaseUrl();
         const invitationUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Interview Invitation Email`);
             console.log(`====================================`);
@@ -42,8 +30,6 @@ export async function sendInterviewInvitationEmail(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         // Create deep link with login redirect
         const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
@@ -89,12 +75,17 @@ ${timeSlotsHTML}
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: candidateEmail,
             subject: `Interview Invitation from ${companyName} - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("Interview invitation email error:", error);
+            return { success: false, error: "Failed to send invitation email" };
+        }
 
         console.log(`[EMAIL] Interview invitation sent to ${candidateEmail}`);
         return { success: true };
@@ -122,7 +113,7 @@ export async function sendInterviewConfirmedEmail(
     try {
         const baseUrl = getBaseUrl();
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Interview Confirmed Email`);
             console.log(`====================================`);
@@ -133,8 +124,6 @@ export async function sendInterviewConfirmedEmail(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         // Create deep link with login redirect
         const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
@@ -183,12 +172,17 @@ ${locationHTML}
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: candidateEmail,
             subject: `Interview Confirmed with ${companyName} - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("Interview confirmed email error:", error);
+            return { success: false, error: "Failed to send confirmation email" };
+        }
 
         console.log(`[EMAIL] Interview confirmed email sent to ${candidateEmail}`);
         return { success: true };
@@ -234,7 +228,7 @@ export async function sendInterviewReminderEmail(
             ? `<p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Round:</strong> ${roundLabel}</p>`
             : "";
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Interview Reminder Email (${offsetLabel} before)`);
             console.log(`====================================`);
@@ -246,7 +240,6 @@ export async function sendInterviewReminderEmail(
             return { success: true };
         }
 
-        const transporter = createTransporter();
         const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
         const loginRedirectUrl = `${baseUrl}/login?returnUrl=${encodeURIComponent(invitationDetailUrl)}`;
 
@@ -286,12 +279,17 @@ ${locationHTML}
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: candidateEmail,
             subject: `Reminder: Interview with ${companyName} — JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("Interview reminder email error:", error);
+            return { success: false, error: "Failed to send reminder email" };
+        }
 
         console.log(`[EMAIL] Interview reminder (${offsetLabel}) sent to ${candidateEmail}`);
         return { success: true };
@@ -317,7 +315,7 @@ export async function sendCandidateCancellationEmail(
     try {
         const baseUrl = getBaseUrl();
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Candidate Cancellation Email`);
             console.log(`====================================`);
@@ -328,8 +326,6 @@ export async function sendCandidateCancellationEmail(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         const html = `<!DOCTYPE html>
 <html><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
@@ -368,12 +364,17 @@ export async function sendCandidateCancellationEmail(
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: employerEmail,
             subject: `Interview Canceled by Candidate - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("Candidate cancellation email error:", error);
+            return { success: false, error: "Failed to send cancellation email" };
+        }
 
         console.log(`[EMAIL] Candidate cancellation email sent to ${employerEmail}`);
         return { success: true };
@@ -399,7 +400,7 @@ export async function sendEmployerCancellationEmail(
     try {
         const baseUrl = getBaseUrl();
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Employer Cancellation Email`);
             console.log(`====================================`);
@@ -410,8 +411,6 @@ export async function sendEmployerCancellationEmail(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         const html = `<!DOCTYPE html>
 <html><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8f9fa;">
@@ -453,12 +452,17 @@ export async function sendEmployerCancellationEmail(
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: candidateEmail,
             subject: `Interview Canceled - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("Employer cancellation email error:", error);
+            return { success: false, error: "Failed to send cancellation email" };
+        }
 
         console.log(`[EMAIL] Employer cancellation email sent to ${candidateEmail}`);
         return { success: true };
@@ -487,7 +491,7 @@ export async function sendMISRescheduleNotificationToCandidate(
     try {
         const baseUrl = getBaseUrl();
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] MIS Reschedule Notification (Candidate)`);
             console.log(`====================================`);
@@ -499,8 +503,6 @@ export async function sendMISRescheduleNotificationToCandidate(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         // Create deep link with login redirect
         const invitationDetailUrl = `${baseUrl}/candidate/invitations/${invitationId}`;
@@ -556,12 +558,17 @@ ${notesHTML}
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: candidateEmail,
             subject: `Interview Rescheduled - ${companyName} - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("MIS reschedule candidate email error:", error);
+            return { success: false, error: "Failed to send reschedule notification" };
+        }
 
         console.log(`[EMAIL] MIS reschedule notification sent to candidate ${candidateEmail}`);
         return { success: true };
@@ -590,7 +597,7 @@ export async function sendMISRescheduleNotificationToEmployer(
     try {
         const baseUrl = getBaseUrl();
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] MIS Reschedule Notification (Employer)`);
             console.log(`====================================`);
@@ -602,8 +609,6 @@ export async function sendMISRescheduleNotificationToEmployer(
             console.log(`====================================\n`);
             return { success: true };
         }
-
-        const transporter = createTransporter();
 
         // Create deep link with login redirect - employer invitations are viewed in a list/modal, not individual detail pages
         const invitationDetailUrl = `${baseUrl}/employer/invitations`;
@@ -659,12 +664,17 @@ ${notesHTML}
 </table></td></tr>
 </table></body></html>`;
 
-        await transporter.sendMail({
-            from: `"JobGenie" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie <${EMAIL_FROM}>`,
             to: employerEmail,
             subject: `Interview Rescheduled - ${candidateName} - JobGenie`,
             html,
         });
+
+        if (error) {
+            console.error("MIS reschedule employer email error:", error);
+            return { success: false, error: "Failed to send reschedule notification" };
+        }
 
         console.log(`[EMAIL] MIS reschedule notification sent to employer ${employerEmail}`);
         return { success: true };

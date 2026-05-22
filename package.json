@@ -15,7 +15,8 @@
     "db:reset": "prisma migrate reset --force && tsx scripts/setup-database.ts",
     "db:cleanup": "tsx scripts/cleanup-logs.ts",
     "mis:seed-permissions": "tsx scripts/seed-mis-permissions.ts",
-    "mis:add-permissions": "tsx scripts/add-mis-permissions.ts"
+    "mis:add-permissions": "tsx scripts/add-mis-permissions.ts",
+    "db:update-seniority-levels": "tsx scripts/update-seniority-levels.ts"
   },
   "prisma": {
     "seed": "tsx scripts/setup-database.ts"
@@ -68,6 +69,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.70.0",
     "react-redux": "^9.2.0",
+    "resend": "^6.12.3",
     "sonner": "^2.0.7",
     "swr": "^2.4.1",
     "tailwind-merge": "^3.4.0",
@@ -78,6 +80,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.25",
     "@types/nodemailer": "^7.0.4",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.6",

@@ -1608,6 +1608,7 @@ export async function requestPasswordReset(
     };
 
     try {
+        console.log(`[AUTH] ===== PASSWORD RESET STARTED for: ${email} =====`);
         const adminClient = createAdminClient();
 
         // Look up user (only candidates and employers — MIS resets via admin)
@@ -1617,16 +1618,22 @@ export async function requestPasswordReset(
             .eq("email", email)
             .in("role", ["candidate", "employer"])
             .maybeSingle();
+        
+        console.log(`[AUTH] User lookup result:`, { found: !!userData, hasError: !!userError });
 
         if (userError || !userData) {
             // Don't reveal whether email exists
+            console.log(`[AUTH] User not found or error, returning generic success`);
             return genericSuccess;
         }
 
         // Don't allow reset for suspended/deleted accounts
         if (userData.status === "suspended" || userData.status === "deleted") {
+            console.log(`[AUTH] User ${userData.status}, returning generic success`);
             return genericSuccess;
         }
+        
+        console.log(`[AUTH] User valid, generating token...`);
 
         // Generate a cryptographically secure token (64-char hex = 32 bytes)
         const rawToken = crypto.randomBytes(32).toString("hex");
@@ -1643,10 +1650,12 @@ export async function requestPasswordReset(
             .eq("id", userData.id);
 
         if (updateError) {
-            console.error("Failed to store reset token:", updateError);
+            console.error("[AUTH] Failed to store reset token:", updateError);
             // Still return generic success — don't leak DB errors
             return genericSuccess;
         }
+        
+        console.log(`[AUTH] Token stored successfully, looking up user profile...`);
 
         // Look up user's first name from their profile
         let firstName = "User";
@@ -1667,8 +1676,14 @@ export async function requestPasswordReset(
         }
 
         // Send the reset email
+        console.log(`[AUTH] About to send password reset email to: ${userData.email}`);
+        console.log(`[AUTH] Token generated: ${rawToken.substring(0, 10)}...`);
+        
         const { sendPasswordResetEmail } = await import("@/lib/email");
-        await sendPasswordResetEmail(userData.email, firstName, rawToken);
+        console.log(`[AUTH] Email module imported, calling sendPasswordResetEmail...`);
+        
+        const emailResult = await sendPasswordResetEmail(userData.email, firstName, rawToken);
+        console.log(`[AUTH] Email send result:`, emailResult);
 
         await logAuth("password_reset_requested", userData.id, userData.role, { email });
 

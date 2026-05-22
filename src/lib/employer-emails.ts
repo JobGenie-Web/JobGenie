@@ -1,22 +1,5 @@
-import nodemailer from "nodemailer";
+import { resend, EMAIL_FROM } from "./resend";
 import { getBaseUrl } from "./email";
-
-/**
- * Create NodeMailer transporter - reusing the logic from email.ts would be better but for separate file we recreate or export it.
- * To avoid code duplication, we should export createTransporter from email.ts, 
- * but since I can't edit email.ts to export it right now without a separate step, I'll duplicate the config reading.
- */
-function createTransporter() {
-    return nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
-    });
-}
 
 /**
  * Generate approval email template for employers
@@ -247,8 +230,8 @@ export async function sendEmployerApprovalEmail(
         const baseUrl = getBaseUrl();
         const loginUrl = `${baseUrl}/employer/login`;
 
-        // Check if SMTP is configured
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        // Check if Resend is configured
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Employer Approval Email`);
             console.log(`====================================`);
@@ -257,22 +240,26 @@ export async function sendEmployerApprovalEmail(
             console.log(`Company: ${companyName}`);
             console.log(`Login URL: ${loginUrl}`);
             console.log(`====================================\n`);
-            console.log("[DEV] SMTP not configured. Set SMTP_USER and SMTP_PASS in .env to send actual emails.");
+            console.log("[DEV] Resend not configured. Set RESEND_API_KEY in .env to send actual emails.");
             return { success: true };
         }
 
-        const transporter = createTransporter();
-
-        const mailOptions = {
-            from: `"JobGenie Employer Support" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie Employer Support <${EMAIL_FROM}>`,
             to: email,
             subject: "🎉 Company Profile Approved - JobGenie",
             html: getEmployerApprovalEmailTemplate(companyName, firstName, loginUrl),
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error("Employer approval email sending error:", error);
+            return {
+                success: false,
+                error: "Failed to send employer approval email",
+            };
+        }
+
         console.log(`[EMAIL] Employer approval email sent to ${email}`);
-
         return { success: true };
     } catch (error) {
         console.error("Employer approval email sending error:", error);
@@ -296,8 +283,8 @@ export async function sendEmployerRejectionEmail(
         const baseUrl = getBaseUrl();
         const loginUrl = `${baseUrl}/employer/login`;
 
-        // Check if SMTP is configured
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        // Check if Resend is configured
+        if (!process.env.RESEND_API_KEY) {
             console.log(`\n====================================`);
             console.log(`[DEV] Employer Rejection Email`);
             console.log(`====================================`);
@@ -307,22 +294,26 @@ export async function sendEmployerRejectionEmail(
             console.log(`Rejection Reason: ${rejectionReason}`);
             console.log(`Login URL: ${loginUrl}`);
             console.log(`====================================\n`);
-            console.log("[DEV] SMTP not configured. Set SMTP_USER and SMTP_PASS in .env to send actual emails.");
+            console.log("[DEV] Resend not configured. Set RESEND_API_KEY in .env to send actual emails.");
             return { success: true };
         }
 
-        const transporter = createTransporter();
-
-        const mailOptions = {
-            from: `"JobGenie Employer Support" <${process.env.SMTP_USER}>`,
+        const { error } = await resend.emails.send({
+            from: `JobGenie Employer Support <${EMAIL_FROM}>`,
             to: email,
             subject: "Action Required: Company Profile Update - JobGenie",
             html: getEmployerRejectionEmailTemplate(companyName, firstName, rejectionReason, loginUrl),
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error("Employer rejection email sending error:", error);
+            return {
+                success: false,
+                error: "Failed to send employer rejection email",
+            };
+        }
+
         console.log(`[EMAIL] Employer rejection email sent to ${email}`);
-
         return { success: true };
     } catch (error) {
         console.error("Employer rejection email sending error:", error);
