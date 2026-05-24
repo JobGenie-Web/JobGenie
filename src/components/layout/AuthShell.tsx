@@ -50,7 +50,7 @@ export function AuthShell({
                 {/* Brand column — desktop */}
                 <aside className="relative hidden overflow-hidden border-border bg-muted/40 lg:flex lg:flex-col lg:justify-between lg:border-r lg:p-10 xl:p-12 dark:bg-muted/15">
                     <div
-                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_10%_15%,oklch(0.88_0.04_260/0.18),transparent_55%),radial-gradient(ellipse_70%_60%_at_90%_80%,oklch(0.93_0.03_95/0.35),transparent_50%)] dark:bg-[radial-gradient(ellipse_90%_70%_at_10%_15%,oklch(0.28_0.05_265/0.25),transparent_55%),radial-gradient(ellipse_70%_60%_at_90%_80%,oklch(0.22_0.03_265/0.2),transparent_50%)]"
+                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_10%_15%,oklch(0.72_0.12_155/0.14),transparent_55%),radial-gradient(ellipse_70%_60%_at_90%_80%,oklch(0.68_0.10_175/0.12),transparent_50%)] dark:bg-[radial-gradient(ellipse_90%_70%_at_10%_15%,oklch(0.30_0.08_155/0.30),transparent_55%),radial-gradient(ellipse_70%_60%_at_90%_80%,oklch(0.26_0.06_175/0.24),transparent_50%)]"
                         aria-hidden
                     />
                     <div className="relative z-10 flex flex-col gap-8">

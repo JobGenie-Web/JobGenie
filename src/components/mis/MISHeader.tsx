@@ -2,6 +2,7 @@
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { UserMenu } from "../candidate/UserMenu";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 interface MISHeaderProps {
@@ -26,7 +27,7 @@ export function MISHeader({ user, pageTitle, pageDescription }: MISHeaderProps) 
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/90 px-4 backdrop-blur-sm">
+        <header className="sticky top-0 z-40 flex h-[4.25rem] items-center gap-4 border-b border-primary/10 bg-card/92 px-4 shadow-[inset_0_-1px_0_oklch(var(--primary)/0.12)] backdrop-blur-sm dark:bg-card/88 md:px-6">
             {/* Modern Circular Toggle */}
             <button
                 onClick={handleToggle}
@@ -59,12 +60,13 @@ export function MISHeader({ user, pageTitle, pageDescription }: MISHeaderProps) 
 
             {/* Page Title Area */}
             {pageTitle && (
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-bold truncate">{pageTitle}</h1>
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90">MIS</p>
+                    <h1 className="truncate bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl">
+                        {pageTitle}
+                    </h1>
                     {pageDescription && (
-                        <p className="text-sm text-muted-foreground truncate">
-                            {pageDescription}
-                        </p>
+                        <p className="truncate text-sm text-muted-foreground md:text-[15px]">{pageDescription}</p>
                     )}
                 </div>
             )}
@@ -74,6 +76,7 @@ export function MISHeader({ user, pageTitle, pageDescription }: MISHeaderProps) 
 
             {/* Right Side - User Menu */}
             <div className="flex items-center gap-4 flex-shrink-0">
+                <ThemeToggle />
                 <UserMenu user={user} />
             </div>
         </header>

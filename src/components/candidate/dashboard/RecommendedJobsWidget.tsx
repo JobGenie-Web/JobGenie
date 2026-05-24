@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, ChevronRight, MapPin, Briefcase } from "lucide-react";
+import { Bookmark, ChevronRight, MapPin, Briefcase, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RecommendedJob } from "@/app/actions/candidate-dashboard-data";
 
@@ -21,17 +22,19 @@ function formatSalary(min: number | null, max: number | null): string | null {
     return null;
 }
 
-function getCompanyInitial(name: string | null): string {
-    if (!name) return "J";
-    return name.charAt(0).toUpperCase();
+function getCompanyInitials(name: string | null): string {
+    if (!name) return "JG";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
 }
 
-const avatarColors = [
-    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+const avatarBg = [
+    { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400" },
+    { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-700 dark:text-violet-400" },
+    { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400" },
+    { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400" },
+    { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-700 dark:text-rose-400" },
 ];
 
 const employmentTypeLabels: Record<string, string> = {
@@ -43,9 +46,99 @@ const employmentTypeLabels: Record<string, string> = {
     temporary: "Temporary",
 };
 
+function JobRow({ job, index }: { job: RecommendedJob; index: number }) {
+    const [saved, setSaved] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const av = avatarBg[index % avatarBg.length];
+    const salaryStr = formatSalary(job.salary_min, job.salary_max);
+    const typeLabel = job.employment_type
+        ? (employmentTypeLabels[job.employment_type] || job.employment_type)
+        : null;
+
+    return (
+        <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className={cn(
+                "flex items-start gap-3 px-5 py-4 transition-all duration-150",
+                hovered
+                    ? "bg-primary/[0.04] border-l-2 border-l-primary"
+                    : "border-l-2 border-l-transparent"
+            )}
+        >
+            {/* Company avatar */}
+            <div className={cn(
+                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold",
+                av.bg, av.text
+            )}>
+                {getCompanyInitials(job.company_name)}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground truncate leading-snug">
+                        {job.job_title}
+                    </p>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {job.is_new && (
+                            <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-bold tracking-wide">
+                                NEW
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {job.company_name && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            {job.company_name}
+                        </span>
+                    )}
+                    {job.location && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {job.location}
+                        </span>
+                    )}
+                    {salaryStr && (
+                        <span className="text-xs font-medium text-foreground/70 font-mono">
+                            {salaryStr}
+                        </span>
+                    )}
+                </div>
+
+                {/* Tags row */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    {typeLabel && (
+                        <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {typeLabel}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <button
+                    onClick={() => setSaved(s => !s)}
+                    className={cn(
+                        "transition-colors",
+                        saved ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"
+                    )}
+                    aria-label="Save job"
+                >
+                    <Bookmark className={cn("h-4 w-4", saved && "fill-primary")} />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export function RecommendedJobsWidget({ jobs }: RecommendedJobsWidgetProps) {
     return (
-        <div className="rounded-2xl border border-border bg-card shadow-sm">
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
                 <div>
@@ -70,67 +163,9 @@ export function RecommendedJobsWidget({ jobs }: RecommendedJobsWidgetProps) {
                         <p className="text-xs text-muted-foreground/70">Check back soon for new opportunities</p>
                     </div>
                 ) : (
-                    jobs.map((job, index) => {
-                        const avatarColor = avatarColors[index % avatarColors.length];
-                        const salaryStr = formatSalary(job.salary_min, job.salary_max);
-                        const typeLabel = job.employment_type
-                            ? (employmentTypeLabels[job.employment_type] || job.employment_type)
-                            : null;
-
-                        return (
-                            <div
-                                key={job.id}
-                                className="flex items-start gap-3 px-5 py-4 hover:bg-muted/30 transition-colors"
-                            >
-                                {/* Company avatar */}
-                                <div className={cn(
-                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold",
-                                    avatarColor
-                                )}>
-                                    {getCompanyInitial(job.company_name)}
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <p className="text-sm font-semibold text-foreground truncate">
-                                            {job.job_title}
-                                        </p>
-                                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                                            {job.is_new && (
-                                                <span className="rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold">
-                                                    New
-                                                </span>
-                                            )}
-                                            <button className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
-                                                <Bookmark className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                                        {job.company_name || "Company"}
-                                        {job.location && ` • ${job.location}`}
-                                    </p>
-
-                                    {/* Badges row */}
-                                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                        {typeLabel && (
-                                            <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                                {typeLabel}
-                                            </span>
-                                        )}
-                                        {salaryStr && (
-                                            <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
-                                                <MapPin className="h-2.5 w-2.5" />
-                                                {salaryStr}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
+                    jobs.map((job, index) => (
+                        <JobRow key={job.id} job={job} index={index} />
+                    ))
                 )}
             </div>
         </div>

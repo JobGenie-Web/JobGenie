@@ -134,11 +134,13 @@ export function EmployerSidebar() {
                             priority
                         />
                     </div>
-                    {!isCollapsed && (
-                        <span className="sidebar-brand-wordmark text-lg font-semibold tracking-tight">
-                            JobGenie
-                        </span>
-                    )}
+                    <span className={cn(
+                        "sidebar-brand-wordmark text-lg font-semibold tracking-tight",
+                        "transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
+                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[160px]"
+                    )}>
+                        JobGenie
+                    </span>
                 </Link>
             </SidebarHeader>
 
@@ -164,9 +166,10 @@ export function EmployerSidebar() {
                                                     )}
                                                 >
                                                     <Icon className="h-6 w-6 shrink-0 text-muted-foreground" />
-                                                    {!isCollapsed && (
-                                                        <span className="text-muted-foreground">{item.title}</span>
-                                                    )}
+                                                    <span className={cn(
+                                                        "text-muted-foreground transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
+                                                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
+                                                    )}>{item.title}</span>
                                                 </div>
                                             </TooltipTrigger>
                                             <TooltipContent side="right" className="font-medium">
@@ -199,16 +202,24 @@ export function EmployerSidebar() {
                                                 <Link href={item.href} className="gap-3 flex items-center justify-between w-full">
                                                     <div className="flex items-center gap-3">
                                                         <Icon className="h-6 w-6 shrink-0" />
-                                                        {!isCollapsed && <span>{item.title}</span>}
+                                                        <span className={cn(
+                                                            "transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
+                                                            isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
+                                                        )}>{item.title}</span>
                                                     </div>
                                                     {/* Unread invitation updates from candidates */}
-                                                    {item.title === "Invitations" && pendingCount > 0 && !isCollapsed && (
-                                                        <Badge
-                                                            className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
-                                                        >
-                                                            {pendingCount}
-                                                        </Badge>
-                                                    )}
+                                                    <span className={cn(
+                                                        "transition-[opacity] duration-200",
+                                                        isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+                                                    )}>
+                                                        {item.title === "Invitations" && pendingCount > 0 && (
+                                                            <Badge
+                                                                className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
+                                                            >
+                                                                {pendingCount}
+                                                            </Badge>
+                                                        )}
+                                                    </span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </TooltipTrigger>

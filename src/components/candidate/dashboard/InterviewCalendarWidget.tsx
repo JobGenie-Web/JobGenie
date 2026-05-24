@@ -86,10 +86,10 @@ export function InterviewCalendarWidget({ events }: Props) {
                     {events.length > 0 && (
                         <div className="flex flex-col gap-1 text-[11px] text-muted-foreground items-end">
                             <span className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" /> Confirmed
+                                <span className="h-2 w-2 rounded-full bg-primary inline-block" /> Confirmed
                             </span>
                             <span className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-primary inline-block" /> Accepted
+                                <span className="h-2 w-2 rounded-full bg-primary/40 inline-block" /> Pending
                             </span>
                         </div>
                     )}
@@ -140,12 +140,12 @@ export function InterviewCalendarWidget({ events }: Props) {
                             const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
 
                             const dotClass = isSelected
-                                ? "bg-white"
+                                ? "bg-primary-foreground"
                                 : allCanceled
                                     ? "bg-muted-foreground/40"
                                     : hasConfirmed
-                                        ? "bg-emerald-500"
-                                        : "bg-primary";
+                                        ? "bg-primary"
+                                        : "bg-primary/50";
 
                             return (
                                 <button
@@ -246,7 +246,7 @@ export function InterviewCalendarWidget({ events }: Props) {
                                                         <Ban className="h-2.5 w-2.5" /> Canceled
                                                     </span>
                                                 ) : ev.is_confirmed ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary">
                                                         <CheckCircle2 className="h-2.5 w-2.5" /> Confirmed
                                                     </span>
                                                 ) : (

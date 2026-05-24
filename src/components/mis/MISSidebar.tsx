@@ -91,7 +91,7 @@ export function MISSidebar() {
     const isCollapsed = state === "collapsed";
 
     return (
-        <Sidebar collapsible="icon" className="shadow-sm">
+        <Sidebar collapsible="icon" className={cn("shadow-sm", "sidebar-portal")}>
             {/* Header with Logo - height matches the header (h-16 = 64px) */}
             <SidebarHeader className="h-16 px-4 flex items-center">
                 <Link href="/mis/dashboard" className="flex items-center gap-3">
@@ -107,16 +107,17 @@ export function MISSidebar() {
                             priority
                         />
                     </div>
-                    {!isCollapsed && (
-                        <div className="flex flex-col">
-                            <span className="text-lg font-semibold text-sidebar-foreground">
-                                JobGenie
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                MIS System
-                            </span>
-                        </div>
-                    )}
+                    <div className={cn(
+                        "flex flex-col transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
+                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[160px]"
+                    )}>
+                        <span className="text-lg font-semibold text-sidebar-foreground">
+                            JobGenie
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            MIS System
+                        </span>
+                    </div>
                 </Link>
             </SidebarHeader>
 
@@ -142,9 +143,12 @@ export function MISSidebar() {
                                                     isActive && "sidebar-item-active"
                                                 )}
                                             >
-                                                <Link href={item.href} className="gap-3">
+                                                <Link href={item.href} className="gap-3 flex items-center">
                                                     <Icon className="h-6 w-6 shrink-0" />
-                                                    {!isCollapsed && <span>{item.title}</span>}
+                                                    <span className={cn(
+                                                        "transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
+                                                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
+                                                    )}>{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </TooltipTrigger>

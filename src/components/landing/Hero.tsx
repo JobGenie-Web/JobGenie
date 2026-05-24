@@ -1,353 +1,303 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
-import {
-    motion,
-    useInView,
-    useReducedMotion,
-} from 'framer-motion';
-import {
-    ArrowRight,
-    ArrowUpRight,
-    Building2,
-    Sparkles,
-    Users,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import {
-    fadeUp,
-    inViewProps,
-    landingEase,
-    scaleIn,
-    staggerFast,
-} from '@/lib/motion/landing';
-import { LandingWatermarks } from '@/components/landing/LandingWatermarks';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
-const metrics = [
-    { value: '10K+', label: 'Live roles' },
-    { value: '50K+', label: 'Professionals' },
-    { value: '5K+', label: 'Organizations' },
-    { value: '95%', label: 'Happy placements' },
-];
-
-const highlights = [
-    'Verified employers',
-    'Interview scheduling',
-    'Audit-ready trails',
-    'Intent-aware matching',
-];
-
-function HeroProgress() {
-    const ref = useRef<HTMLDivElement>(null);
-    const inView = useInView(ref, { once: true, margin: '-10%' });
-    const reduce = useReducedMotion();
-
+/* ── Cursor spotlight ──────────────────────────────────────────────────────── */
+function CursorSpotlight() {
+    const [pos, setPos] = useState({ x: -2000, y: -2000 });
+    useEffect(() => {
+        const fn = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
+        window.addEventListener('mousemove', fn, { passive: true });
+        return () => window.removeEventListener('mousemove', fn);
+    }, []);
     return (
-        <div ref={ref} className="mt-6 h-2 overflow-hidden rounded-full bg-muted">
-            <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: reduce ? '72%' : 0 }}
-                animate={inView ? { width: '72%' } : { width: reduce ? '72%' : 0 }}
-                transition={{
-                    duration: reduce ? 0 : 1.1,
-                    ease: landingEase,
-                    delay: 0.12,
-                }}
-            />
+        <div
+            className="pointer-events-none fixed inset-0 z-[1]"
+            style={{
+                background: `radial-gradient(700px at ${pos.x}px ${pos.y}px, rgba(0,200,60,0.08), transparent 40%)`,
+            }}
+        />
+    );
+}
+
+/* ── Hero background blobs ─────────────────────────────────────────────────── */
+function HeroBg() {
+    return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="dot-grid absolute inset-0 opacity-70" />
+            <div className="absolute rounded-full" style={{
+                top: '-18%', right: '-8%', width: 900, height: 900,
+                background: 'radial-gradient(circle, var(--lp-blob-green) 0%, transparent 58%)',
+                filter: 'blur(32px)', animation: 'blobFloat 22s ease-in-out infinite',
+            }} />
+            <div className="absolute rounded-full" style={{
+                bottom: '-12%', left: '-5%', width: 700, height: 700,
+                background: 'radial-gradient(circle, var(--lp-blob-blue) 0%, transparent 60%)',
+                filter: 'blur(32px)', animation: 'blobFloat2 26s ease-in-out infinite',
+            }} />
+            <div className="absolute rounded-full" style={{
+                top: '40%', left: '38%', width: 500, height: 500,
+                background: 'radial-gradient(circle, var(--lp-blob-purple) 0%, transparent 60%)',
+                filter: 'blur(32px)', animation: 'blobFloat3 17s ease-in-out infinite',
+            }} />
+            <div className="absolute bottom-0 left-0 right-0 h-80" style={{ background: 'var(--lp-fade-bottom)' }} />
+            <div className="absolute inset-0" style={{ background: 'var(--lp-vignette)' }} />
         </div>
     );
 }
 
-export function Hero() {
-    const reduce = useReducedMotion();
-
+/* ── Match score widget ─────────────────────────────────────────────────────── */
+function MatchCard() {
+    const pct = 96;
+    const circ = 2 * Math.PI * 38;
     return (
-        <section id="about" className="relative overflow-hidden">
-            <div className="landing-atmosphere mesh-bg relative">
-                <div
-                    className="landing-noise pointer-events-none absolute inset-0 opacity-[0.2] mix-blend-normal dark:opacity-[0.26]"
-                    aria-hidden
-                    style={{ willChange: 'auto', backfaceVisibility: 'hidden' }}
-                />
-                <div
-                    className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full blur-2xl landing-blob-a opacity-90"
-                    aria-hidden
-                    style={{ backfaceVisibility: 'hidden' }}
-                />
-                <div
-                    className="pointer-events-none absolute -bottom-32 -right-32 h-[380px] w-[380px] rounded-full blur-2xl landing-blob-b opacity-80"
-                    aria-hidden
-                    style={{ backfaceVisibility: 'hidden' }}
-                />
-
-                <LandingWatermarks variant="hero" />
-
-                <div className="relative z-10 mx-auto max-w-[1200px] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:px-10">
-                    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-                        {/* Copy */}
-                        <motion.div
-                            variants={staggerFast}
-                            initial="hidden"
-                            animate="visible"
-                        >
-                            <motion.p
-                                variants={fadeUp}
-                                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
-                            >
-                                <span className="inline-flex text-primary" aria-hidden>
-                                    <Sparkles className="h-3.5 w-3.5 motion-safe:opacity-90" />
-                                </span>
-                                Talent OS
-                            </motion.p>
-
-                            <motion.h1
-                                variants={fadeUp}
-                                className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]"
-                            >
-                                Hiring that stays{' '}
-                                <span className="text-primary underline decoration-primary/35 decoration-2 underline-offset-4">
-                                    clear
-                                </span>
-                                <span className="text-muted-foreground">,</span> end to end.
-                            </motion.h1>
-
-                            <motion.p
-                                variants={fadeUp}
-                                className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-[1.05rem]"
-                            >
-                                One place for verified employers and candidates — discovery,
-                                screening, and scheduling without juggling five tools.
-                            </motion.p>
-
-                            <motion.div
-                                variants={fadeUp}
-                                className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
-                            >
-                                <motion.div
-                                    whileHover={{ scale: 1.02, y: -1 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                                >
-                                    <Button
-                                        asChild
-                                        variant="gradient"
-                                        size="lg"
-                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
-                                    >
-                                        <Link href="/candidate/signup" className="gap-2">
-                                            Join as candidate
-                                            <ArrowRight className="h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.02, y: -1 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                                >
-                                    <Button
-                                        asChild
-                                        variant="gradient"
-                                        size="lg"
-                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
-                                    >
-                                        <Link href="/employer/signup" className="gap-2">
-                                            Register company
-                                            <ArrowUpRight className="h-4 w-4 opacity-80" />
-                                        </Link>
-                                    </Button>
-                                </motion.div>
-                            </motion.div>
-
-                            <motion.div className="mt-10 flex flex-wrap gap-2">
-                                {highlights.map((h) => (
-                                    <motion.span
-                                        key={h}
-                                        variants={fadeUp}
-                                        whileHover={{
-                                            y: -2,
-                                            borderColor: 'color-mix(in oklch, var(--primary) 45%, transparent)',
-                                        }}
-                                        className="rounded-lg border border-border/80 bg-muted/70 px-3 py-1.5 text-xs font-medium text-muted-foreground dark:bg-muted/40"
-                                    >
-                                        {h}
-                                    </motion.span>
-                                ))}
-                            </motion.div>
-                        </motion.div>
-
-                        {/* Preview card */}
-                        <motion.div
-                            variants={scaleIn}
-                            initial="hidden"
-                            animate="visible"
-                            transition={{ delay: 0.12 }}
-                            className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none"
-                        >
-                            <div
-                                className={
-                                    reduce
-                                        ? 'rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 dark:border-border/80 dark:shadow-black/40 motion-reduce:transform-none'
-                                        : 'landing-hero-card-float rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-[1.02] dark:border-border/80 dark:shadow-black/40'
-                                }
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                            Pipeline pulse
-                                        </p>
-                                        <p className="mt-2 font-mono text-5xl font-bold tracking-tight text-primary">
-                                            24
-                                            <span className="text-2xl font-semibold text-muted-foreground">
-                                                h
-                                            </span>
-                                        </p>
-                                        <p className="mt-3 text-sm leading-snug text-muted-foreground">
-                                            Typical time from accepted invite to first interview slot.
-                                        </p>
-                                    </div>
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 16 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.45, duration: 0.5, ease: landingEase }}
-                                        className="rounded-2xl bg-primary/12 px-3 py-2 text-center dark:bg-primary/18"
-                                    >
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                                            Stage drift
-                                        </p>
-                                        <p className="mt-1 font-mono text-lg font-semibold text-foreground">
-                                            −38%
-                                        </p>
-                                    </motion.div>
-                                </div>
-
-                                <HeroProgress />
-                                <div className="mt-3 flex justify-between font-mono text-[11px] text-muted-foreground">
-                                    <span>Week 0</span>
-                                    <span className="text-foreground/80">On track</span>
-                                    <span>Offer</span>
-                                </div>
-
-                                <div className="mt-8 flex flex-wrap gap-2 border-t border-border/70 pt-6">
-                                    <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                                        SOC2-ready workflows
-                                    </span>
-                                    <span className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                                        Verified orgs
-                                    </span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-
-                    {/* Metrics */}
-                    <motion.div
-                        {...inViewProps}
-                        variants={staggerFast}
-                        className="mt-14 rounded-2xl border border-border/60 bg-muted/60 px-6 py-8 dark:bg-muted/25 sm:px-10"
-                    >
-                        <dl className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-6">
-                            {metrics.map((m) => (
-                                <motion.div key={m.label} variants={fadeUp}>
-                                    <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                                        {m.label}
-                                    </dt>
-                                    <dd className="mt-2 font-mono text-3xl font-bold tabular-nums text-foreground sm:text-4xl">
-                                        {m.value}
-                                    </dd>
-                                </motion.div>
-                            ))}
-                        </dl>
-                    </motion.div>
-
-                    {/* Pathways */}
-                    <div className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8 md:items-stretch">
-                        <motion.article
-                            {...inViewProps}
-                            variants={scaleIn}
-                            whileHover={reduce ? undefined : { y: -3 }}
-                            className="flex h-full min-h-0 rounded-3xl"
-                        >
-                            <Card
-                                variant="glass"
-                                className="flex h-full w-full flex-col rounded-3xl p-8"
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <motion.div
-                                        whileHover={{ rotate: [0, -6, 6, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
-                                    >
-                                        <Users className="h-6 w-6" strokeWidth={1.75} />
-                                    </motion.div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Candidates
-                                    </span>
-                                </div>
-                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                    Your profile, one timeline.
-                                </h2>
-                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                                    Verified identity and applications that stay readable for hiring teams.
-                                </p>
-                                <Button
-                                    asChild
-                                    variant="link"
-                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
-                                >
-                                    <Link href="/candidate/signup" className="gap-1">
-                                        Create account
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </Card>
-                        </motion.article>
-
-                        <motion.article
-                            {...inViewProps}
-                            variants={scaleIn}
-                            whileHover={reduce ? undefined : { y: -3 }}
-                            className="flex h-full min-h-0 rounded-3xl"
-                        >
-                            <Card
-                                variant="glass"
-                                className="flex h-full w-full flex-col rounded-3xl p-8"
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <motion.div
-                                        whileHover={{ rotate: [0, -6, 6, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
-                                    >
-                                        <Building2 className="h-6 w-6" strokeWidth={1.75} />
-                                    </motion.div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Employers
-                                    </span>
-                                </div>
-                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                    Hiring ops in one trail.
-                                </h2>
-                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                                    Verification, interviews, and outcomes linked for recruiting and leadership.
-                                </p>
-                                <Button
-                                    asChild
-                                    variant="link"
-                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
-                                >
-                                    <Link href="/employer/signup" className="gap-1">
-                                        Register company
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </Card>
-                        </motion.article>
-                    </div>
+        <div style={{
+            padding: '18px 20px', borderRadius: 16, width: 215,
+            background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)',
+            backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
+            boxShadow: 'var(--lp-glass-shadow)',
+            animation: 'floatA 8s ease-in-out 0.8s infinite',
+        }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.11em', color: 'var(--lp-text-28)', marginBottom: 12 }}>AI MATCH SCORE</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ position: 'relative', width: 54, height: 54, flexShrink: 0 }}>
+                    <svg width={54} height={54} viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="var(--lp-border)" strokeWidth="7" />
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="#00cc36" strokeWidth="7"
+                            strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round"
+                            style={{ filter: 'drop-shadow(0 0 9px rgba(0,200,54,0.7))' }} />
+                    </svg>
+                    <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'var(--lp-text)', fontFamily: 'monospace' }}>{pct}%</span>
+                </div>
+                <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--lp-text)', marginBottom: 3 }}>Senior Engineer</div>
+                    <div style={{ fontSize: 11, color: 'var(--lp-text-28)', marginBottom: 8 }}>TechCorp · Remote</div>
+                    <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 4, letterSpacing: '0.05em', background: 'rgba(0,180,60,0.12)', color: '#00aa30', border: '1px solid rgba(0,180,60,0.25)' }}>✦ TOP MATCH</span>
                 </div>
             </div>
-        </section>
+        </div>
+    );
+}
+
+/* ── Pipeline card widget ───────────────────────────────────────────────────── */
+function PipelineCard() {
+    const stages = [
+        { label: 'Applied', n: 124, color: '#f59e0b' },
+        { label: 'Screened', n: 47, color: '#3b82f6' },
+        { label: 'Interview', n: 19, color: '#8b5cf6' },
+        { label: 'Offer', n: 6, color: '#00bb30' },
+    ];
+    return (
+        <div style={{
+            padding: '18px 20px', borderRadius: 16, width: 275,
+            background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)',
+            backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
+            boxShadow: 'var(--lp-glass-shadow)',
+            animation: 'floatB 9s ease-in-out infinite',
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#00bb30" strokeWidth="2"><rect x="2" y="3" width="7" height="9" rx="1" /><rect x="9.5" y="3" width="5" height="5" rx="1" /><rect x="15" y="3" width="7" height="7" rx="1" /></svg>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--lp-text-60)' }}>Hiring Pipeline</span>
+                </div>
+                <span style={{ fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4, color: '#00aa30', letterSpacing: '0.08em' }}>
+                    <span className="anim-pulse-green" style={{ width: 5, height: 5, borderRadius: '50%', background: '#00aa30', display: 'inline-block' }} />
+                    LIVE
+                </span>
+            </div>
+            {stages.map((s, i) => (
+                <div key={i} style={{ marginBottom: i < stages.length - 1 ? 9 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, color: 'var(--lp-text-38)', fontWeight: 500 }}>{s.label}</span>
+                        <span style={{ fontSize: 10, color: s.color, fontWeight: 700, fontFamily: 'monospace' }}>{s.n}</span>
+                    </div>
+                    <div style={{ height: 3, borderRadius: 99, background: 'var(--lp-border)' }}>
+                        <div style={{ height: '100%', width: `${(s.n / 124) * 100}%`, borderRadius: 99, background: s.color, boxShadow: `0 0 7px ${s.color}70` }} />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+/* ── Notification + genie bubble widget ─────────────────────────────────────── */
+function NotifCard({ text, sub, color = '#00aa30', animClass = 'anim-float-c', genieRight = true }: {
+    text: string; sub: string; color?: string; animClass?: string; genieRight?: boolean;
+}) {
+    return (
+        <div className={animClass} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            {/* Notification pill */}
+            <div style={{
+                padding: '12px 16px',
+                borderRadius: 16,
+                background: 'var(--lp-glass-bg)',
+                border: '1px solid var(--lp-glass-border)',
+                backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)',
+                boxShadow: 'var(--lp-glass-shadow)',
+                display: 'flex', alignItems: 'center', gap: 11,
+                width: 230, flexShrink: 0, position: 'relative',
+            }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, borderRadius: '16px 0 0 16px', background: color, opacity: 0.8 }} />
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, marginLeft: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--lp-text)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--lp-text-28)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+                </div>
+            </div>
+            {/* Genie peeking out — unclipped */}
+            <div style={{
+                position: 'absolute',
+                ...(genieRight ? { right: -72 } : { left: -72 }),
+                bottom: -12, width: 96, height: 130, pointerEvents: 'none',
+            }}>
+                <Image src="/genie.png" alt="Genie" fill className="object-contain"
+                    style={{ objectPosition: 'center bottom', filter: 'saturate(1.2) brightness(1.05)', transform: genieRight ? 'scaleX(-1)' : 'none' }} />
+            </div>
+        </div>
+    );
+}
+
+function useFadeIn() {
+    const [show, setShow] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShow(true), 60); return () => clearTimeout(t); }, []);
+    return show;
+}
+
+/* ── Hero section ───────────────────────────────────────────────────────────── */
+export function Hero() {
+    const show = useFadeIn();
+    const fd = (delay: number): React.CSSProperties => ({
+        opacity: show ? 1 : 0,
+        transform: show ? 'none' : 'translateY(24px)',
+        transition: `opacity 750ms ${delay}ms ease-out, transform 750ms ${delay}ms ease-out`,
+    });
+
+    return (
+        <>
+            <CursorSpotlight />
+            <section
+                className="relative overflow-hidden"
+                style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', background: 'var(--lp-bg)' }}
+            >
+                <HeroBg />
+
+                {/* Background genie */}
+                <div className="pointer-events-none absolute bottom-0 right-0 select-none" style={{ height: '92%', zIndex: 1 }}>
+                    <Image src="/genie.png" alt="" aria-hidden width={700} height={900}
+                        className="h-full w-auto anim-genie-bob"
+                        style={{ opacity: 0.42, filter: 'saturate(1.2) brightness(1.05)' }}
+                        priority
+                    />
+                </div>
+
+                {/* Sparkle particles */}
+                {[
+                    { r: '9%', b: '8%', s: 5, d: 0 }, { r: '13%', b: '18%', s: 3.5, d: 0.4 },
+                    { r: '7%', b: '28%', s: 4, d: 0.8 }, { r: '17%', b: '12%', s: 3, d: 1.1 },
+                    { r: '5%', b: '38%', s: 5, d: 0.3 }, { r: '11%', b: '22%', s: 3, d: 1.5 },
+                    { r: '15%', b: '6%', s: 4, d: 0.7 }, { r: '8%', b: '44%', s: 2.5, d: 1.9 },
+                    { r: '20%', b: '15%', s: 3.5, d: 0.5 }, { r: '6%', b: '32%', s: 4.5, d: 1.2 },
+                ].map((p, i) => (
+                    <div key={i} className="pointer-events-none absolute rounded-full" style={{
+                        right: p.r, bottom: p.b, width: p.s, height: p.s,
+                        background: '#00cc44',
+                        boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`,
+                        animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`,
+                        zIndex: 2,
+                    }} />
+                ))}
+
+                {/* Smoke wisps */}
+                {[{ r: '10%', b: '5%', w: 28, d: 0.2 }, { r: '16%', b: '10%', w: 20, d: 0.9 }, { r: '7%', b: '15%', w: 24, d: 1.4 }].map((s, i) => (
+                    <div key={i} className="pointer-events-none absolute rounded-full" style={{
+                        right: s.r, bottom: s.b, width: s.w, height: s.w,
+                        background: 'radial-gradient(circle, rgba(0,200,60,0.18) 0%, transparent 70%)',
+                        animation: `magicSmoke ${2.4 + i * 0.5}s ${s.d}s ease-out infinite`,
+                        zIndex: 2,
+                    }} />
+                ))}
+
+                {/* Main content grid */}
+                <div className="relative mx-auto w-full" style={{ maxWidth: 1300, padding: '100px 56px 80px', zIndex: 2, display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 64, alignItems: 'center' }}>
+
+                    {/* Left copy */}
+                    <div>
+                        <div style={{ ...fd(80), display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px', borderRadius: 99, border: '1px solid rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)', marginBottom: 32 }}>
+                            <span style={{ padding: '2px 9px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
+                            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>Recruitment OS for modern teams</span>
+                        </div>
+
+                        <h1 style={{ ...fd(180), fontSize: 'clamp(44px, 5.5vw, 72px)', fontWeight: 800, letterSpacing: '-0.042em', lineHeight: 1.02, color: 'var(--lp-heading)', marginBottom: 24 }}>
+                            Hire the right<br />people,{' '}
+                            <span style={{ color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>faster.</span>
+                        </h1>
+
+                        <p style={{ ...fd(280), fontSize: 17, color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 490, marginBottom: 40 }}>
+                            A unified recruitment platform where candidates are verified, employers are trusted,
+                            and every step of the hiring journey is transparent and trackable.
+                        </p>
+
+                        <div style={{ ...fd(360), display: 'flex', gap: 12, marginBottom: 48, flexWrap: 'wrap' }}>
+                            <Link href="/candidate/signup"
+                                style={{ padding: '14px 30px', borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-block', boxShadow: '0 0 36px rgba(0,180,60,0.38)', transition: 'all 200ms' }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)'; }}
+                            >Start as Candidate →</Link>
+                            <Link href="/employer/signup"
+                                style={{ padding: '14px 30px', borderRadius: 9999, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-block', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', transition: 'all 200ms' }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface-hover)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-60)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                            >Register Company</Link>
+                        </div>
+
+                        {/* Social proof */}
+                        <div style={{ ...fd(440), display: 'flex', alignItems: 'center', gap: 20 }}>
+                            <div style={{ display: 'flex' }}>
+                                {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
+                                    <div key={i} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>
+                                        {['AC', 'NV', 'TW', 'EM', 'JP'][i]}
+                                    </div>
+                                ))}
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
+                                <div style={{ display: 'flex', gap: 1, marginTop: 3, alignItems: 'center' }}>
+                                    {[0, 1, 2, 3, 4].map(i => (
+                                        <svg key={i} width={12} height={12} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+                                        </svg>
+                                    ))}
+                                    <span style={{ fontSize: 11, color: 'var(--lp-text-28)', marginLeft: 4 }}>4.9 / 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right widget cluster */}
+                    <div style={{ ...fd(220), position: 'relative', height: 560 }}>
+                        <div style={{ position: 'absolute', top: 30, left: 0 }}><PipelineCard /></div>
+                        <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 2 }}><MatchCard /></div>
+                        <div style={{ position: 'absolute', bottom: 158, right: 80, zIndex: 3 }}>
+                            <NotifCard text="Interview Confirmed" sub="TechCorp · Round 2 · May 26" animClass="anim-float-a" genieRight={true} />
+                        </div>
+                        <div style={{ position: 'absolute', bottom: 52, left: 0, zIndex: 2 }}>
+                            <NotifCard text="Offer Received! 🎉" sub="Nexus Tech · $120k package" color="#f59e0b" animClass="anim-float-b" genieRight={false} />
+                        </div>
+                        <div style={{ position: 'absolute', top: '22%', left: '18%', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,180,60,0.055) 0%, transparent 70%)', filter: 'blur(70px)', pointerEvents: 'none' }} />
+                    </div>
+                </div>
+
+                {/* Scroll cue */}
+                <div className="scroll-cue pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1" style={{ opacity: 0.3, zIndex: 2 }}>
+                    <div style={{ width: 22, height: 36, borderRadius: 99, border: '1.5px solid var(--lp-border)', display: 'flex', justifyContent: 'center', paddingTop: 6 }}>
+                        <div className="anim-bounce-dot" style={{ width: 3, height: 7, borderRadius: 99, background: 'var(--lp-text-45)' }} />
+                    </div>
+                </div>
+            </section>
+        </>
     );
 }

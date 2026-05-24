@@ -1,93 +1,119 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const navLinks = [
-    { href: '#about', label: 'Overview' },
-    { href: '#features', label: 'Platform' },
-    { href: '#contact', label: 'Contact' },
+    { href: '#features', label: 'Features' },
+    { href: '#how-it-works', label: 'How it Works' },
+    { href: '#portals', label: 'Portals' },
+    { href: '#testimonials', label: 'Testimonials' },
 ];
 
 export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
-    const [open, setOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        const fn = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', fn, { passive: true });
+        return () => window.removeEventListener('scroll', fn);
+    }, []);
 
     return (
-        <header className="sticky top-0 z-50 px-3 pt-3 sm:px-5 lg:px-8">
-            <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/85 px-4 py-3 shadow-[0_12px_40px_-16px_rgba(0,0,0,0.35)] backdrop-blur-md dark:bg-background/72 dark:shadow-black/50 md:px-5">
-                <Link href="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-90">
-                    <Image
-                        src="/logo.jpg"
-                        alt="JobGenie"
-                        width={112}
-                        height={42}
-                        className="h-9 w-auto rounded-md"
-                        priority
-                    />
-                </Link>
-
-                <nav className="hidden items-center gap-0.5 rounded-full border border-border/40 bg-muted/30 px-1.5 py-1 md:flex dark:bg-muted/20">
-                    {navLinks.map((link) => (
-                        <div key={link.href}>
-                            <Link
-                                href={link.href}
-                                className="rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-background/90 hover:text-foreground dark:hover:bg-card/80"
-                            >
-                                {link.label}
-                            </Link>
-                        </div>
-                    ))}
-                </nav>
-
-                <div className="flex items-center gap-2">
-                    <ThemeToggle />
-                    {showSignIn && (
-                        <Button
-                            asChild
-                            size="sm"
-                            className="hidden rounded-full px-6 font-semibold shadow-md shadow-primary/15 sm:inline-flex"
-                        >
-                            <Link href="/login">Sign in</Link>
-                        </Button>
-                    )}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="md:hidden"
-                        onClick={() => setOpen(!open)}
-                        aria-expanded={open}
-                        aria-label="Menu"
-                    >
-                        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                    </Button>
+        <header style={{
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+            padding: '0 40px', height: 64, display: 'flex', alignItems: 'center',
+            background: scrolled ? 'var(--lp-nav-bg)' : 'transparent',
+            backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+            borderBottom: `1px solid ${scrolled ? 'var(--lp-nav-border)' : 'transparent'}`,
+            transition: 'all 350ms cubic-bezier(0.4,0,0.2,1)',
+        }}>
+            {/* Logo */}
+            <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                style={{ display: 'flex', alignItems: 'center', gap: 9, flex: '0 0 auto', textDecoration: 'none' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#00cc44', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(0,180,60,0.45)' }}>
+                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
                 </div>
+                <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em', color: 'var(--lp-text)' }}>
+                    Job<span style={{ color: '#00aa28' }}>Genie</span>
+                </span>
+            </Link>
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex" style={{ flex: 1, justifyContent: 'center', gap: 2, display: 'flex' }}>
+                {navLinks.map(l => (
+                    <a key={l.href} href={l.href}
+                        style={{ padding: '6px 15px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--lp-nav-text)', transition: 'color 150ms, background 150ms', textDecoration: 'none' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text-hover)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-nav-hover-bg)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                        {l.label}
+                    </a>
+                ))}
+            </nav>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
+                {/* Theme toggle always visible */}
+                <ThemeToggle />
+
+                {showSignIn && (
+                    <>
+                        <Link href="/login"
+                            className="hidden sm:inline-block"
+                            style={{ padding: '7px 16px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'all 160ms' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                            Sign In
+                        </Link>
+                        <Link href="/candidate/signup"
+                            className="hidden sm:inline-block"
+                            style={{ padding: '8px 20px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 22px rgba(0,180,60,0.32)', transition: 'all 160ms' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.55)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 22px rgba(0,180,60,0.32)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
+                            Get Started →
+                        </Link>
+                    </>
+                )}
+
+                {/* Mobile hamburger */}
+                <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}
+                    style={{ padding: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--lp-text)' }}
+                    aria-label="Menu">
+                    {mobileOpen
+                        ? <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        : <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+                    }
+                </button>
             </div>
 
-            {open && (
-                <div className="mx-auto mt-2 max-w-[1400px] overflow-hidden rounded-2xl border border-border/70 bg-background/96 shadow-xl backdrop-blur-md md:hidden">
-                    <nav className="flex flex-col gap-1 px-4 py-4">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className="rounded-xl px-4 py-3 text-sm font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                                onClick={() => setOpen(false)}
-                            >
-                                {link.label}
-                            </Link>
+            {/* Mobile menu */}
+            {mobileOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--lp-nav-bg)', backdropFilter: 'blur(24px)', borderBottom: '1px solid var(--lp-nav-border)', padding: '16px 24px 20px' }}>
+                    <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
+                        {navLinks.map(l => (
+                            <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
+                                style={{ padding: '10px 12px', borderRadius: 7, fontSize: 14, fontWeight: 500, color: 'var(--lp-text-45)', textDecoration: 'none', transition: 'all 160ms' }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                                {l.label}
+                            </a>
                         ))}
-                        {showSignIn && (
-                            <Button asChild className="mt-3 h-11 w-full rounded-full font-semibold">
-                                <Link href="/login" onClick={() => setOpen(false)}>
-                                    Sign in
-                                </Link>
-                            </Button>
-                        )}
                     </nav>
+                    {showSignIn && (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <Link href="/login" onClick={() => setMobileOpen(false)}
+                                style={{ flex: 1, padding: '10px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', textAlign: 'center' }}>
+                                Sign In
+                            </Link>
+                            <Link href="/candidate/signup" onClick={() => setMobileOpen(false)}
+                                style={{ flex: 1, padding: '10px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+                                Get Started
+                            </Link>
+                        </div>
+                    )}
                 </div>
             )}
         </header>
