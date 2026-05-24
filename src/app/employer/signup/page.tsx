@@ -12,13 +12,8 @@ export const metadata: Metadata = {
 
 export default async function EmployerSignupPage() {
     const supabase = await createClient();
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session) {
-        redirect('/employer/dashboard');
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) redirect('/employer/dashboard');
 
     return (
         <AuthShell
@@ -32,22 +27,21 @@ export default async function EmployerSignupPage() {
             formWidth="2xl"
             bare
         >
-            <div className="mx-auto w-full max-w-4xl space-y-8">
-                <div className="text-center lg:text-left">
-                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <div className="mx-auto w-full max-w-4xl space-y-7">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                         Employer registration
                     </h1>
-                    <p className="mt-2 text-sm text-muted-foreground sm:text-[15px]">
-                        Complete company details, then your admin profile — we&apos;ll guide you through
-                        both steps.
+                    <p className="mt-2 text-sm text-white/50">
+                        Complete company details, then your admin profile — we&apos;ll guide you through both steps.
                     </p>
                 </div>
 
                 <EmployerSignupWizard />
 
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-sm text-white/40">
                     Already have an account?{' '}
-                    <Link href="/login" className="font-semibold text-primary hover:underline">
+                    <Link href="/login" className="font-semibold text-primary hover:brightness-110 transition-all">
                         Sign in
                     </Link>
                 </p>

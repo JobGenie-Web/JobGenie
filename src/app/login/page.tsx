@@ -1,8 +1,6 @@
 import Link from 'next/link';
-import { KeyRound, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { KeyRound, Sparkles, ArrowRight } from 'lucide-react';
 import { UniversalLoginForm } from '@/components/auth/UniversalLoginForm';
-import { Separator } from '@/components/ui/separator';
 import { AuthShell } from '@/components/layout/AuthShell';
 
 export default async function LoginPage({
@@ -19,43 +17,63 @@ export default async function LoginPage({
             sideDescription="Role-aware workspaces for candidates, employers, and operations — with verification and timelines in one place."
             formWidth="md"
         >
-            <div className="mb-5 flex justify-center sm:mb-6">
-                <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-3.5 text-primary sm:p-4">
-                    <LogIn className="h-7 w-7 sm:h-8 sm:w-8" />
+            {/* Icon */}
+            <div className="mb-6 flex justify-center">
+                <div className="relative">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center shadow-lg shadow-primary/10">
+                        <Sparkles className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="absolute inset-0 rounded-2xl bg-primary/10 blur-xl -z-10" />
                 </div>
             </div>
 
-            <h1 className="text-center text-2xl font-bold tracking-tight sm:text-[1.65rem]">
+            <h1 className="text-center text-2xl font-bold tracking-tight text-white sm:text-[1.7rem]">
                 Welcome back
             </h1>
-            <p className="mb-6 mt-2 text-center text-sm text-muted-foreground sm:mb-7 sm:text-[15px]">
-                Sign in with your work email to continue.
+            <p className="mb-7 mt-2 text-center text-sm text-white/50">
+                Sign in to your JobGenie account to continue.
             </p>
 
             <UniversalLoginForm returnUrl={returnUrl} />
 
-            <div className="mt-4 text-center sm:mt-5">
+            <div className="mt-5 text-center">
                 <Link
                     href="/forgot-password"
-                    className="inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+                    className="inline-flex items-center justify-center gap-1.5 text-xs text-white/40 transition-colors hover:text-primary"
                 >
                     <KeyRound className="h-3.5 w-3.5" />
                     Forgot your password?
                 </Link>
             </div>
 
-            <div className="my-6 sm:my-7">
-                <Separator />
+            {/* Divider */}
+            <div className="my-6 flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/[0.08]" />
+                <span className="text-[11px] text-white/25 uppercase tracking-widest">New here?</span>
+                <div className="flex-1 h-px bg-white/[0.08]" />
             </div>
 
-            <p className="text-center text-sm text-muted-foreground">New to JobGenie?</p>
-            <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
-                <Button variant="outline" asChild size="sm" className="h-10 w-full font-medium">
-                    <Link href="/candidate/signup">Candidate sign up</Link>
-                </Button>
-                <Button variant="outline" asChild size="sm" className="h-10 w-full font-medium">
-                    <Link href="/employer/signup">Employer sign up</Link>
-                </Button>
+            <div className="grid grid-cols-2 gap-3">
+                <Link
+                    href="/candidate/signup"
+                    className="group flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-primary/30 transition-all px-4 py-3"
+                >
+                    <div>
+                        <p className="text-xs font-semibold text-white/80 group-hover:text-white transition-colors">Candidate</p>
+                        <p className="text-[11px] text-white/35 mt-0.5">Find jobs</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-white/25 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </Link>
+                <Link
+                    href="/employer/signup"
+                    className="group flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-primary/30 transition-all px-4 py-3"
+                >
+                    <div>
+                        <p className="text-xs font-semibold text-white/80 group-hover:text-white transition-colors">Employer</p>
+                        <p className="text-[11px] text-white/35 mt-0.5">Hire talent</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-white/25 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </Link>
             </div>
         </AuthShell>
     );

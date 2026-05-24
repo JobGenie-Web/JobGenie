@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { User } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { CandidateSignupForm } from '@/components/auth/CandidateSignupForm';
 import { AuthShell } from '@/components/layout/AuthShell';
 
@@ -15,24 +15,28 @@ export default function CandidateSignupPage() {
             ]}
             formWidth="lg"
         >
-            <div className="mb-5 flex justify-center sm:mb-6">
-                <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-3.5 text-primary sm:p-4">
-                    <User className="h-7 w-7 sm:h-8 sm:w-8" />
+            {/* Icon */}
+            <div className="mb-6 flex justify-center">
+                <div className="relative">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center shadow-lg shadow-primary/10">
+                        <UserPlus className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="absolute inset-0 rounded-2xl bg-primary/10 blur-xl -z-10" />
                 </div>
             </div>
 
-            <h1 className="text-center text-2xl font-bold tracking-tight sm:text-[1.65rem]">
+            <h1 className="text-center text-2xl font-bold tracking-tight text-white sm:text-[1.7rem]">
                 Create your candidate account
             </h1>
-            <p className="mb-6 mt-2 text-center text-sm text-muted-foreground sm:mb-7 sm:text-[15px]">
+            <p className="mb-7 mt-2 text-center text-sm text-white/50">
                 Join verified job seekers on JobGenie — free to get started.
             </p>
 
             <CandidateSignupForm />
 
-            <p className="mt-6 text-center text-sm text-muted-foreground sm:mt-7">
+            <p className="mt-6 text-center text-sm text-white/40">
                 Already have an account?{' '}
-                <Link href="/login" className="font-semibold text-primary hover:underline">
+                <Link href="/login" className="font-semibold text-primary hover:brightness-110 transition-all">
                     Sign in
                 </Link>
             </p>

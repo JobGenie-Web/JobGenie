@@ -13,9 +13,9 @@ import {
 
 export default function Home() {
     return (
-        <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+        <div style={{ background: '#0a0a0a', minHeight: '100vh', overflowX: 'hidden', width: '100%', position: 'relative' }}>
             <Header />
-            <main>
+            <main style={{ overflowX: 'hidden', width: '100%' }}>
                 <Hero />
                 <LogoStrip />
                 <StatsSection />

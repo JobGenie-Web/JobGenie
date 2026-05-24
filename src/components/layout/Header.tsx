@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
@@ -21,32 +22,49 @@ export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
         return () => window.removeEventListener('scroll', fn);
     }, []);
 
+    // Close menu on resize to desktop
+    useEffect(() => {
+        const fn = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
+        window.addEventListener('resize', fn);
+        return () => window.removeEventListener('resize', fn);
+    }, []);
+
     return (
-        <header style={{
-            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-            padding: '0 40px', height: 64, display: 'flex', alignItems: 'center',
-            background: scrolled ? 'var(--lp-nav-bg)' : 'transparent',
-            backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
-            borderBottom: `1px solid ${scrolled ? 'var(--lp-nav-border)' : 'transparent'}`,
-            transition: 'all 350ms cubic-bezier(0.4,0,0.2,1)',
-        }}>
+        <header
+            className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300"
+            style={{
+                height: 'clamp(56px, 15vw, 64px)',
+                padding: '0 clamp(12px, 4vw, 40px)',
+                display: 'flex',
+                alignItems: 'center',
+                background: scrolled ? 'var(--lp-nav-bg)' : 'transparent',
+                backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+                WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+                borderBottom: `1px solid ${scrolled ? 'var(--lp-nav-border)' : 'transparent'}`,
+            }}
+        >
             {/* Logo */}
-            <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, flex: '0 0 auto', textDecoration: 'none' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#00cc44', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(0,180,60,0.45)' }}>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+            <Link href="/"
+                className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 no-underline">
+                <div style={{ width: 'clamp(28px, 8vw, 32px)', height: 'clamp(28px, 8vw, 32px)', position: 'relative', flexShrink: 0 }}>
+                    <Image 
+                        src="/logo.jpg" 
+                        alt="JobGenie Logo" 
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        priority
+                    />
                 </div>
-                <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em', color: 'var(--lp-text)' }}>
+                <span style={{ fontWeight: 700, fontSize: 'clamp(14px, 4vw, 16px)', letterSpacing: '-0.02em', color: 'var(--lp-text)', whiteSpace: 'nowrap' }}>
                     Job<span style={{ color: '#00aa28' }}>Genie</span>
                 </span>
             </Link>
 
-            {/* Desktop nav */}
-            <nav className="hidden md:flex" style={{ flex: 1, justifyContent: 'center', gap: 2, display: 'flex' }}>
+            {/* Desktop nav — hidden below md */}
+            <nav className="hidden md:flex flex-1 justify-center gap-0.5">
                 {navLinks.map(l => (
                     <a key={l.href} href={l.href}
-                        style={{ padding: '6px 15px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--lp-nav-text)', transition: 'color 150ms, background 150ms', textDecoration: 'none' }}
+                        style={{ padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--lp-nav-text)', transition: 'color 150ms, background 150ms', textDecoration: 'none', whiteSpace: 'nowrap' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text-hover)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-nav-hover-bg)'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                         {l.label}
@@ -54,23 +72,22 @@ export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
                 ))}
             </nav>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
-                {/* Theme toggle always visible */}
+            {/* Right actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-auto md:ml-0">
                 <ThemeToggle />
 
                 {showSignIn && (
                     <>
                         <Link href="/login"
-                            className="hidden sm:inline-block"
-                            style={{ padding: '7px 16px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'all 160ms' }}
+                            className="hidden md:inline-block"
+                            style={{ padding: '7px 16px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'all 160ms', whiteSpace: 'nowrap' }}
                             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
                             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                             Sign In
                         </Link>
                         <Link href="/candidate/signup"
-                            className="hidden sm:inline-block"
-                            style={{ padding: '8px 20px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 22px rgba(0,180,60,0.32)', transition: 'all 160ms' }}
+                            className="hidden md:inline-block"
+                            style={{ padding: '8px 18px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 22px rgba(0,180,60,0.32)', transition: 'all 160ms', whiteSpace: 'nowrap' }}
                             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.55)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
                             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 22px rgba(0,180,60,0.32)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
                             Get Started →
@@ -78,24 +95,40 @@ export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
                     </>
                 )}
 
-                {/* Mobile hamburger */}
-                <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}
-                    style={{ padding: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--lp-text)' }}
-                    aria-label="Menu">
+                {/* Hamburger — visible below md */}
+                <button
+                    className="md:hidden flex items-center justify-center rounded-lg transition-colors touch-manipulation"
+                    onClick={() => setMobileOpen(o => !o)}
+                    style={{ width: 'clamp(36px, 10vw, 40px)', height: 'clamp(36px, 10vw, 40px)', minWidth: 36, minHeight: 36, background: mobileOpen ? 'var(--lp-surface)' : 'none', border: '1px solid ' + (mobileOpen ? 'var(--lp-border)' : 'transparent'), cursor: 'pointer', color: 'var(--lp-text)' }}
+                    aria-label="Toggle menu"
+                >
                     {mobileOpen
-                        ? <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                        : <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+                        ? <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        : <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></svg>
                     }
                 </button>
             </div>
 
-            {/* Mobile menu */}
-            {mobileOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--lp-nav-bg)', backdropFilter: 'blur(24px)', borderBottom: '1px solid var(--lp-nav-border)', padding: '16px 24px 20px' }}>
-                    <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
+            {/* Mobile dropdown menu */}
+            <div
+                className="md:hidden absolute left-0 right-0 overflow-hidden transition-all duration-300"
+                style={{
+                    top: 'clamp(56px, 15vw, 64px)',
+                    maxHeight: mobileOpen ? 500 : 0,
+                    opacity: mobileOpen ? 1 : 0,
+                    background: 'var(--lp-nav-bg)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    borderBottom: mobileOpen ? '1px solid var(--lp-nav-border)' : 'none',
+                    pointerEvents: mobileOpen ? 'auto' : 'none',
+                }}
+            >
+                <div style={{ padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 20px) clamp(16px, 4vw, 20px)' }}>
+                    <nav className="flex flex-col gap-1 mb-4">
                         {navLinks.map(l => (
                             <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
-                                style={{ padding: '10px 12px', borderRadius: 7, fontSize: 14, fontWeight: 500, color: 'var(--lp-text-45)', textDecoration: 'none', transition: 'all 160ms' }}
+                                className="touch-manipulation"
+                                style={{ padding: 'clamp(12px, 3vw, 14px) clamp(12px, 3vw, 14px)', borderRadius: 8, fontSize: 'clamp(13px, 3.5vw, 15px)', fontWeight: 500, color: 'var(--lp-text-45)', textDecoration: 'none', transition: 'all 150ms', display: 'block', minHeight: 44 }}
                                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
                                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                                 {l.label}
@@ -103,19 +136,21 @@ export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
                         ))}
                     </nav>
                     {showSignIn && (
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div className="flex flex-col sm:flex-row gap-2.5 pt-3" style={{ borderTop: '1px solid var(--lp-border)' }}>
                             <Link href="/login" onClick={() => setMobileOpen(false)}
-                                style={{ flex: 1, padding: '10px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', textAlign: 'center' }}>
+                                className="flex-1 text-center touch-manipulation"
+                                style={{ padding: 'clamp(11px, 3vw, 13px)', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-60)', fontSize: 'clamp(13px, 3.5vw, 14px)', fontWeight: 500, textDecoration: 'none' }}>
                                 Sign In
                             </Link>
                             <Link href="/candidate/signup" onClick={() => setMobileOpen(false)}
-                                style={{ flex: 1, padding: '10px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+                                className="flex-1 text-center touch-manipulation"
+                                style={{ padding: 'clamp(11px, 3vw, 13px)', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: '#00cc44', color: '#fff', fontSize: 'clamp(13px, 3.5vw, 14px)', fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(0,180,60,0.35)' }}>
                                 Get Started
                             </Link>
                         </div>
                     )}
                 </div>
-            )}
+            </div>
         </header>
     );
 }

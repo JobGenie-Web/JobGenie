@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-/* ── Cursor spotlight ──────────────────────────────────────────────────────── */
 function CursorSpotlight() {
     const [pos, setPos] = useState({ x: -2000, y: -2000 });
     useEffect(() => {
@@ -14,75 +13,100 @@ function CursorSpotlight() {
     }, []);
     return (
         <div
-            className="pointer-events-none fixed inset-0 z-[1]"
-            style={{
-                background: `radial-gradient(700px at ${pos.x}px ${pos.y}px, rgba(0,200,60,0.08), transparent 40%)`,
-            }}
+            className="pointer-events-none fixed inset-0 z-[1] hidden md:block"
+            style={{ background: `radial-gradient(600px at ${pos.x}px ${pos.y}px, rgba(0,200,60,0.07), transparent 40%)` }}
         />
     );
 }
 
-/* ── Hero background blobs ─────────────────────────────────────────────────── */
+function FloatingLightOrbs() {
+    // Large ambient orbs flowing across the screen
+    const ambientOrbs = [
+        { size: 150, duration: 25, delay: 0, opacity: 0.08 },
+        { size: 120, duration: 30, delay: 5, opacity: 0.1 },
+        { size: 180, duration: 28, delay: 10, opacity: 0.07 },
+        { size: 100, duration: 35, delay: 15, opacity: 0.09 },
+        { size: 140, duration: 32, delay: 8, opacity: 0.08 },
+        { size: 110, duration: 27, delay: 12, opacity: 0.1 },
+    ];
+
+    // Small floating glows - independent of mouse
+    const smallGlows = [
+        { size: 40, duration: 8, delay: 0, startX: 20, startY: 30 },
+        { size: 35, duration: 10, delay: 2, startX: 70, startY: 50 },
+        { size: 45, duration: 9, delay: 4, startX: 40, startY: 70 },
+        { size: 38, duration: 11, delay: 1, startX: 85, startY: 20 },
+        { size: 42, duration: 7, delay: 3, startX: 15, startY: 60 },
+        { size: 36, duration: 12, delay: 5, startX: 60, startY: 40 },
+    ];
+
+    return (
+        <>
+            {/* Large ambient orbs - desktop */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
+                {ambientOrbs.map((orb, i) => (
+                    <div
+                        key={`ambient-${i}`}
+                        className="floating-orb"
+                        style={{
+                            position: 'absolute',
+                            width: `${orb.size}px`,
+                            height: `${orb.size}px`,
+                            borderRadius: '50%',
+                            background: `radial-gradient(circle, rgba(0,255,80,${orb.opacity}) 0%, rgba(0,220,60,${orb.opacity * 0.6}) 40%, transparent 70%)`,
+                            filter: 'blur(40px)',
+                            animation: `floatingOrb${i} ${orb.duration}s ${orb.delay}s ease-in-out infinite`,
+                            opacity: orb.opacity,
+                            willChange: 'transform, opacity',
+                        }}
+                    />
+                ))}
+            </div>
+            
+            {/* Small independent glows - all devices */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                {smallGlows.map((glow, i) => (
+                    <div
+                        key={`glow-${i}`}
+                        style={{
+                            position: 'absolute',
+                            left: `${glow.startX}%`,
+                            top: `${glow.startY}%`,
+                            width: `${glow.size}px`,
+                            height: `${glow.size}px`,
+                            borderRadius: '50%',
+                            background: `radial-gradient(circle, rgba(0,255,100,0.6) 0%, rgba(0,220,80,0.4) 30%, rgba(0,200,60,0.2) 60%, transparent 100%)`,
+                            filter: 'blur(8px)',
+                            boxShadow: '0 0 20px rgba(0,255,100,0.4), 0 0 40px rgba(0,220,80,0.2)',
+                            animation: `floatGlow${i} ${glow.duration}s ${glow.delay}s ease-in-out infinite`,
+                            willChange: 'transform',
+                            zIndex: 3,
+                        }}
+                    />
+                ))}
+            </div>
+        </>
+    );
+}
+
 function HeroBg() {
     return (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ width: '100%', maxWidth: '100vw' }}>
             <div className="dot-grid absolute inset-0 opacity-70" />
-            <div className="absolute rounded-full" style={{
-                top: '-18%', right: '-8%', width: 900, height: 900,
-                background: 'radial-gradient(circle, var(--lp-blob-green) 0%, transparent 58%)',
-                filter: 'blur(32px)', animation: 'blobFloat 22s ease-in-out infinite',
-            }} />
-            <div className="absolute rounded-full" style={{
-                bottom: '-12%', left: '-5%', width: 700, height: 700,
-                background: 'radial-gradient(circle, var(--lp-blob-blue) 0%, transparent 60%)',
-                filter: 'blur(32px)', animation: 'blobFloat2 26s ease-in-out infinite',
-            }} />
-            <div className="absolute rounded-full" style={{
-                top: '40%', left: '38%', width: 500, height: 500,
-                background: 'radial-gradient(circle, var(--lp-blob-purple) 0%, transparent 60%)',
-                filter: 'blur(32px)', animation: 'blobFloat3 17s ease-in-out infinite',
-            }} />
-            <div className="absolute bottom-0 left-0 right-0 h-80" style={{ background: 'var(--lp-fade-bottom)' }} />
+
+            {/* Blobs - only green */}
+            <div className="absolute rounded-full" style={{ top: '-18%', right: '-5%', width: 'clamp(250px, 50vw, 900px)', height: 'clamp(250px, 50vw, 900px)', background: 'radial-gradient(circle, var(--lp-blob-green) 0%, transparent 58%)', filter: 'blur(32px)', animation: 'blobFloat 22s ease-in-out infinite', willChange: 'transform' }} />
+            {/* Removed blue blob to avoid line appearance */}
+
+            {/* Removed static glare beams and center pulse */}
+
+            <div className="absolute bottom-0 left-0 right-0 h-64" style={{ background: 'var(--lp-fade-bottom)' }} />
             <div className="absolute inset-0" style={{ background: 'var(--lp-vignette)' }} />
         </div>
     );
 }
 
-/* ── Match score widget ─────────────────────────────────────────────────────── */
-function MatchCard() {
-    const pct = 96;
-    const circ = 2 * Math.PI * 38;
-    return (
-        <div style={{
-            padding: '18px 20px', borderRadius: 16, width: 215,
-            background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)',
-            backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-            boxShadow: 'var(--lp-glass-shadow)',
-            animation: 'floatA 8s ease-in-out 0.8s infinite',
-        }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.11em', color: 'var(--lp-text-28)', marginBottom: 12 }}>AI MATCH SCORE</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ position: 'relative', width: 54, height: 54, flexShrink: 0 }}>
-                    <svg width={54} height={54} viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="44" cy="44" r="38" fill="none" stroke="var(--lp-border)" strokeWidth="7" />
-                        <circle cx="44" cy="44" r="38" fill="none" stroke="#00cc36" strokeWidth="7"
-                            strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round"
-                            style={{ filter: 'drop-shadow(0 0 9px rgba(0,200,54,0.7))' }} />
-                    </svg>
-                    <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'var(--lp-text)', fontFamily: 'monospace' }}>{pct}%</span>
-                </div>
-                <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--lp-text)', marginBottom: 3 }}>Senior Engineer</div>
-                    <div style={{ fontSize: 11, color: 'var(--lp-text-28)', marginBottom: 8 }}>TechCorp · Remote</div>
-                    <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 4, letterSpacing: '0.05em', background: 'rgba(0,180,60,0.12)', color: '#00aa30', border: '1px solid rgba(0,180,60,0.25)' }}>✦ TOP MATCH</span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ── Pipeline card widget ───────────────────────────────────────────────────── */
-function PipelineCard() {
+function PipelineCard({ fluid = false }: { fluid?: boolean }) {
     const stages = [
         { label: 'Applied', n: 124, color: '#f59e0b' },
         { label: 'Screened', n: 47, color: '#3b82f6' },
@@ -90,31 +114,21 @@ function PipelineCard() {
         { label: 'Offer', n: 6, color: '#00bb30' },
     ];
     return (
-        <div style={{
-            padding: '18px 20px', borderRadius: 16, width: 275,
-            background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)',
-            backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-            boxShadow: 'var(--lp-glass-shadow)',
-            animation: 'floatB 9s ease-in-out infinite',
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#00bb30" strokeWidth="2"><rect x="2" y="3" width="7" height="9" rx="1" /><rect x="9.5" y="3" width="5" height="5" rx="1" /><rect x="15" y="3" width="7" height="7" rx="1" /></svg>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--lp-text-60)' }}>Hiring Pipeline</span>
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4, color: '#00aa30', letterSpacing: '0.08em' }}>
-                    <span className="anim-pulse-green" style={{ width: 5, height: 5, borderRadius: '50%', background: '#00aa30', display: 'inline-block' }} />
-                    LIVE
+        <div style={{ padding: 'clamp(10px, 3vw, 14px)', borderRadius: 'clamp(12px, 3.5vw, 14px)', width: fluid ? '100%' : 240, minWidth: fluid ? 0 : 200, background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', boxShadow: 'var(--lp-glass-shadow)', animation: 'floatB 9s ease-in-out infinite' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(8px, 2.5vw, 10px)' }}>
+                <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-60)' }}>Hiring Pipeline</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 'clamp(2px, 0.7vw, 3px)', color: '#00aa30' }}>
+                    <span className="anim-pulse-green" style={{ width: 'clamp(3px, 1vw, 4px)', height: 'clamp(3px, 1vw, 4px)', borderRadius: '50%', background: '#00aa30', display: 'inline-block' }} />LIVE
                 </span>
             </div>
             {stages.map((s, i) => (
-                <div key={i} style={{ marginBottom: i < stages.length - 1 ? 9 : 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 10, color: 'var(--lp-text-38)', fontWeight: 500 }}>{s.label}</span>
-                        <span style={{ fontSize: 10, color: s.color, fontWeight: 700, fontFamily: 'monospace' }}>{s.n}</span>
+                <div key={i} style={{ marginBottom: i < stages.length - 1 ? 'clamp(5px, 1.5vw, 7px)' : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(2px, 0.7vw, 3px)' }}>
+                        <span style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-38)', fontWeight: 500 }}>{s.label}</span>
+                        <span style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: s.color, fontWeight: 700, fontFamily: 'monospace' }}>{s.n}</span>
                     </div>
-                    <div style={{ height: 3, borderRadius: 99, background: 'var(--lp-border)' }}>
-                        <div style={{ height: '100%', width: `${(s.n / 124) * 100}%`, borderRadius: 99, background: s.color, boxShadow: `0 0 7px ${s.color}70` }} />
+                    <div style={{ height: 'clamp(2.5px, 0.8vw, 3px)', borderRadius: 99, background: 'var(--lp-border)' }}>
+                        <div style={{ height: '100%', width: `${(s.n / 124) * 100}%`, borderRadius: 99, background: s.color, boxShadow: `0 0 6px ${s.color}70` }} />
                     </div>
                 </div>
             ))}
@@ -122,40 +136,46 @@ function PipelineCard() {
     );
 }
 
-/* ── Notification + genie bubble widget ─────────────────────────────────────── */
-function NotifCard({ text, sub, color = '#00aa30', animClass = 'anim-float-c', genieRight = true }: {
-    text: string; sub: string; color?: string; animClass?: string; genieRight?: boolean;
-}) {
+function MatchCard({ fluid = false }: { fluid?: boolean }) {
+    const pct = 96;
+    const circ = 2 * Math.PI * 38;
     return (
-        <div className={animClass} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-            {/* Notification pill */}
-            <div style={{
-                padding: '12px 16px',
-                borderRadius: 16,
-                background: 'var(--lp-glass-bg)',
-                border: '1px solid var(--lp-glass-border)',
-                backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)',
-                boxShadow: 'var(--lp-glass-shadow)',
-                display: 'flex', alignItems: 'center', gap: 11,
-                width: 230, flexShrink: 0, position: 'relative',
-            }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, borderRadius: '16px 0 0 16px', background: color, opacity: 0.8 }} />
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, marginLeft: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+        <div style={{ padding: 'clamp(10px, 3vw, 14px)', borderRadius: 'clamp(12px, 3.5vw, 14px)', width: fluid ? '100%' : 195, minWidth: fluid ? 0 : 160, background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', boxShadow: 'var(--lp-glass-shadow)', animation: 'floatA 8s ease-in-out 0.8s infinite' }}>
+            <div style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 700, letterSpacing: '0.11em', color: 'var(--lp-text-28)', marginBottom: 'clamp(6px, 2vw, 8px)' }}>AI MATCH SCORE</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(7px, 2vw, 9px)' }}>
+                <div style={{ position: 'relative', width: 'clamp(35px, 10vw, 40px)', height: 'clamp(35px, 10vw, 40px)', flexShrink: 0 }}>
+                    <svg width={'clamp(35px, 10vw, 40px)'} height={'clamp(35px, 10vw, 40px)'} viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="var(--lp-border)" strokeWidth="7" />
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="#00cc36" strokeWidth="7" strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 9px rgba(0,200,54,0.7))' }} />
+                    </svg>
+                    <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, color: 'var(--lp-text)', fontFamily: 'monospace' }}>{pct}%</span>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--lp-text)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</div>
-                    <div style={{ fontSize: 9.5, color: 'var(--lp-text-28)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text)', marginBottom: 'clamp(1px, 0.5vw, 2px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Senior Engineer</div>
+                    <div style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-28)', marginBottom: 'clamp(4px, 1.2vw, 5px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>TechCorp · Remote</div>
+                    <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, padding: '2px clamp(4px, 1.2vw, 5px)', borderRadius: 'clamp(3px, 1vw, 4px)', letterSpacing: '0.05em', background: 'rgba(0,180,60,0.12)', color: '#00aa30', border: '1px solid rgba(0,180,60,0.25)', whiteSpace: 'nowrap', display: 'inline-block' }}>✦ TOP MATCH</span>
                 </div>
             </div>
-            {/* Genie peeking out — unclipped */}
-            <div style={{
-                position: 'absolute',
-                ...(genieRight ? { right: -72 } : { left: -72 }),
-                bottom: -12, width: 96, height: 130, pointerEvents: 'none',
-            }}>
-                <Image src="/genie.png" alt="Genie" fill className="object-contain"
-                    style={{ objectPosition: 'center bottom', filter: 'saturate(1.2) brightness(1.05)', transform: genieRight ? 'scaleX(-1)' : 'none' }} />
+        </div>
+    );
+}
+
+function NotifPill({ text, sub, color = '#00aa30', animClass = 'anim-float-c', fluid = false, borderPosition = 'left' }: {
+    text: string; sub: string; color?: string; animClass?: string; fluid?: boolean; borderPosition?: 'left' | 'right';
+}) {
+    const borderStyle = borderPosition === 'left' 
+        ? { left: 0, borderRadius: 'clamp(10px, 3vw, 12px) 0 0 clamp(10px, 3vw, 12px)' }
+        : { right: 0, borderRadius: '0 clamp(10px, 3vw, 12px) clamp(10px, 3vw, 12px) 0' };
+    
+    return (
+        <div className={animClass} style={{ padding: 'clamp(7px, 2vw, 11px)', borderRadius: 'clamp(10px, 3vw, 12px)', background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', boxShadow: 'var(--lp-glass-shadow)', display: 'flex', alignItems: 'center', gap: 'clamp(6px, 2vw, 8px)', position: 'relative', width: fluid ? '100%' : undefined, maxWidth: fluid ? undefined : 220, minWidth: fluid ? 0 : 180 }}>
+            <div style={{ position: 'absolute', top: 0, bottom: 0, width: 'clamp(2px, 0.7vw, 3px)', background: color, opacity: 0.8, ...borderStyle }} />
+            <div style={{ width: 'clamp(20px, 5.5vw, 22px)', height: 'clamp(20px, 5.5vw, 22px)', borderRadius: 'clamp(5px, 1.5vw, 6px)', background: `${color}18`, border: `1px solid ${color}30`, marginLeft: borderPosition === 'left' ? 'clamp(3px, 1vw, 4px)' : 0, marginRight: borderPosition === 'right' ? 'clamp(3px, 1vw, 4px)' : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, order: borderPosition === 'right' ? 2 : 0 }}>
+                <svg width={'clamp(8px, 2.2vw, 9px)'} height={'clamp(8px, 2.2vw, 9px)'} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0, order: 1 }}>
+                <div style={{ fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, color: 'var(--lp-text)', marginBottom: 'clamp(0.5px, 0.3vw, 1px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</div>
+                <div style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
             </div>
         </div>
     );
@@ -167,134 +187,218 @@ function useFadeIn() {
     return show;
 }
 
-/* ── Hero section ───────────────────────────────────────────────────────────── */
 export function Hero() {
     const show = useFadeIn();
     const fd = (delay: number): React.CSSProperties => ({
         opacity: show ? 1 : 0,
-        transform: show ? 'none' : 'translateY(24px)',
+        transform: show ? 'none' : 'translateY(20px)',
         transition: `opacity 750ms ${delay}ms ease-out, transform 750ms ${delay}ms ease-out`,
     });
 
     return (
         <>
             <CursorSpotlight />
-            <section
-                className="relative overflow-hidden"
-                style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', background: 'var(--lp-bg)' }}
-            >
+            <section className="relative overflow-hidden min-h-screen flex items-center" style={{ background: 'var(--lp-bg)', width: '100%', maxWidth: '100vw' }}>
                 <HeroBg />
+                <FloatingLightOrbs />
 
-                {/* Background genie */}
-                <div className="pointer-events-none absolute bottom-0 right-0 select-none" style={{ height: '92%', zIndex: 1 }}>
+                {/* Background genie — desktop: right side, mobile: centered faded */}
+                <div className="pointer-events-none absolute select-none hidden lg:block" style={{ bottom: 0, right: -150, height: '95%', zIndex: 1, maxWidth: '50%' }}>
                     <Image src="/genie.png" alt="" aria-hidden width={700} height={900}
                         className="h-full w-auto anim-genie-bob"
-                        style={{ opacity: 0.42, filter: 'saturate(1.2) brightness(1.05)' }}
-                        priority
-                    />
+                        style={{ opacity: 0.35, filter: 'saturate(1.2) brightness(1.05)', maxWidth: '75%', height: 'auto', transform: 'scaleY(-1)' }} priority />
                 </div>
 
-                {/* Sparkle particles */}
+                {/* Genie mobile — centered, natural aspect ratio with animation */}
+                <div className="pointer-events-none absolute select-none lg:hidden" style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, width: 'min(72vw, 300px)', maxWidth: '90%' }}>
+                    <div className="anim-genie-bob">
+                        <Image src="/genie.png" alt="" aria-hidden width={400} height={520}
+                            className="w-full h-auto"
+                            style={{ opacity: 0.2, filter: 'saturate(1.3) brightness(1.1)', maxWidth: '100%', transform: 'scaleY(-1)' }} priority />
+                    </div>
+                </div>
+
+                {/* Sparkles — visible on all devices, responsive sizing */}
+                {/* Right side sparkles */}
                 {[
-                    { r: '9%', b: '8%', s: 5, d: 0 }, { r: '13%', b: '18%', s: 3.5, d: 0.4 },
-                    { r: '7%', b: '28%', s: 4, d: 0.8 }, { r: '17%', b: '12%', s: 3, d: 1.1 },
-                    { r: '5%', b: '38%', s: 5, d: 0.3 }, { r: '11%', b: '22%', s: 3, d: 1.5 },
-                    { r: '15%', b: '6%', s: 4, d: 0.7 }, { r: '8%', b: '44%', s: 2.5, d: 1.9 },
-                    { r: '20%', b: '15%', s: 3.5, d: 0.5 }, { r: '6%', b: '32%', s: 4.5, d: 1.2 },
+                    { r: '9%', b: '8%', s: 5, d: 0 }, 
+                    { r: '13%', b: '18%', s: 3.5, d: 0.4 },
+                    { r: '7%', b: '28%', s: 4, d: 0.8 }, 
+                    { r: '17%', b: '12%', s: 3, d: 1.1 },
+                    { r: '22%', b: '22%', s: 3.5, d: 0.6 },
+                    { r: '5%', b: '35%', s: 3, d: 1.3 },
                 ].map((p, i) => (
-                    <div key={i} className="pointer-events-none absolute rounded-full" style={{
-                        right: p.r, bottom: p.b, width: p.s, height: p.s,
-                        background: '#00cc44',
-                        boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`,
-                        animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`,
-                        zIndex: 2,
-                    }} />
+                    <div key={`right-${i}`} className="pointer-events-none absolute rounded-full" style={{ right: p.r, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: i >= 4 ? 0.7 : 1 }} />
+                ))}
+                {/* Left side sparkles (mobile-friendly) */}
+                {[
+                    { l: '10%', b: '15%', s: 4, d: 0.3 },
+                    { l: '15%', b: '25%', s: 3, d: 0.9 },
+                    { l: '7%', b: '10%', s: 3.5, d: 1.2 },
+                ].map((p, i) => (
+                    <div key={`left-${i}`} className="pointer-events-none absolute rounded-full lg:hidden" style={{ left: p.l, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${2.0 + i * 0.3}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: 0.7 }} />
                 ))}
 
-                {/* Smoke wisps */}
-                {[{ r: '10%', b: '5%', w: 28, d: 0.2 }, { r: '16%', b: '10%', w: 20, d: 0.9 }, { r: '7%', b: '15%', w: 24, d: 1.4 }].map((s, i) => (
-                    <div key={i} className="pointer-events-none absolute rounded-full" style={{
-                        right: s.r, bottom: s.b, width: s.w, height: s.w,
-                        background: 'radial-gradient(circle, rgba(0,200,60,0.18) 0%, transparent 70%)',
-                        animation: `magicSmoke ${2.4 + i * 0.5}s ${s.d}s ease-out infinite`,
-                        zIndex: 2,
-                    }} />
-                ))}
+                {/* ── Main content ── */}
+                <div className="relative w-full z-[2] mx-auto" style={{ maxWidth: 1300, overflowX: 'hidden' }}>
 
-                {/* Main content grid */}
-                <div className="relative mx-auto w-full" style={{ maxWidth: 1300, padding: '100px 56px 80px', zIndex: 2, display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 64, alignItems: 'center' }}>
-
-                    {/* Left copy */}
-                    <div>
-                        <div style={{ ...fd(80), display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px', borderRadius: 99, border: '1px solid rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)', marginBottom: 32 }}>
-                            <span style={{ padding: '2px 9px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
-                            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>Recruitment OS for modern teams</span>
+                    {/* ═══ MOBILE LAYOUT (< lg) ═══ */}
+                    <div className="lg:hidden px-4 xs:px-5 sm:px-6 pt-20 xs:pt-24 sm:pt-28 pb-8 sm:pb-10 flex flex-col items-center text-center">
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(80), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                            <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
+                            <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Recruitment OS for modern teams</span>
                         </div>
 
-                        <h1 style={{ ...fd(180), fontSize: 'clamp(44px, 5.5vw, 72px)', fontWeight: 800, letterSpacing: '-0.042em', lineHeight: 1.02, color: 'var(--lp-heading)', marginBottom: 24 }}>
+                        {/* Headline */}
+                        <h1 style={{ ...fd(180), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
                             Hire the right<br />people,{' '}
                             <span style={{ color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>faster.</span>
                         </h1>
 
-                        <p style={{ ...fd(280), fontSize: 17, color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 490, marginBottom: 40 }}>
-                            A unified recruitment platform where candidates are verified, employers are trusted,
-                            and every step of the hiring journey is transparent and trackable.
+                        {/* Subtext */}
+                        <p style={{ ...fd(280), fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
+                            A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.
                         </p>
 
-                        <div style={{ ...fd(360), display: 'flex', gap: 12, marginBottom: 48, flexWrap: 'wrap' }}>
-                            <Link href="/candidate/signup"
-                                style={{ padding: '14px 30px', borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-block', boxShadow: '0 0 36px rgba(0,180,60,0.38)', transition: 'all 200ms' }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px) scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)'; }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)'; }}
+                        {/* CTA buttons */}
+                        <div style={fd(340)} className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-[min(320px,90vw)] px-4 mb-6 sm:mb-8">
+                            <Link href="/candidate/signup" className="text-center touch-manipulation"
+                                style={{ padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', minHeight: 44, borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 'clamp(14px, 3.5vw, 15px)', fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 36px rgba(0,180,60,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >Start as Candidate →</Link>
-                            <Link href="/employer/signup"
-                                style={{ padding: '14px 30px', borderRadius: 9999, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-block', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', transition: 'all 200ms' }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface-hover)'; }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-60)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                            <Link href="/employer/signup" className="text-center touch-manipulation"
+                                style={{ padding: 'clamp(11px, 3vw, 13px) clamp(20px, 5vw, 26px)', minHeight: 44, borderRadius: 9999, fontSize: 'clamp(14px, 3.5vw, 15px)', fontWeight: 600, textDecoration: 'none', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >Register Company</Link>
                         </div>
 
                         {/* Social proof */}
-                        <div style={{ ...fd(440), display: 'flex', alignItems: 'center', gap: 20 }}>
-                            <div style={{ display: 'flex' }}>
+                        <div style={fd(400)} className="flex flex-col xs:flex-row items-center gap-2.5 xs:gap-3 mb-8 sm:mb-10 px-4">
+                            <div className="flex">
                                 {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
-                                    <div key={i} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>
+                                    <div key={i} style={{ width: 'clamp(24px, 6vw, 26px)', height: 'clamp(24px, 6vw, 26px)', borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? 'clamp(-8px, -2vw, -7px)' : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 700, color: '#fff' }}>
                                         {['AC', 'NV', 'TW', 'EM', 'JP'][i]}
                                     </div>
                                 ))}
                             </div>
-                            <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
-                                <div style={{ display: 'flex', gap: 1, marginTop: 3, alignItems: 'center' }}>
+                            <div className="text-center xs:text-left">
+                                <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
+                                <div className="flex gap-0.5 mt-0.5 items-center justify-center xs:justify-start">
                                     {[0, 1, 2, 3, 4].map(i => (
-                                        <svg key={i} width={12} height={12} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
+                                        <svg key={i} width={'clamp(9px, 2.5vw, 10px)'} height={'clamp(9px, 2.5vw, 10px)'} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
                                         </svg>
                                     ))}
-                                    <span style={{ fontSize: 11, color: 'var(--lp-text-28)', marginLeft: 4 }}>4.9 / 5</span>
+                                    <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', color: 'var(--lp-text-28)', marginLeft: 3 }}>4.9 / 5</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Mobile widget cards — fully fluid and responsive */}
+                        <div className="w-full grid gap-2.5 sm:gap-3 mb-4 px-2" style={{ ...fd(460), gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', maxWidth: '100%', overflowX: 'hidden' }}>
+                            <div className="col-span-full">
+                                <PipelineCard fluid />
+                            </div>
+                            <div className="col-span-full xs:col-span-1">
+                                <MatchCard fluid />
+                            </div>
+                            <div className="flex flex-col gap-2 col-span-full xs:col-span-1">
+                                <NotifPill text="Interview Confirmed" sub="TechCorp · Round 2" animClass="anim-float-a" fluid />
+                                <NotifPill text="Offer Received! 🎉" sub="Nexus · $120k" color="#f59e0b" animClass="anim-float-b" fluid />
                             </div>
                         </div>
                     </div>
 
-                    {/* Right widget cluster */}
-                    <div style={{ ...fd(220), position: 'relative', height: 560 }}>
-                        <div style={{ position: 'absolute', top: 30, left: 0 }}><PipelineCard /></div>
-                        <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 2 }}><MatchCard /></div>
-                        <div style={{ position: 'absolute', bottom: 158, right: 80, zIndex: 3 }}>
-                            <NotifCard text="Interview Confirmed" sub="TechCorp · Round 2 · May 26" animClass="anim-float-a" genieRight={true} />
+                    {/* ═══ DESKTOP LAYOUT (lg+) ═══ */}
+                    <div className="hidden lg:grid grid-cols-2 gap-12 xl:gap-16 items-center px-12 xl:px-20 py-24 xl:py-28">
+
+                        {/* Left copy */}
+                        <div>
+                            {/* Badge */}
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(80), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
+                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>Recruitment OS for modern teams</span>
+                            </div>
+
+                            <h1 style={{ ...fd(180), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
+                                Hire the right<br />people,{' '}
+                                <span style={{ color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>faster.</span>
+                            </h1>
+
+                            <p style={{ ...fd(280), fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
+                                A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.
+                            </p>
+
+                            {/* CTA buttons */}
+                            <div style={fd(360)} className="flex gap-3 mb-10">
+                                <Link href="/candidate/signup"
+                                    style={{ padding: '13px 26px', borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 36px rgba(0,180,60,0.38)', transition: 'all 200ms' }}
+                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)'; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)'; }}
+                                >Start as Candidate →</Link>
+                                <Link href="/employer/signup"
+                                    style={{ padding: '13px 26px', borderRadius: 9999, fontSize: 15, fontWeight: 600, textDecoration: 'none', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', transition: 'all 200ms' }}
+                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-60)'; }}
+                                >Register Company</Link>
+                            </div>
+
+                            {/* Social proof */}
+                            <div style={fd(440)} className="flex items-center gap-4">
+                                <div className="flex">
+                                    {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
+                                        <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? -7 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff' }}>
+                                            {['AC', 'NV', 'TW', 'EM', 'JP'][i]}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
+                                    <div className="flex gap-0.5 mt-1 items-center">
+                                        {[0, 1, 2, 3, 4].map(i => (
+                                            <svg key={i} width={11} height={11} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+                                            </svg>
+                                        ))}
+                                        <span style={{ fontSize: 10, color: 'var(--lp-text-28)', marginLeft: 3 }}>4.9 / 5</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ position: 'absolute', bottom: 52, left: 0, zIndex: 2 }}>
-                            <NotifCard text="Offer Received! 🎉" sub="Nexus Tech · $120k package" color="#f59e0b" animClass="anim-float-b" genieRight={false} />
+
+                        {/* Right widget cluster */}
+                        <div style={{ ...fd(220), position: 'relative', height: 520 }}>
+                            <div className="absolute" style={{ top: 24, left: 0 }}><PipelineCard /></div>
+                            <div className="absolute" style={{ top: 0, right: 0, zIndex: 2 }}><MatchCard /></div>
+                            
+                            {/* Genie for Interview Confirmed card - flipped horizontally + vertically */}
+                            <div className="absolute pointer-events-none" style={{ bottom: 100, right: 70, zIndex: 4 }}>
+                                <Image src="/genie.png" alt="" aria-hidden width={120} height={156}
+                                    className="anim-genie-bob"
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(1, -1)' }} />
+                            </div>
+                            
+                            <div className="absolute" style={{ bottom: 140, right: 150, zIndex: 3 }}>
+                                <NotifPill text="Interview Confirmed" sub="TechCorp · Round 2 · May 26" animClass="anim-float-a" borderPosition="right" />
+                            </div>
+                            
+                            {/* Genie for Offer Received card - normal direction */}
+                            <div className="absolute pointer-events-none" style={{ bottom: 0, left: -30, zIndex: 3 }}>
+                                <Image src="/genie2.png" alt="" aria-hidden width={110} height={143}
+                                    className="anim-genie-bob"
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(-1, -1)' }} />
+                            </div>
+                            
+                            <div className="absolute" style={{ bottom: 44, left: 50, zIndex: 2 }}>
+                                <NotifPill text="Offer Received! 🎉" sub="Nexus Tech · $120k package" color="#f59e0b" animClass="anim-float-b" />
+                            </div>
                         </div>
-                        <div style={{ position: 'absolute', top: '22%', left: '18%', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,180,60,0.055) 0%, transparent 70%)', filter: 'blur(70px)', pointerEvents: 'none' }} />
                     </div>
                 </div>
 
-                {/* Scroll cue */}
-                <div className="scroll-cue pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1" style={{ opacity: 0.3, zIndex: 2 }}>
-                    <div style={{ width: 22, height: 36, borderRadius: 99, border: '1.5px solid var(--lp-border)', display: 'flex', justifyContent: 'center', paddingTop: 6 }}>
-                        <div className="anim-bounce-dot" style={{ width: 3, height: 7, borderRadius: 99, background: 'var(--lp-text-45)' }} />
+                {/* Scroll cue — sm+ only */}
+                <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex-col items-center gap-1 hidden sm:flex" style={{ opacity: 0.3, zIndex: 2 }}>
+                    <div style={{ width: 20, height: 32, borderRadius: 99, border: '1.5px solid var(--lp-border)', display: 'flex', justifyContent: 'center', paddingTop: 5 }}>
+                        <div className="anim-bounce-dot" style={{ width: 3, height: 6, borderRadius: 99, background: 'var(--lp-text-45)' }} />
                     </div>
                 </div>
             </section>
