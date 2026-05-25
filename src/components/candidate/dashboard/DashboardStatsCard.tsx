@@ -15,37 +15,37 @@ interface DashboardStatsCardProps {
 
 const colorMap = {
     blue: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--accent-sky)_l_c_h_/_0.12),oklch(from_var(--accent-sky)_l_c_h_/_0.06))]",
+        iconBg: "bg-blue-100 dark:bg-blue-900/20",
         iconColor: "text-blue-600 dark:text-blue-400",
         valueColor: "text-foreground",
         border: "border-blue-100 dark:border-blue-900/30",
     },
     green: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--primary)_l_c_h_/_0.12),oklch(from_var(--accent)_l_c_h_/_0.06))]",
-        iconColor: "text-emerald-600 dark:text-emerald-400",
+        iconBg: "bg-primary/10",
+        iconColor: "text-primary",
         valueColor: "text-foreground",
-        border: "border-emerald-100 dark:border-emerald-900/30",
+        border: "border-primary/15",
     },
     amber: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--accent-amber)_l_c_h_/_0.12),oklch(from_var(--accent-amber)_l_c_h_/_0.06))]",
+        iconBg: "bg-amber-100 dark:bg-amber-900/20",
         iconColor: "text-amber-600 dark:text-amber-400",
         valueColor: "text-foreground",
         border: "border-amber-100 dark:border-amber-900/30",
     },
     purple: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--accent-violet)_l_c_h_/_0.12),oklch(from_var(--accent-violet)_l_c_h_/_0.06))]",
+        iconBg: "bg-violet-100 dark:bg-violet-900/20",
         iconColor: "text-violet-600 dark:text-violet-400",
         valueColor: "text-foreground",
         border: "border-violet-100 dark:border-violet-900/30",
     },
     rose: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--accent-rose)_l_c_h_/_0.12),oklch(from_var(--accent-rose)_l_c_h_/_0.06))]",
+        iconBg: "bg-rose-100 dark:bg-rose-900/20",
         iconColor: "text-rose-600 dark:text-rose-400",
         valueColor: "text-foreground",
         border: "border-rose-100 dark:border-rose-900/30",
     },
     cyan: {
-        iconBg: "bg-[linear-gradient(135deg,oklch(from_var(--accent-sky)_l_c_h_/_0.12),oklch(from_var(--accent-sky)_l_c_h_/_0.06))]",
+        iconBg: "bg-cyan-100 dark:bg-cyan-900/20",
         iconColor: "text-cyan-600 dark:text-cyan-400",
         valueColor: "text-foreground",
         border: "border-cyan-100 dark:border-cyan-900/30",
@@ -93,13 +93,13 @@ export function DashboardStatsCard({
 
             {trend && trendLabel && (
                 <div className="flex items-center gap-1 mt-auto">
-                    {trend === "up" && <TrendingUp className="h-3 w-3 text-emerald-500" />}
+                    {trend === "up" && <TrendingUp className="h-3 w-3 text-primary" />}
                     {trend === "down" && <TrendingDown className="h-3 w-3 text-rose-500" />}
                     {trend === "neutral" && <Minus className="h-3 w-3 text-muted-foreground" />}
                     <span
                         className={cn(
                             "text-xs font-medium",
-                            trend === "up" && "text-emerald-600 dark:text-emerald-400",
+                            trend === "up" && "text-primary",
                             trend === "down" && "text-rose-600 dark:text-rose-400",
                             trend === "neutral" && "text-muted-foreground"
                         )}

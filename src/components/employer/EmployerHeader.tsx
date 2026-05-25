@@ -3,6 +3,7 @@
 import { useSidebar } from "@/components/ui/sidebar";
 import { EmployerUserMenu } from "./EmployerUserMenu";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 interface EmployerHeaderProps {
@@ -72,6 +73,7 @@ export function EmployerHeader({ user, pageTitle, pageDescription }: EmployerHea
             )}
 
             <div className="flex shrink-0 items-center gap-3">
+                <ThemeToggle />
                 <NotificationBell />
                 <EmployerUserMenu user={user} />
             </div>

@@ -1,41 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { User, Eye, EyeOff } from "lucide-react";
+import { User, Eye, EyeOff, Loader2, Check, X, ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
     calculatePasswordStrength,
     getStrengthLabel,
     getStrengthColor,
 } from "@/lib/validations/employer-schema";
 
+const inputCls = cn(
+    "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-white/25",
+    "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors",
+);
+const labelCls = "block text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5";
+
+const strengthBarColor: Record<string, string> = {
+    "bg-red-500":    "bg-red-500",
+    "bg-orange-500": "bg-orange-500",
+    "bg-yellow-500": "bg-yellow-500",
+    "bg-lime-500":   "bg-lime-500",
+    "bg-green-500":  "bg-green-500",
+};
+
 interface EmployerProfileStepProps {
-    data: {
-        firstName: string;
-        lastName: string;
-        phone: string;
-        email: string;
-        password: string;
-        confirmPassword: string;
-        jobTitle: string;
-    };
+    data: { firstName: string; lastName: string; phone: string; email: string; password: string; confirmPassword: string; jobTitle: string; };
     onChange: (data: EmployerProfileStepProps["data"]) => void;
     onPrevious: () => void;
     onSubmit: () => void;
     isLoading: boolean;
 }
 
-export function EmployerProfileStep({
-    data,
-    onChange,
-    onPrevious,
-    onSubmit,
-    isLoading,
-}: EmployerProfileStepProps) {
+export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLoading }: EmployerProfileStepProps) {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -44,276 +40,178 @@ export function EmployerProfileStep({
     const strengthLabel = getStrengthLabel(passwordStrength);
     const strengthColor = getStrengthColor(passwordStrength);
 
-    const handleChange = (field: keyof typeof data, value: string) => {
+    const set = (field: keyof typeof data, value: string) => {
         onChange({ ...data, [field]: value });
-        // Clear error when user starts typing
-        if (errors[field]) {
-            setErrors({ ...errors, [field]: "" });
-        }
+        if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
     };
 
     const validate = () => {
-        const newErrors: Record<string, string> = {};
-
-        if (!data.firstName.trim()) {
-            newErrors.firstName = "First name is required";
-        } else if (data.firstName.length < 2) {
-            newErrors.firstName = "First name must be at least 2 characters";
-        }
-
-        if (!data.lastName.trim()) {
-            newErrors.lastName = "Last name is required";
-        } else if (data.lastName.length < 2) {
-            newErrors.lastName = "Last name must be at least 2 characters";
-        }
-
-        if (!data.phone.trim()) {
-            newErrors.phone = "Phone number is required";
-        } else if (!/^[+]?[\d\s-]+$/.test(data.phone)) {
-            newErrors.phone = "Please enter a valid phone number";
-        }
-
-        if (!data.email.trim()) {
-            newErrors.email = "Email is required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-            newErrors.email = "Please enter a valid email address";
-        }
-
-        if (!data.password) {
-            newErrors.password = "Password is required";
-        } else if (data.password.length < 8) {
-            newErrors.password = "Password must be at least 8 characters";
-        } else if (!/[a-z]/.test(data.password)) {
-            newErrors.password = "Password must contain at least one lowercase letter";
-        } else if (!/[A-Z]/.test(data.password)) {
-            newErrors.password = "Password must contain at least one uppercase letter";
-        } else if (!/[0-9]/.test(data.password)) {
-            newErrors.password = "Password must contain at least one number";
-        }
-
-        if (!data.confirmPassword) {
-            newErrors.confirmPassword = "Please confirm your password";
-        } else if (data.password !== data.confirmPassword) {
-            newErrors.confirmPassword = "Passwords do not match";
-        }
-
-        if (!data.jobTitle.trim()) {
-            newErrors.jobTitle = "Job title is required";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        const e: Record<string, string> = {};
+        if (!data.firstName.trim() || data.firstName.length < 2) e.firstName = "First name must be at least 2 characters";
+        if (!data.lastName.trim() || data.lastName.length < 2) e.lastName = "Last name must be at least 2 characters";
+        if (!data.phone.trim() || !/^[+]?[\d\s-]+$/.test(data.phone)) e.phone = "Please enter a valid phone number";
+        if (!data.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) e.email = "Please enter a valid email address";
+        if (!data.jobTitle.trim()) e.jobTitle = "Job title is required";
+        if (!data.password || data.password.length < 8) e.password = "Password must be at least 8 characters";
+        else if (!/[a-z]/.test(data.password)) e.password = "Must contain a lowercase letter";
+        else if (!/[A-Z]/.test(data.password)) e.password = "Must contain an uppercase letter";
+        else if (!/[0-9]/.test(data.password)) e.password = "Must contain a number";
+        if (!data.confirmPassword) e.confirmPassword = "Please confirm your password";
+        else if (data.password !== data.confirmPassword) e.confirmPassword = "Passwords do not match";
+        setErrors(e);
+        return Object.keys(e).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validate()) {
-            onSubmit();
-        }
-    };
+    const passwordsMatch = data.password.length > 0 && data.confirmPassword.length > 0 && data.password === data.confirmPassword;
+    const passwordsDontMatch = data.confirmPassword.length > 0 && data.password !== data.confirmPassword;
 
     return (
-        <Card>
-            <CardContent className="pt-6 space-y-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <User className="h-5 w-5 text-primary" />
-                    <h2 className="text-xl font-semibold">Your Information</h2>
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 space-y-5">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4.5 w-4.5 text-primary" />
                 </div>
+                <div>
+                    <h2 className="text-base font-bold text-white">Your Information</h2>
+                    <p className="text-xs text-white/40">Step 2 of 2 — Admin account</p>
+                </div>
+            </div>
 
-                <div className="space-y-4">
-                    {/* Name Fields */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="firstName">
-                                First Name <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="firstName"
-                                placeholder="Enter first name"
-                                value={data.firstName}
-                                onChange={(e) => handleChange("firstName", e.target.value)}
-                                className={errors.firstName ? "border-destructive" : ""}
-                            />
-                            {errors.firstName && (
-                                <p className="text-sm text-destructive">{errors.firstName}</p>
-                            )}
+            {/* Name row */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label htmlFor="firstName" className={labelCls}>First Name <span className="text-red-400/80">*</span></label>
+                    <input id="firstName" placeholder="John" value={data.firstName}
+                        onChange={e => set("firstName", e.target.value)}
+                        className={cn(inputCls, errors.firstName && "border-red-500/50")} />
+                    {errors.firstName && <p className="mt-1.5 text-xs text-red-400">{errors.firstName}</p>}
+                </div>
+                <div>
+                    <label htmlFor="lastName" className={labelCls}>Last Name <span className="text-red-400/80">*</span></label>
+                    <input id="lastName" placeholder="Doe" value={data.lastName}
+                        onChange={e => set("lastName", e.target.value)}
+                        className={cn(inputCls, errors.lastName && "border-red-500/50")} />
+                    {errors.lastName && <p className="mt-1.5 text-xs text-red-400">{errors.lastName}</p>}
+                </div>
+            </div>
+
+            {/* Phone / Email row */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label htmlFor="phone" className={labelCls}>
+                        Phone <span className="text-[10px] text-white/30 font-normal normal-case tracking-normal">+94XXXXXXXXX</span> <span className="text-red-400/80">*</span>
+                    </label>
+                    <input id="phone" type="tel" maxLength={15} placeholder="+94771234567" value={data.phone}
+                        onChange={e => set("phone", e.target.value)}
+                        className={cn(inputCls, errors.phone && "border-red-500/50")} />
+                    {errors.phone && <p className="mt-1.5 text-xs text-red-400">{errors.phone}</p>}
+                </div>
+                <div>
+                    <label htmlFor="email" className={labelCls}>Email Address <span className="text-red-400/80">*</span></label>
+                    <input id="email" type="email" placeholder="you@company.com" value={data.email}
+                        onChange={e => set("email", e.target.value)}
+                        className={cn(inputCls, errors.email && "border-red-500/50")} />
+                    {errors.email && <p className="mt-1.5 text-xs text-red-400">{errors.email}</p>}
+                </div>
+            </div>
+
+            {/* Job Title */}
+            <div>
+                <label htmlFor="jobTitle" className={labelCls}>Job Title / Designation <span className="text-red-400/80">*</span></label>
+                <input id="jobTitle" placeholder="e.g., HR Manager, CEO, Recruiter" value={data.jobTitle}
+                    onChange={e => set("jobTitle", e.target.value)}
+                    className={cn(inputCls, errors.jobTitle && "border-red-500/50")} />
+                {errors.jobTitle && <p className="mt-1.5 text-xs text-red-400">{errors.jobTitle}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+                <label htmlFor="password" className={labelCls}>Password <span className="text-red-400/80">*</span></label>
+                <div className="relative">
+                    <input id="password" type={showPassword ? "text" : "password"} placeholder="Create a strong password"
+                        value={data.password} onChange={e => set("password", e.target.value)}
+                        className={cn(inputCls, "pr-10", errors.password && "border-red-500/50")} />
+                    <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                </div>
+                {errors.password && <p className="mt-1.5 text-xs text-red-400">{errors.password}</p>}
+                <p className="mt-1.5 text-[11px] text-white/30">Min 8 chars · uppercase · lowercase · number · special character</p>
+                {data.password.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                        <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(level => (
+                                <div key={level} className={cn(
+                                    "h-1 flex-1 rounded-full transition-colors",
+                                    level <= passwordStrength ? (strengthBarColor[strengthColor] ?? "bg-primary") : "bg-white/[0.08]",
+                                )} />
+                            ))}
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">
-                                Last Name <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="lastName"
-                                placeholder="Enter last name"
-                                value={data.lastName}
-                                onChange={(e) => handleChange("lastName", e.target.value)}
-                                className={errors.lastName ? "border-destructive" : ""}
-                            />
-                            {errors.lastName && (
-                                <p className="text-sm text-destructive">{errors.lastName}</p>
-                            )}
-                        </div>
+                        <p className="text-[11px] text-white/40">Strength: <span className="font-medium text-white/70">{strengthLabel}</span></p>
                     </div>
+                )}
+            </div>
 
-                    {/* Phone */}
-                    <div className="space-y-2">
-                        <Label htmlFor="phone">
-                            Phone Number <span className="text-xs text-muted-foreground font-normal ml-1">( Format: +94XXXXXXXXX )</span> <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="phone"
-                            type="tel"
-                            maxLength={15}
-                            placeholder="Enter phone number"
-                            value={data.phone}
-                            onChange={(e) => handleChange("phone", e.target.value)}
-                            className={errors.phone ? "border-destructive" : ""}
-                        />
-                        {errors.phone && (
-                            <p className="text-sm text-destructive">{errors.phone}</p>
+            {/* Confirm Password */}
+            <div>
+                <label htmlFor="confirmPassword" className={labelCls}>Confirm Password <span className="text-red-400/80">*</span></label>
+                <div className="relative">
+                    <input id="confirmPassword" type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Re-enter your password" value={data.confirmPassword}
+                        onChange={e => set("confirmPassword", e.target.value)}
+                        className={cn(
+                            inputCls, "pr-16",
+                            passwordsMatch && "border-primary/40 focus:ring-primary/30",
+                            passwordsDontMatch && "border-red-500/50 focus:ring-red-500/30",
+                        )} />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        {data.confirmPassword.length > 0 && (
+                            <span className={passwordsMatch ? "text-primary" : "text-red-400"}>
+                                {passwordsMatch ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                            </span>
                         )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="space-y-2">
-                        <Label htmlFor="email">
-                            Email Address <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="your.email@company.com"
-                            value={data.email}
-                            onChange={(e) => handleChange("email", e.target.value)}
-                            className={errors.email ? "border-destructive" : ""}
-                        />
-                        {errors.email && (
-                            <p className="text-sm text-destructive">{errors.email}</p>
-                        )}
-                    </div>
-
-                    {/* Job Title */}
-                    <div className="space-y-2">
-                        <Label htmlFor="jobTitle">
-                            Job Title / Designation <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="jobTitle"
-                            placeholder="e.g., HR Manager, CEO, Recruiter"
-                            value={data.jobTitle}
-                            onChange={(e) => handleChange("jobTitle", e.target.value)}
-                            className={errors.jobTitle ? "border-destructive" : ""}
-                        />
-                        {errors.jobTitle && (
-                            <p className="text-sm text-destructive">{errors.jobTitle}</p>
-                        )}
-                    </div>
-
-                    {/* Password */}
-                    <div className="space-y-2">
-                        <Label htmlFor="password">
-                            Password <span className="text-destructive">*</span>
-                        </Label>
-                        <div className="relative">
-                            <Input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Create a strong password"
-                                value={data.password}
-                                onChange={(e) => handleChange("password", e.target.value)}
-                                className={errors.password ? "border-destructive pr-10" : "pr-10"}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                        {errors.password && (
-                            <p className="text-sm text-destructive">{errors.password}</p>
-                        )}
-
-                        {/* Password Validation Message */}
-                        <p className="text-xs text-muted-foreground mt-2 mb-2">
-                            Minimum 8 characters, must include atleast an uppercase, a lowercase, a number and a special character
-                        </p>
-
-                        {/* Password Strength Indicator */}
-                        {data.password && (
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-muted-foreground">Password Strength:</span>
-                                    <span className="font-medium">{strengthLabel}</span>
-                                </div>
-                                <Progress value={(passwordStrength / 5) * 100} className="h-1.5" />
-                                {/* <div
-                                    className={`h-1.5 rounded-full transition-all ${strengthColor}`}
-                                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                                /> */}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Confirm Password */}
-                    <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
-                            Confirm Password <span className="text-destructive">*</span>
-                        </Label>
-                        <div className="relative">
-                            <Input
-                                id="confirmPassword"
-                                type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Re-enter your password"
-                                value={data.confirmPassword}
-                                onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                                className={
-                                    errors.confirmPassword || (data.confirmPassword && data.password !== data.confirmPassword)
-                                        ? "border-destructive pr-10"
-                                        : data.confirmPassword && data.password === data.confirmPassword
-                                            ? "border-green-600 dark:border-green-400 pr-10 focus-visible:ring-green-600"
-                                            : "pr-10"
-                                }
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                        {errors.confirmPassword && !data.confirmPassword && (
-                            <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                        )}
-                        {data.confirmPassword && data.password !== data.confirmPassword && (
-                            <p className="text-sm text-destructive">Passwords do not match</p>
-                        )}
-                        {data.confirmPassword && data.password === data.confirmPassword && (
-                            <p className="text-sm text-green-600 dark:text-green-400">Passwords are matching</p>
-                        )}
+                        <button type="button" tabIndex={-1} onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="text-white/30 hover:text-white/70 transition-colors">
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                     </div>
                 </div>
+                {errors.confirmPassword && <p className="mt-1.5 text-xs text-red-400">{errors.confirmPassword}</p>}
+                {data.confirmPassword.length > 0 && !errors.confirmPassword && (
+                    <p className={cn("mt-1.5 text-[11px]", passwordsMatch ? "text-primary" : "text-red-400")}>
+                        {passwordsMatch ? "Passwords match ✓" : "Passwords do not match"}
+                    </p>
+                )}
+            </div>
 
-                {/* Navigation */}
-                <div className="flex justify-between pt-4">
-                    <Button
-                        variant="outline"
-                        onClick={onPrevious}
-                        disabled={isLoading}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        className="min-w-32"
-                    >
-                        {isLoading ? "Creating Account..." : "Create Account"}
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-2">
+                <button
+                    onClick={onPrevious}
+                    disabled={isLoading}
+                    className={cn(
+                        "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all",
+                        "border border-white/[0.10] bg-white/[0.03] text-white/70 hover:bg-white/[0.07] hover:text-white",
+                        "disabled:opacity-40 disabled:cursor-not-allowed",
+                    )}
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                </button>
+                <button
+                    onClick={() => { if (validate()) onSubmit(); }}
+                    disabled={isLoading}
+                    className={cn(
+                        "flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold transition-all",
+                        "bg-primary text-primary-foreground hover:brightness-110 active:scale-[0.99]",
+                        "shadow-lg shadow-primary/20",
+                        "disabled:opacity-60 disabled:cursor-not-allowed",
+                    )}
+                >
+                    {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Creating Account…</> : "Create Account"}
+                </button>
+            </div>
+        </div>
     );
 }

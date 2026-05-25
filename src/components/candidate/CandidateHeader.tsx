@@ -3,6 +3,7 @@
 import { useSidebar } from "@/components/ui/sidebar";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 interface CandidateHeaderProps {
@@ -73,6 +74,7 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
             )}
 
             <div className="flex shrink-0 items-center gap-3">
+                <ThemeToggle />
                 <NotificationBell />
                 <UserMenu user={user} />
             </div>

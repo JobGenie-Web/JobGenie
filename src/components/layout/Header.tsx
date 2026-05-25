@@ -2,94 +2,155 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const navLinks = [
-    { href: '#about', label: 'Overview' },
-    { href: '#features', label: 'Platform' },
-    { href: '#contact', label: 'Contact' },
+    { href: '#features', label: 'Features' },
+    { href: '#how-it-works', label: 'How it Works' },
+    { href: '#portals', label: 'Portals' },
+    { href: '#testimonials', label: 'Testimonials' },
 ];
 
 export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
-    const [open, setOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        const fn = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', fn, { passive: true });
+        return () => window.removeEventListener('scroll', fn);
+    }, []);
+
+    // Close menu on resize to desktop
+    useEffect(() => {
+        const fn = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
+        window.addEventListener('resize', fn);
+        return () => window.removeEventListener('resize', fn);
+    }, []);
 
     return (
-        <header className="sticky top-0 z-50 px-3 pt-3 sm:px-5 lg:px-8">
-            <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/85 px-4 py-3 shadow-[0_12px_40px_-16px_rgba(0,0,0,0.35)] backdrop-blur-md dark:bg-background/72 dark:shadow-black/50 md:px-5">
-                <Link href="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-90">
-                    <Image
-                        src="/logo.jpg"
-                        alt="JobGenie"
-                        width={112}
-                        height={42}
-                        className="h-9 w-auto rounded-md"
+        <header
+            className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300"
+            style={{
+                height: 'clamp(56px, 15vw, 64px)',
+                padding: '0 clamp(12px, 4vw, 40px)',
+                display: 'flex',
+                alignItems: 'center',
+                background: scrolled ? 'var(--lp-nav-bg)' : 'transparent',
+                backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+                WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'none',
+                borderBottom: `1px solid ${scrolled ? 'var(--lp-nav-border)' : 'transparent'}`,
+            }}
+        >
+            {/* Logo */}
+            <Link href="/"
+                className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 no-underline">
+                <div style={{ width: 'clamp(28px, 8vw, 32px)', height: 'clamp(28px, 8vw, 32px)', position: 'relative', flexShrink: 0 }}>
+                    <Image 
+                        src="/logo.jpg" 
+                        alt="JobGenie Logo" 
+                        fill
+                        style={{ objectFit: 'contain' }}
                         priority
                     />
-                </Link>
-
-                <nav className="hidden items-center gap-0.5 rounded-full border border-border/40 bg-muted/30 px-1.5 py-1 md:flex dark:bg-muted/20">
-                    {navLinks.map((link) => (
-                        <div key={link.href}>
-                            <Link
-                                href={link.href}
-                                className="rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-background/90 hover:text-foreground dark:hover:bg-card/80"
-                            >
-                                {link.label}
-                            </Link>
-                        </div>
-                    ))}
-                </nav>
-
-                <div className="flex items-center gap-2">
-                    <ThemeToggle />
-                    {showSignIn && (
-                        <Button
-                            asChild
-                            size="sm"
-                            className="hidden rounded-full px-6 font-semibold shadow-md shadow-primary/15 sm:inline-flex"
-                        >
-                            <Link href="/login">Sign in</Link>
-                        </Button>
-                    )}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="md:hidden"
-                        onClick={() => setOpen(!open)}
-                        aria-expanded={open}
-                        aria-label="Menu"
-                    >
-                        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                    </Button>
                 </div>
+                <span style={{ fontWeight: 700, fontSize: 'clamp(14px, 4vw, 16px)', letterSpacing: '-0.02em', color: 'var(--lp-text)', whiteSpace: 'nowrap' }}>
+                    Job<span style={{ color: '#00aa28' }}>Genie</span>
+                </span>
+            </Link>
+
+            {/* Desktop nav — hidden below md */}
+            <nav className="hidden md:flex flex-1 justify-center gap-0.5">
+                {navLinks.map(l => (
+                    <a key={l.href} href={l.href}
+                        style={{ padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--lp-nav-text)', transition: 'color 150ms, background 150ms', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text-hover)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-nav-hover-bg)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-nav-text)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                        {l.label}
+                    </a>
+                ))}
+            </nav>
+
+            {/* Right actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-auto md:ml-0">
+                <ThemeToggle />
+
+                {showSignIn && (
+                    <>
+                        <Link href="/login"
+                            className="hidden md:inline-block"
+                            style={{ padding: '7px 16px', borderRadius: 7, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-45)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'all 160ms', whiteSpace: 'nowrap' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                            Sign In
+                        </Link>
+                        <Link href="/candidate/signup"
+                            className="hidden md:inline-block"
+                            style={{ padding: '8px 18px', borderRadius: 7, background: '#00cc44', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 22px rgba(0,180,60,0.32)', transition: 'all 160ms', whiteSpace: 'nowrap' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.55)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 22px rgba(0,180,60,0.32)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
+                            Get Started →
+                        </Link>
+                    </>
+                )}
+
+                {/* Hamburger — visible below md */}
+                <button
+                    className="md:hidden flex items-center justify-center rounded-lg transition-colors touch-manipulation"
+                    onClick={() => setMobileOpen(o => !o)}
+                    style={{ width: 'clamp(36px, 10vw, 40px)', height: 'clamp(36px, 10vw, 40px)', minWidth: 36, minHeight: 36, background: mobileOpen ? 'var(--lp-surface)' : 'none', border: '1px solid ' + (mobileOpen ? 'var(--lp-border)' : 'transparent'), cursor: 'pointer', color: 'var(--lp-text)' }}
+                    aria-label="Toggle menu"
+                >
+                    {mobileOpen
+                        ? <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        : <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></svg>
+                    }
+                </button>
             </div>
 
-            {open && (
-                <div className="mx-auto mt-2 max-w-[1400px] overflow-hidden rounded-2xl border border-border/70 bg-background/96 shadow-xl backdrop-blur-md md:hidden">
-                    <nav className="flex flex-col gap-1 px-4 py-4">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className="rounded-xl px-4 py-3 text-sm font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                                onClick={() => setOpen(false)}
-                            >
-                                {link.label}
-                            </Link>
+            {/* Mobile dropdown menu */}
+            <div
+                className="md:hidden absolute left-0 right-0 overflow-hidden transition-all duration-300"
+                style={{
+                    top: 'clamp(56px, 15vw, 64px)',
+                    maxHeight: mobileOpen ? 500 : 0,
+                    opacity: mobileOpen ? 1 : 0,
+                    background: 'var(--lp-nav-bg)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    borderBottom: mobileOpen ? '1px solid var(--lp-nav-border)' : 'none',
+                    pointerEvents: mobileOpen ? 'auto' : 'none',
+                }}
+            >
+                <div style={{ padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 20px) clamp(16px, 4vw, 20px)' }}>
+                    <nav className="flex flex-col gap-1 mb-4">
+                        {navLinks.map(l => (
+                            <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
+                                className="touch-manipulation"
+                                style={{ padding: 'clamp(12px, 3vw, 14px) clamp(12px, 3vw, 14px)', borderRadius: 8, fontSize: 'clamp(13px, 3.5vw, 15px)', fontWeight: 500, color: 'var(--lp-text-45)', textDecoration: 'none', transition: 'all 150ms', display: 'block', minHeight: 44 }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; (e.currentTarget as HTMLElement).style.background = 'var(--lp-surface)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-45)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                                {l.label}
+                            </a>
                         ))}
-                        {showSignIn && (
-                            <Button asChild className="mt-3 h-11 w-full rounded-full font-semibold">
-                                <Link href="/login" onClick={() => setOpen(false)}>
-                                    Sign in
-                                </Link>
-                            </Button>
-                        )}
                     </nav>
+                    {showSignIn && (
+                        <div className="flex flex-col sm:flex-row gap-2.5 pt-3" style={{ borderTop: '1px solid var(--lp-border)' }}>
+                            <Link href="/login" onClick={() => setMobileOpen(false)}
+                                className="flex-1 text-center touch-manipulation"
+                                style={{ padding: 'clamp(11px, 3vw, 13px)', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px solid var(--lp-border)', background: 'transparent', color: 'var(--lp-text-60)', fontSize: 'clamp(13px, 3.5vw, 14px)', fontWeight: 500, textDecoration: 'none' }}>
+                                Sign In
+                            </Link>
+                            <Link href="/candidate/signup" onClick={() => setMobileOpen(false)}
+                                className="flex-1 text-center touch-manipulation"
+                                style={{ padding: 'clamp(11px, 3vw, 13px)', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: '#00cc44', color: '#fff', fontSize: 'clamp(13px, 3.5vw, 14px)', fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(0,180,60,0.35)' }}>
+                                Get Started
+                            </Link>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </header>
     );
 }

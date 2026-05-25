@@ -1,353 +1,535 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
-import {
-    motion,
-    useInView,
-    useReducedMotion,
-} from 'framer-motion';
-import {
-    ArrowRight,
-    ArrowUpRight,
-    Building2,
-    Sparkles,
-    Users,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import {
-    fadeUp,
-    inViewProps,
-    landingEase,
-    scaleIn,
-    staggerFast,
-} from '@/lib/motion/landing';
-import { LandingWatermarks } from '@/components/landing/LandingWatermarks';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
-const metrics = [
-    { value: '10K+', label: 'Live roles' },
-    { value: '50K+', label: 'Professionals' },
-    { value: '5K+', label: 'Organizations' },
-    { value: '95%', label: 'Happy placements' },
-];
+function CursorSpotlight() {
+    const [pos, setPos] = useState({ x: -2000, y: -2000 });
+    useEffect(() => {
+        const fn = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
+        window.addEventListener('mousemove', fn, { passive: true });
+        return () => window.removeEventListener('mousemove', fn);
+    }, []);
+    return (
+        <div
+            className="pointer-events-none fixed inset-0 z-[1] hidden md:block"
+            style={{ background: `radial-gradient(600px at ${pos.x}px ${pos.y}px, rgba(0,200,60,0.07), transparent 40%)` }}
+        />
+    );
+}
 
-const highlights = [
-    'Verified employers',
-    'Interview scheduling',
-    'Audit-ready trails',
-    'Intent-aware matching',
-];
+function FloatingLightOrbs() {
+    // Large ambient orbs flowing across the screen
+    const ambientOrbs = [
+        { size: 150, duration: 25, delay: 0, opacity: 0.08 },
+        { size: 120, duration: 30, delay: 5, opacity: 0.1 },
+        { size: 180, duration: 28, delay: 10, opacity: 0.07 },
+        { size: 100, duration: 35, delay: 15, opacity: 0.09 },
+        { size: 140, duration: 32, delay: 8, opacity: 0.08 },
+        { size: 110, duration: 27, delay: 12, opacity: 0.1 },
+    ];
 
-function HeroProgress() {
-    const ref = useRef<HTMLDivElement>(null);
-    const inView = useInView(ref, { once: true, margin: '-10%' });
-    const reduce = useReducedMotion();
+    // Small floating glows - independent of mouse
+    const smallGlows = [
+        { size: 40, duration: 8, delay: 0, startX: 20, startY: 30 },
+        { size: 35, duration: 10, delay: 2, startX: 70, startY: 50 },
+        { size: 45, duration: 9, delay: 4, startX: 40, startY: 70 },
+        { size: 38, duration: 11, delay: 1, startX: 85, startY: 20 },
+        { size: 42, duration: 7, delay: 3, startX: 15, startY: 60 },
+        { size: 36, duration: 12, delay: 5, startX: 60, startY: 40 },
+    ];
 
     return (
-        <div ref={ref} className="mt-6 h-2 overflow-hidden rounded-full bg-muted">
-            <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: reduce ? '72%' : 0 }}
-                animate={inView ? { width: '72%' } : { width: reduce ? '72%' : 0 }}
-                transition={{
-                    duration: reduce ? 0 : 1.1,
-                    ease: landingEase,
-                    delay: 0.12,
-                }}
-            />
+        <>
+            {/* Large ambient orbs - desktop */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
+                {ambientOrbs.map((orb, i) => (
+                    <div
+                        key={`ambient-${i}`}
+                        className="floating-orb"
+                        style={{
+                            position: 'absolute',
+                            width: `${orb.size}px`,
+                            height: `${orb.size}px`,
+                            borderRadius: '50%',
+                            background: `radial-gradient(circle, rgba(0,255,80,${orb.opacity}) 0%, rgba(0,220,60,${orb.opacity * 0.6}) 40%, transparent 70%)`,
+                            filter: 'blur(40px)',
+                            animation: `floatingOrb${i} ${orb.duration}s ${orb.delay}s ease-in-out infinite`,
+                            opacity: orb.opacity,
+                            willChange: 'transform, opacity',
+                        }}
+                    />
+                ))}
+            </div>
+            
+            {/* Small independent glows - all devices */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                {smallGlows.map((glow, i) => (
+                    <div
+                        key={`glow-${i}`}
+                        style={{
+                            position: 'absolute',
+                            left: `${glow.startX}%`,
+                            top: `${glow.startY}%`,
+                            width: `${glow.size}px`,
+                            height: `${glow.size}px`,
+                            borderRadius: '50%',
+                            background: `radial-gradient(circle, rgba(0,255,100,0.6) 0%, rgba(0,220,80,0.4) 30%, rgba(0,200,60,0.2) 60%, transparent 100%)`,
+                            filter: 'blur(8px)',
+                            boxShadow: '0 0 20px rgba(0,255,100,0.4), 0 0 40px rgba(0,220,80,0.2)',
+                            animation: `floatGlow${i} ${glow.duration}s ${glow.delay}s ease-in-out infinite`,
+                            willChange: 'transform',
+                            zIndex: 3,
+                        }}
+                    />
+                ))}
+            </div>
+        </>
+    );
+}
+
+function HeroBg() {
+    return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ width: '100%', maxWidth: '100vw' }}>
+            <div className="dot-grid absolute inset-0 opacity-70" />
+
+            {/* Blobs - only green */}
+            <div className="absolute rounded-full" style={{ top: '-18%', right: '-5%', width: 'clamp(250px, 50vw, 900px)', height: 'clamp(250px, 50vw, 900px)', background: 'radial-gradient(circle, var(--lp-blob-green) 0%, transparent 58%)', filter: 'blur(32px)', animation: 'blobFloat 22s ease-in-out infinite', willChange: 'transform' }} />
+            {/* Removed blue blob to avoid line appearance */}
+
+            {/* Removed static glare beams and center pulse */}
+
+            <div className="absolute bottom-0 left-0 right-0 h-64" style={{ background: 'var(--lp-fade-bottom)' }} />
+            <div className="absolute inset-0" style={{ background: 'var(--lp-vignette)' }} />
         </div>
     );
 }
 
-export function Hero() {
-    const reduce = useReducedMotion();
-
+function PipelineCard({ fluid = false }: { fluid?: boolean }) {
+    const stages = [
+        { label: 'Applied', n: 124, color: '#f59e0b' },
+        { label: 'Screened', n: 47, color: '#3b82f6' },
+        { label: 'Interview', n: 19, color: '#8b5cf6' },
+        { label: 'Offer', n: 6, color: '#00bb30' },
+    ];
     return (
-        <section id="about" className="relative overflow-hidden">
-            <div className="landing-atmosphere mesh-bg relative">
-                <div
-                    className="landing-noise pointer-events-none absolute inset-0 opacity-[0.2] mix-blend-normal dark:opacity-[0.26]"
-                    aria-hidden
-                    style={{ willChange: 'auto', backfaceVisibility: 'hidden' }}
-                />
-                <div
-                    className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full blur-2xl landing-blob-a opacity-90"
-                    aria-hidden
-                    style={{ backfaceVisibility: 'hidden' }}
-                />
-                <div
-                    className="pointer-events-none absolute -bottom-32 -right-32 h-[380px] w-[380px] rounded-full blur-2xl landing-blob-b opacity-80"
-                    aria-hidden
-                    style={{ backfaceVisibility: 'hidden' }}
-                />
-
-                <LandingWatermarks variant="hero" />
-
-                <div className="relative z-10 mx-auto max-w-[1200px] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-12 lg:px-10">
-                    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-                        {/* Copy */}
-                        <motion.div
-                            variants={staggerFast}
-                            initial="hidden"
-                            animate="visible"
-                        >
-                            <motion.p
-                                variants={fadeUp}
-                                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
-                            >
-                                <span className="inline-flex text-primary" aria-hidden>
-                                    <Sparkles className="h-3.5 w-3.5 motion-safe:opacity-90" />
-                                </span>
-                                Talent OS
-                            </motion.p>
-
-                            <motion.h1
-                                variants={fadeUp}
-                                className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]"
-                            >
-                                Hiring that stays{' '}
-                                <span className="text-primary underline decoration-primary/35 decoration-2 underline-offset-4">
-                                    clear
-                                </span>
-                                <span className="text-muted-foreground">,</span> end to end.
-                            </motion.h1>
-
-                            <motion.p
-                                variants={fadeUp}
-                                className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-[1.05rem]"
-                            >
-                                One place for verified employers and candidates — discovery,
-                                screening, and scheduling without juggling five tools.
-                            </motion.p>
-
-                            <motion.div
-                                variants={fadeUp}
-                                className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
-                            >
-                                <motion.div
-                                    whileHover={{ scale: 1.02, y: -1 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                                >
-                                    <Button
-                                        asChild
-                                        variant="gradient"
-                                        size="lg"
-                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
-                                    >
-                                        <Link href="/candidate/signup" className="gap-2">
-                                            Join as candidate
-                                            <ArrowRight className="h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.02, y: -1 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                                >
-                                    <Button
-                                        asChild
-                                        variant="gradient"
-                                        size="lg"
-                                        className="h-12 rounded-xl px-8 text-[15px] font-semibold"
-                                    >
-                                        <Link href="/employer/signup" className="gap-2">
-                                            Register company
-                                            <ArrowUpRight className="h-4 w-4 opacity-80" />
-                                        </Link>
-                                    </Button>
-                                </motion.div>
-                            </motion.div>
-
-                            <motion.div className="mt-10 flex flex-wrap gap-2">
-                                {highlights.map((h) => (
-                                    <motion.span
-                                        key={h}
-                                        variants={fadeUp}
-                                        whileHover={{
-                                            y: -2,
-                                            borderColor: 'color-mix(in oklch, var(--primary) 45%, transparent)',
-                                        }}
-                                        className="rounded-lg border border-border/80 bg-muted/70 px-3 py-1.5 text-xs font-medium text-muted-foreground dark:bg-muted/40"
-                                    >
-                                        {h}
-                                    </motion.span>
-                                ))}
-                            </motion.div>
-                        </motion.div>
-
-                        {/* Preview card */}
-                        <motion.div
-                            variants={scaleIn}
-                            initial="hidden"
-                            animate="visible"
-                            transition={{ delay: 0.12 }}
-                            className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none"
-                        >
-                            <div
-                                className={
-                                    reduce
-                                        ? 'rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 dark:border-border/80 dark:shadow-black/40 motion-reduce:transform-none'
-                                        : 'landing-hero-card-float rounded-3xl border border-border bg-card p-7 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-[1.02] dark:border-border/80 dark:shadow-black/40'
-                                }
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                            Pipeline pulse
-                                        </p>
-                                        <p className="mt-2 font-mono text-5xl font-bold tracking-tight text-primary">
-                                            24
-                                            <span className="text-2xl font-semibold text-muted-foreground">
-                                                h
-                                            </span>
-                                        </p>
-                                        <p className="mt-3 text-sm leading-snug text-muted-foreground">
-                                            Typical time from accepted invite to first interview slot.
-                                        </p>
-                                    </div>
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 16 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.45, duration: 0.5, ease: landingEase }}
-                                        className="rounded-2xl bg-primary/12 px-3 py-2 text-center dark:bg-primary/18"
-                                    >
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                                            Stage drift
-                                        </p>
-                                        <p className="mt-1 font-mono text-lg font-semibold text-foreground">
-                                            −38%
-                                        </p>
-                                    </motion.div>
-                                </div>
-
-                                <HeroProgress />
-                                <div className="mt-3 flex justify-between font-mono text-[11px] text-muted-foreground">
-                                    <span>Week 0</span>
-                                    <span className="text-foreground/80">On track</span>
-                                    <span>Offer</span>
-                                </div>
-
-                                <div className="mt-8 flex flex-wrap gap-2 border-t border-border/70 pt-6">
-                                    <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                                        SOC2-ready workflows
-                                    </span>
-                                    <span className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                                        Verified orgs
-                                    </span>
-                                </div>
-                            </div>
-                        </motion.div>
+        <div style={{ padding: 'clamp(10px, 3vw, 14px)', borderRadius: 'clamp(12px, 3.5vw, 14px)', width: fluid ? '100%' : 240, minWidth: fluid ? 0 : 200, background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', boxShadow: 'var(--lp-glass-shadow)', animation: 'floatB 9s ease-in-out infinite' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(8px, 2.5vw, 10px)' }}>
+                <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-60)' }}>Hiring Pipeline</span>
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 'clamp(2px, 0.7vw, 3px)', color: '#00aa30' }}>
+                    <span className="anim-pulse-green" style={{ width: 'clamp(3px, 1vw, 4px)', height: 'clamp(3px, 1vw, 4px)', borderRadius: '50%', background: '#00aa30', display: 'inline-block' }} />LIVE
+                </span>
+            </div>
+            {stages.map((s, i) => (
+                <div key={i} style={{ marginBottom: i < stages.length - 1 ? 'clamp(5px, 1.5vw, 7px)' : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(2px, 0.7vw, 3px)' }}>
+                        <span style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-38)', fontWeight: 500 }}>{s.label}</span>
+                        <span style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: s.color, fontWeight: 700, fontFamily: 'monospace' }}>{s.n}</span>
                     </div>
-
-                    {/* Metrics */}
-                    <motion.div
-                        {...inViewProps}
-                        variants={staggerFast}
-                        className="mt-14 rounded-2xl border border-border/60 bg-muted/60 px-6 py-8 dark:bg-muted/25 sm:px-10"
-                    >
-                        <dl className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-6">
-                            {metrics.map((m) => (
-                                <motion.div key={m.label} variants={fadeUp}>
-                                    <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                                        {m.label}
-                                    </dt>
-                                    <dd className="mt-2 font-mono text-3xl font-bold tabular-nums text-foreground sm:text-4xl">
-                                        {m.value}
-                                    </dd>
-                                </motion.div>
-                            ))}
-                        </dl>
-                    </motion.div>
-
-                    {/* Pathways */}
-                    <div className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8 md:items-stretch">
-                        <motion.article
-                            {...inViewProps}
-                            variants={scaleIn}
-                            whileHover={reduce ? undefined : { y: -3 }}
-                            className="flex h-full min-h-0 rounded-3xl"
-                        >
-                            <Card
-                                variant="glass"
-                                className="flex h-full w-full flex-col rounded-3xl p-8"
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <motion.div
-                                        whileHover={{ rotate: [0, -6, 6, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
-                                    >
-                                        <Users className="h-6 w-6" strokeWidth={1.75} />
-                                    </motion.div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Candidates
-                                    </span>
-                                </div>
-                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                    Your profile, one timeline.
-                                </h2>
-                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                                    Verified identity and applications that stay readable for hiring teams.
-                                </p>
-                                <Button
-                                    asChild
-                                    variant="link"
-                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
-                                >
-                                    <Link href="/candidate/signup" className="gap-1">
-                                        Create account
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </Card>
-                        </motion.article>
-
-                        <motion.article
-                            {...inViewProps}
-                            variants={scaleIn}
-                            whileHover={reduce ? undefined : { y: -3 }}
-                            className="flex h-full min-h-0 rounded-3xl"
-                        >
-                            <Card
-                                variant="glass"
-                                className="flex h-full w-full flex-col rounded-3xl p-8"
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <motion.div
-                                        whileHover={{ rotate: [0, -6, 6, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
-                                    >
-                                        <Building2 className="h-6 w-6" strokeWidth={1.75} />
-                                    </motion.div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Employers
-                                    </span>
-                                </div>
-                                <h2 className="mt-6 text-2xl font-bold tracking-tight">
-                                    Hiring ops in one trail.
-                                </h2>
-                                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                                    Verification, interviews, and outcomes linked for recruiting and leadership.
-                                </p>
-                                <Button
-                                    asChild
-                                    variant="link"
-                                    className="mt-6 h-auto shrink-0 self-start p-0 text-base font-semibold text-primary"
-                                >
-                                    <Link href="/employer/signup" className="gap-1">
-                                        Register company
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </Card>
-                        </motion.article>
+                    <div style={{ height: 'clamp(2.5px, 0.8vw, 3px)', borderRadius: 99, background: 'var(--lp-border)' }}>
+                        <div style={{ height: '100%', width: `${(s.n / 124) * 100}%`, borderRadius: 99, background: s.color, boxShadow: `0 0 6px ${s.color}70` }} />
                     </div>
                 </div>
+            ))}
+        </div>
+    );
+}
+
+function MatchCard({ fluid = false }: { fluid?: boolean }) {
+    const pct = 96;
+    const circ = 2 * Math.PI * 38;
+    return (
+        <div style={{ padding: 'clamp(10px, 3vw, 14px)', borderRadius: 'clamp(12px, 3.5vw, 14px)', width: fluid ? '100%' : 195, minWidth: fluid ? 0 : 160, background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', boxShadow: 'var(--lp-glass-shadow)', animation: 'floatA 8s ease-in-out 0.8s infinite' }}>
+            <div style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 700, letterSpacing: '0.11em', color: 'var(--lp-text-28)', marginBottom: 'clamp(6px, 2vw, 8px)' }}>AI MATCH SCORE</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(7px, 2vw, 9px)' }}>
+                <div style={{ position: 'relative', width: 'clamp(35px, 10vw, 40px)', height: 'clamp(35px, 10vw, 40px)', flexShrink: 0 }}>
+                    <svg width={'clamp(35px, 10vw, 40px)'} height={'clamp(35px, 10vw, 40px)'} viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="var(--lp-border)" strokeWidth="7" />
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="#00cc36" strokeWidth="7" strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 9px rgba(0,200,54,0.7))' }} />
+                    </svg>
+                    <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, color: 'var(--lp-text)', fontFamily: 'monospace' }}>{pct}%</span>
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text)', marginBottom: 'clamp(1px, 0.5vw, 2px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Senior Engineer</div>
+                    <div style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-28)', marginBottom: 'clamp(4px, 1.2vw, 5px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>TechCorp · Remote</div>
+                    <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, padding: '2px clamp(4px, 1.2vw, 5px)', borderRadius: 'clamp(3px, 1vw, 4px)', letterSpacing: '0.05em', background: 'rgba(0,180,60,0.12)', color: '#00aa30', border: '1px solid rgba(0,180,60,0.25)', whiteSpace: 'nowrap', display: 'inline-block' }}>✦ TOP MATCH</span>
+                </div>
             </div>
-        </section>
+        </div>
+    );
+}
+
+function NotifPill({ text, sub, color = '#00aa30', animClass = 'anim-float-c', fluid = false, borderPosition = 'left' }: {
+    text: string; sub: string; color?: string; animClass?: string; fluid?: boolean; borderPosition?: 'left' | 'right';
+}) {
+    const borderStyle = borderPosition === 'left' 
+        ? { left: 0, borderRadius: 'clamp(10px, 3vw, 12px) 0 0 clamp(10px, 3vw, 12px)' }
+        : { right: 0, borderRadius: '0 clamp(10px, 3vw, 12px) clamp(10px, 3vw, 12px) 0' };
+    
+    return (
+        <div className={animClass} style={{ padding: 'clamp(7px, 2vw, 11px)', borderRadius: 'clamp(10px, 3vw, 12px)', background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', boxShadow: 'var(--lp-glass-shadow)', display: 'flex', alignItems: 'center', gap: 'clamp(6px, 2vw, 8px)', position: 'relative', width: fluid ? '100%' : undefined, maxWidth: fluid ? undefined : 220, minWidth: fluid ? 0 : 180 }}>
+            <div style={{ position: 'absolute', top: 0, bottom: 0, width: 'clamp(2px, 0.7vw, 3px)', background: color, opacity: 0.8, ...borderStyle }} />
+            <div style={{ width: 'clamp(20px, 5.5vw, 22px)', height: 'clamp(20px, 5.5vw, 22px)', borderRadius: 'clamp(5px, 1.5vw, 6px)', background: `${color}18`, border: `1px solid ${color}30`, marginLeft: borderPosition === 'left' ? 'clamp(3px, 1vw, 4px)' : 0, marginRight: borderPosition === 'right' ? 'clamp(3px, 1vw, 4px)' : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, order: borderPosition === 'right' ? 2 : 0 }}>
+                <svg width={'clamp(8px, 2.2vw, 9px)'} height={'clamp(8px, 2.2vw, 9px)'} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0, order: 1 }}>
+                <div style={{ fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, color: 'var(--lp-text)', marginBottom: 'clamp(0.5px, 0.3vw, 1px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</div>
+                <div style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
+            </div>
+        </div>
+    );
+}
+
+function useFadeIn() {
+    const [show, setShow] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShow(true), 10); return () => clearTimeout(t); }, []);
+    return show;
+}
+
+function useTextSwap(intervalMs = 5000) {
+    const [isEmployer, setIsEmployer] = useState(true);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setIsEmployer(prev => !prev);
+                setIsTransitioning(false);
+            }, 400);
+        }, intervalMs);
+        
+        return () => clearInterval(interval);
+    }, [intervalMs]);
+    
+    return { isEmployer, isTransitioning };
+}
+
+export function Hero() {
+    const show = useFadeIn();
+    const { isEmployer, isTransitioning } = useTextSwap(5000);
+    
+    const fd = (delay: number): React.CSSProperties => ({
+        opacity: show ? 1 : 0,
+        transform: show ? 'none' : 'translateY(20px)',
+        transition: `opacity 500ms ${delay}ms ease-out, transform 500ms ${delay}ms ease-out`,
+    });
+
+    const textTransition: React.CSSProperties = {
+        opacity: isTransitioning ? 0 : 1,
+        transform: isTransitioning ? 'translateY(-10px)' : 'translateY(0)',
+        transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
+    };
+
+    const content = {
+        employer: {
+            badge: 'Recruitment OS for modern teams',
+            headline: 'Hire the right people,',
+            highlightWord: 'faster.',
+            subtext: 'A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.',
+        },
+        candidate: {
+            badge: 'Your career journey starts here',
+            headline: 'Find your dream job,',
+            highlightWord: 'faster.',
+            subtext: 'Get verified, showcase your skills, and track every opportunity in one place. Connect with trusted employers who value transparency.',
+        },
+    };
+
+    const currentContent = isEmployer ? content.employer : content.candidate;
+
+    return (
+        <>
+            <CursorSpotlight />
+            <section className="relative overflow-hidden min-h-screen flex items-center" style={{ background: 'var(--lp-bg)', width: '100%', maxWidth: '100vw' }}>
+                <HeroBg />
+                <FloatingLightOrbs />
+
+                {/* Background genie — desktop: right side, mobile: centered faded */}
+                <div className="pointer-events-none absolute select-none hidden lg:block" style={{ bottom: 0, right: -150, height: '95%', zIndex: 1, maxWidth: '50%' }}>
+                    <Image src="/genie.png" alt="" aria-hidden width={700} height={900}
+                        className="h-full w-auto anim-genie-bob"
+                        style={{ opacity: 0.35, filter: 'saturate(1.2) brightness(1.05)', maxWidth: '75%', height: 'auto', transform: 'scaleY(-1)' }} priority />
+                </div>
+
+                {/* Genie mobile — centered, natural aspect ratio with animation */}
+                <div className="pointer-events-none absolute select-none lg:hidden" style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, width: 'min(72vw, 300px)', maxWidth: '90%' }}>
+                    <div className="anim-genie-bob">
+                        <Image src="/genie.png" alt="" aria-hidden width={400} height={520}
+                            className="w-full h-auto"
+                            style={{ opacity: 0.2, filter: 'saturate(1.3) brightness(1.1)', maxWidth: '100%', transform: 'scaleY(-1)' }} priority />
+                    </div>
+                </div>
+
+                {/* Sparkles — visible on all devices, responsive sizing */}
+                {/* Right side sparkles */}
+                {[
+                    { r: '9%', b: '8%', s: 5, d: 0 }, 
+                    { r: '13%', b: '18%', s: 3.5, d: 0.4 },
+                    { r: '7%', b: '28%', s: 4, d: 0.8 }, 
+                    { r: '17%', b: '12%', s: 3, d: 1.1 },
+                    { r: '22%', b: '22%', s: 3.5, d: 0.6 },
+                    { r: '5%', b: '35%', s: 3, d: 1.3 },
+                ].map((p, i) => (
+                    <div key={`right-${i}`} className="pointer-events-none absolute rounded-full" style={{ right: p.r, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: i >= 4 ? 0.7 : 1 }} />
+                ))}
+                {/* Left side sparkles (mobile-friendly) */}
+                {[
+                    { l: '10%', b: '15%', s: 4, d: 0.3 },
+                    { l: '15%', b: '25%', s: 3, d: 0.9 },
+                    { l: '7%', b: '10%', s: 3.5, d: 1.2 },
+                ].map((p, i) => (
+                    <div key={`left-${i}`} className="pointer-events-none absolute rounded-full lg:hidden" style={{ left: p.l, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${2.0 + i * 0.3}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: 0.7 }} />
+                ))}
+
+                {/* ── Main content ── */}
+                <div className="relative w-full z-[2] mx-auto" style={{ maxWidth: 1300, overflowX: 'hidden' }}>
+
+                    {/* ═══ MOBILE LAYOUT (< lg) ═══ */}
+                    <div className="lg:hidden px-4 xs:px-5 sm:px-6 pt-20 xs:pt-24 sm:pt-28 pb-8 sm:pb-10 flex flex-col items-center text-center">
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                            <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
+                            <span style={{ ...textTransition, fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentContent.badge}</span>
+                        </div>
+
+                        {/* Headline */}
+                        <h1 style={{ ...fd(50), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
+                            <span style={textTransition}>{currentContent.headline}</span><br />
+                            <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                        </h1>
+
+                        {/* Subtext */}
+                        <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
+                            {currentContent.subtext}
+                        </p>
+
+                        {/* CTA buttons */}
+                        <div style={fd(130)} className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-[min(320px,90vw)] px-4 mb-6 sm:mb-8">
+                            <Link href="/candidate/signup" className="text-center touch-manipulation"
+                                style={{ 
+                                    padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', 
+                                    minHeight: 44, 
+                                    borderRadius: 9999, 
+                                    background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
+                                    color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
+                                    fontSize: 'clamp(14px, 3.5vw, 15px)', 
+                                    fontWeight: isEmployer ? 600 : 700, 
+                                    textDecoration: 'none', 
+                                    boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
+                                    border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                }}
+                            >Start as Candidate</Link>
+                            <Link href="/employer/signup" className="text-center touch-manipulation"
+                                style={{ 
+                                    padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', 
+                                    minHeight: 44, 
+                                    borderRadius: 9999, 
+                                    fontSize: 'clamp(14px, 3.5vw, 15px)', 
+                                    fontWeight: isEmployer ? 700 : 600, 
+                                    textDecoration: 'none', 
+                                    background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
+                                    color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
+                                    boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
+                                    border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                }}
+                            >Register Company</Link>
+                        </div>
+
+                        {/* Social proof */}
+                        <div style={fd(160)} className="flex flex-col xs:flex-row items-center gap-2.5 xs:gap-3 mb-8 sm:mb-10 px-4">
+                            <div className="flex">
+                                {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
+                                    <div key={i} style={{ width: 'clamp(24px, 6vw, 26px)', height: 'clamp(24px, 6vw, 26px)', borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? 'clamp(-8px, -2vw, -7px)' : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 700, color: '#fff' }}>
+                                        {['AC', 'NV', 'TW', 'EM', 'JP'][i]}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="text-center xs:text-left">
+                                <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
+                                <div className="flex gap-0.5 mt-0.5 items-center justify-center xs:justify-start">
+                                    {[0, 1, 2, 3, 4].map(i => (
+                                        <svg key={i} width={'clamp(9px, 2.5vw, 10px)'} height={'clamp(9px, 2.5vw, 10px)'} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+                                        </svg>
+                                    ))}
+                                    <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', color: 'var(--lp-text-28)', marginLeft: 3 }}>4.9 / 5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mobile widget cards — fully fluid and responsive */}
+                        <div className="w-full grid gap-2.5 sm:gap-3 mb-4 px-2" style={{ ...fd(190), gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', maxWidth: '100%', overflowX: 'hidden' }}>
+                            <div className="col-span-full">
+                                <PipelineCard fluid />
+                            </div>
+                            <div className="col-span-full xs:col-span-1">
+                                <MatchCard fluid />
+                            </div>
+                            <div className="flex flex-col gap-2 col-span-full xs:col-span-1">
+                                <NotifPill text="Interview Confirmed" sub="TechCorp · Round 2" animClass="anim-float-a" fluid />
+                                <NotifPill text="Offer Received! 🎉" sub="Nexus · $120k" color="#f59e0b" animClass="anim-float-b" fluid />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ═══ DESKTOP LAYOUT (lg+) ═══ */}
+                    <div className="hidden lg:grid grid-cols-2 gap-12 xl:gap-16 items-center px-12 xl:px-20 py-24 xl:py-28">
+
+                        {/* Left copy */}
+                        <div>
+                            {/* Badge */}
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
+                                <span style={{ ...textTransition, fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>{currentContent.badge}</span>
+                            </div>
+
+                            <h1 style={{ ...fd(50), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
+                                <span style={textTransition}>{currentContent.headline}</span><br />
+                                <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                            </h1>
+
+                            <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
+                                {currentContent.subtext}
+                            </p>
+
+                            {/* CTA buttons */}
+                            <div style={fd(140)} className="flex gap-3 mb-10">
+                                <Link href="/candidate/signup"
+                                    style={{ 
+                                        padding: '13px 26px', 
+                                        borderRadius: 9999, 
+                                        background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
+                                        color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
+                                        fontSize: 15, 
+                                        fontWeight: isEmployer ? 600 : 700, 
+                                        textDecoration: 'none', 
+                                        boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
+                                        border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                    }}
+                                    onMouseEnter={e => { 
+                                        if (!isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                                        }
+                                    }}
+                                    onMouseLeave={e => { 
+                                        if (!isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
+                                        }
+                                    }}
+                                >Start as Candidate</Link>
+                                <Link href="/employer/signup"
+                                    style={{ 
+                                        padding: '13px 26px', 
+                                        borderRadius: 9999, 
+                                        fontSize: 15, 
+                                        fontWeight: isEmployer ? 700 : 600, 
+                                        textDecoration: 'none', 
+                                        background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
+                                        color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
+                                        boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
+                                        border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                    }}
+                                    onMouseEnter={e => { 
+                                        if (isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                                        }
+                                    }}
+                                    onMouseLeave={e => { 
+                                        if (isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
+                                        }
+                                    }}
+                                >Register Company</Link>
+                            </div>
+
+                            {/* Social proof */}
+                            <div style={fd(170)} className="flex items-center gap-4">
+                                <div className="flex">
+                                    {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
+                                        <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? -7 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff' }}>
+                                            {['AC', 'NV', 'TW', 'EM', 'JP'][i]}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--lp-text-60)' }}>Trusted by 45,000+ professionals</div>
+                                    <div className="flex gap-0.5 mt-1 items-center">
+                                        {[0, 1, 2, 3, 4].map(i => (
+                                            <svg key={i} width={11} height={11} viewBox="0 0 24 24" fill={i < 4 ? '#f59e0b' : 'var(--lp-border)'} stroke="none">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+                                            </svg>
+                                        ))}
+                                        <span style={{ fontSize: 10, color: 'var(--lp-text-28)', marginLeft: 3 }}>4.9 / 5</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right widget cluster */}
+                        <div style={{ ...fd(70), position: 'relative', height: 520 }}>
+                            <div className="absolute" style={{ top: 24, left: 0 }}><PipelineCard /></div>
+                            <div className="absolute" style={{ top: 0, right: 0, zIndex: 2 }}><MatchCard /></div>
+                            
+                            {/* Genie for Interview Confirmed card - flipped horizontally + vertically */}
+                            <div className="absolute pointer-events-none" style={{ bottom: 100, right: 70, zIndex: 4 }}>
+                                <Image src="/genie.png" alt="" aria-hidden width={120} height={156}
+                                    className="anim-genie-bob"
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(1, -1)' }} />
+                            </div>
+                            
+                            <div className="absolute" style={{ bottom: 140, right: 150, zIndex: 3 }}>
+                                <NotifPill text="Interview Confirmed" sub="TechCorp · Round 2 · May 26" animClass="anim-float-a" borderPosition="right" />
+                            </div>
+                            
+                            {/* Genie for Offer Received card - normal direction */}
+                            <div className="absolute pointer-events-none" style={{ bottom: 0, left: -30, zIndex: 3 }}>
+                                <Image src="/genie2.png" alt="" aria-hidden width={110} height={143}
+                                    className="anim-genie-bob"
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(-1, -1)' }} />
+                            </div>
+                            
+                            <div className="absolute" style={{ bottom: 44, left: 50, zIndex: 2 }}>
+                                <NotifPill text="Offer Received! 🎉" sub="Nexus Tech · $120k package" color="#f59e0b" animClass="anim-float-b" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Scroll cue — sm+ only */}
+                <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex-col items-center gap-1 hidden sm:flex" style={{ opacity: 0.3, zIndex: 2 }}>
+                    <div style={{ width: 20, height: 32, borderRadius: 99, border: '1.5px solid var(--lp-border)', display: 'flex', justifyContent: 'center', paddingTop: 5 }}>
+                        <div className="anim-bounce-dot" style={{ width: 3, height: 6, borderRadius: 99, background: 'var(--lp-text-45)' }} />
+                    </div>
+                </div>
+            </section>
+        </>
     );
 }
