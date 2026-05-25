@@ -183,17 +183,61 @@ function NotifPill({ text, sub, color = '#00aa30', animClass = 'anim-float-c', f
 
 function useFadeIn() {
     const [show, setShow] = useState(false);
-    useEffect(() => { const t = setTimeout(() => setShow(true), 60); return () => clearTimeout(t); }, []);
+    useEffect(() => { const t = setTimeout(() => setShow(true), 10); return () => clearTimeout(t); }, []);
     return show;
+}
+
+function useTextSwap(intervalMs = 5000) {
+    const [isEmployer, setIsEmployer] = useState(true);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setIsEmployer(prev => !prev);
+                setIsTransitioning(false);
+            }, 400);
+        }, intervalMs);
+        
+        return () => clearInterval(interval);
+    }, [intervalMs]);
+    
+    return { isEmployer, isTransitioning };
 }
 
 export function Hero() {
     const show = useFadeIn();
+    const { isEmployer, isTransitioning } = useTextSwap(5000);
+    
     const fd = (delay: number): React.CSSProperties => ({
         opacity: show ? 1 : 0,
         transform: show ? 'none' : 'translateY(20px)',
-        transition: `opacity 750ms ${delay}ms ease-out, transform 750ms ${delay}ms ease-out`,
+        transition: `opacity 500ms ${delay}ms ease-out, transform 500ms ${delay}ms ease-out`,
     });
+
+    const textTransition: React.CSSProperties = {
+        opacity: isTransitioning ? 0 : 1,
+        transform: isTransitioning ? 'translateY(-10px)' : 'translateY(0)',
+        transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
+    };
+
+    const content = {
+        employer: {
+            badge: 'Recruitment OS for modern teams',
+            headline: 'Hire the right people,',
+            highlightWord: 'faster.',
+            subtext: 'A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.',
+        },
+        candidate: {
+            badge: 'Your career journey starts here',
+            headline: 'Find your dream job,',
+            highlightWord: 'faster.',
+            subtext: 'Get verified, showcase your skills, and track every opportunity in one place. Connect with trusted employers who value transparency.',
+        },
+    };
+
+    const currentContent = isEmployer ? content.employer : content.candidate;
 
     return (
         <>
@@ -245,34 +289,64 @@ export function Hero() {
                     {/* ═══ MOBILE LAYOUT (< lg) ═══ */}
                     <div className="lg:hidden px-4 xs:px-5 sm:px-6 pt-20 xs:pt-24 sm:pt-28 pb-8 sm:pb-10 flex flex-col items-center text-center">
                         {/* Badge */}
-                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(80), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
                             <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
-                            <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Recruitment OS for modern teams</span>
+                            <span style={{ ...textTransition, fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentContent.badge}</span>
                         </div>
 
                         {/* Headline */}
-                        <h1 style={{ ...fd(180), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
-                            Hire the right<br />people,{' '}
-                            <span style={{ color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>faster.</span>
+                        <h1 style={{ ...fd(50), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
+                            <span style={textTransition}>{currentContent.headline}</span><br />
+                            <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
                         </h1>
 
                         {/* Subtext */}
-                        <p style={{ ...fd(280), fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
-                            A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.
+                        <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
+                            {currentContent.subtext}
                         </p>
 
                         {/* CTA buttons */}
-                        <div style={fd(340)} className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-[min(320px,90vw)] px-4 mb-6 sm:mb-8">
+                        <div style={fd(130)} className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-[min(320px,90vw)] px-4 mb-6 sm:mb-8">
                             <Link href="/candidate/signup" className="text-center touch-manipulation"
-                                style={{ padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', minHeight: 44, borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 'clamp(14px, 3.5vw, 15px)', fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 36px rgba(0,180,60,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >Start as Candidate →</Link>
+                                style={{ 
+                                    padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', 
+                                    minHeight: 44, 
+                                    borderRadius: 9999, 
+                                    background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
+                                    color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
+                                    fontSize: 'clamp(14px, 3.5vw, 15px)', 
+                                    fontWeight: isEmployer ? 600 : 700, 
+                                    textDecoration: 'none', 
+                                    boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
+                                    border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                }}
+                            >Start as Candidate</Link>
                             <Link href="/employer/signup" className="text-center touch-manipulation"
-                                style={{ padding: 'clamp(11px, 3vw, 13px) clamp(20px, 5vw, 26px)', minHeight: 44, borderRadius: 9999, fontSize: 'clamp(14px, 3.5vw, 15px)', fontWeight: 600, textDecoration: 'none', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ 
+                                    padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', 
+                                    minHeight: 44, 
+                                    borderRadius: 9999, 
+                                    fontSize: 'clamp(14px, 3.5vw, 15px)', 
+                                    fontWeight: isEmployer ? 700 : 600, 
+                                    textDecoration: 'none', 
+                                    background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
+                                    color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
+                                    boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
+                                    border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                }}
                             >Register Company</Link>
                         </div>
 
                         {/* Social proof */}
-                        <div style={fd(400)} className="flex flex-col xs:flex-row items-center gap-2.5 xs:gap-3 mb-8 sm:mb-10 px-4">
+                        <div style={fd(160)} className="flex flex-col xs:flex-row items-center gap-2.5 xs:gap-3 mb-8 sm:mb-10 px-4">
                             <div className="flex">
                                 {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
                                     <div key={i} style={{ width: 'clamp(24px, 6vw, 26px)', height: 'clamp(24px, 6vw, 26px)', borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? 'clamp(-8px, -2vw, -7px)' : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 700, color: '#fff' }}>
@@ -294,7 +368,7 @@ export function Hero() {
                         </div>
 
                         {/* Mobile widget cards — fully fluid and responsive */}
-                        <div className="w-full grid gap-2.5 sm:gap-3 mb-4 px-2" style={{ ...fd(460), gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', maxWidth: '100%', overflowX: 'hidden' }}>
+                        <div className="w-full grid gap-2.5 sm:gap-3 mb-4 px-2" style={{ ...fd(190), gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', maxWidth: '100%', overflowX: 'hidden' }}>
                             <div className="col-span-full">
                                 <PipelineCard fluid />
                             </div>
@@ -314,36 +388,90 @@ export function Hero() {
                         {/* Left copy */}
                         <div>
                             {/* Badge */}
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(80), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
                                 <span style={{ padding: '2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
-                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>Recruitment OS for modern teams</span>
+                                <span style={{ ...textTransition, fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>{currentContent.badge}</span>
                             </div>
 
-                            <h1 style={{ ...fd(180), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
-                                Hire the right<br />people,{' '}
-                                <span style={{ color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>faster.</span>
+                            <h1 style={{ ...fd(50), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
+                                <span style={textTransition}>{currentContent.headline}</span><br />
+                                <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
                             </h1>
 
-                            <p style={{ ...fd(280), fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
-                                A unified recruitment platform where candidates are verified, employers are trusted, and every step of the hiring journey is transparent and trackable.
+                            <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
+                                {currentContent.subtext}
                             </p>
 
                             {/* CTA buttons */}
-                            <div style={fd(360)} className="flex gap-3 mb-10">
+                            <div style={fd(140)} className="flex gap-3 mb-10">
                                 <Link href="/candidate/signup"
-                                    style={{ padding: '13px 26px', borderRadius: 9999, background: '#00cc44', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 36px rgba(0,180,60,0.38)', transition: 'all 200ms' }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)'; }}
-                                >Start as Candidate →</Link>
+                                    style={{ 
+                                        padding: '13px 26px', 
+                                        borderRadius: 9999, 
+                                        background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
+                                        color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
+                                        fontSize: 15, 
+                                        fontWeight: isEmployer ? 600 : 700, 
+                                        textDecoration: 'none', 
+                                        boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
+                                        border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                    }}
+                                    onMouseEnter={e => { 
+                                        if (!isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                                        }
+                                    }}
+                                    onMouseLeave={e => { 
+                                        if (!isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
+                                        }
+                                    }}
+                                >Start as Candidate</Link>
                                 <Link href="/employer/signup"
-                                    style={{ padding: '13px 26px', borderRadius: 9999, fontSize: 15, fontWeight: 600, textDecoration: 'none', background: 'var(--lp-surface)', color: 'var(--lp-text-60)', border: '1px solid var(--lp-border)', transition: 'all 200ms' }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text)'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--lp-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--lp-text-60)'; }}
+                                    style={{ 
+                                        padding: '13px 26px', 
+                                        borderRadius: 9999, 
+                                        fontSize: 15, 
+                                        fontWeight: isEmployer ? 700 : 600, 
+                                        textDecoration: 'none', 
+                                        background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
+                                        color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
+                                        boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
+                                        border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                    }}
+                                    onMouseEnter={e => { 
+                                        if (isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
+                                        }
+                                    }}
+                                    onMouseLeave={e => { 
+                                        if (isEmployer) {
+                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
+                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
+                                        } else {
+                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
+                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
+                                        }
+                                    }}
                                 >Register Company</Link>
                             </div>
 
                             {/* Social proof */}
-                            <div style={fd(440)} className="flex items-center gap-4">
+                            <div style={fd(170)} className="flex items-center gap-4">
                                 <div className="flex">
                                     {['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].map((c, i) => (
                                         <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: '2px solid var(--lp-bg)', marginLeft: i > 0 ? -7 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff' }}>
@@ -366,7 +494,7 @@ export function Hero() {
                         </div>
 
                         {/* Right widget cluster */}
-                        <div style={{ ...fd(220), position: 'relative', height: 520 }}>
+                        <div style={{ ...fd(70), position: 'relative', height: 520 }}>
                             <div className="absolute" style={{ top: 24, left: 0 }}><PipelineCard /></div>
                             <div className="absolute" style={{ top: 0, right: 0, zIndex: 2 }}><MatchCard /></div>
                             
