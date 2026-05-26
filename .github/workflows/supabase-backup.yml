@@ -29,7 +29,10 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           DATE=$(date +%Y-%m-%d_%H-%M)
-          pg_dump "${SUPABASE_DB_URL}?sslmode=require" --clean --if-exists -Fc -f "db_backup_${DATE}.dump"
+          # Use session-mode pooler URL (IPv4-compatible). sslmode=require is mandatory for pooler.
+          pg_dump "${SUPABASE_DB_URL}" --clean --if-exists -Fc -f "db_backup_${DATE}.dump" \
+            --no-password \
+            -v 2>&1 | tail -5
           echo "Backup file: db_backup_${DATE}.dump"
 
       # ---- STORAGE BUCKETS ----
