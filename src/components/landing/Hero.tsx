@@ -183,7 +183,7 @@ function NotifPill({ text, sub, color = '#00aa30', animClass = 'anim-float-c', f
 
 function useFadeIn() {
     const [show, setShow] = useState(false);
-    useEffect(() => { const t = setTimeout(() => setShow(true), 10); return () => clearTimeout(t); }, []);
+    useEffect(() => { const t = setTimeout(() => setShow(true), 50); return () => clearTimeout(t); }, []);
     return show;
 }
 
@@ -216,11 +216,11 @@ export function Hero() {
         transition: `opacity 500ms ${delay}ms ease-out, transform 500ms ${delay}ms ease-out`,
     });
 
-    const textTransition: React.CSSProperties = {
-        opacity: isTransitioning ? 0 : 1,
-        transform: isTransitioning ? 'translateY(-10px)' : 'translateY(0)',
-        transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
-    };
+    const textTransition = (delay: number = 0): React.CSSProperties => ({
+        opacity: show ? (isTransitioning ? 0 : 1) : 0,
+        transform: show ? (isTransitioning ? 'translateY(-10px)' : 'translateY(0)') : 'translateY(20px)',
+        transition: `opacity ${show ? '400ms' : `500ms ${delay}ms`} ease-in-out, transform ${show ? '400ms' : `500ms ${delay}ms`} ease-in-out`,
+    });
 
     const content = {
         employer: {
@@ -291,17 +291,17 @@ export function Hero() {
                         {/* Badge */}
                         <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
                             <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
-                            <span style={{ ...textTransition, fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentContent.badge}</span>
+                            <span style={{ ...textTransition(0), fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentContent.badge}</span>
                         </div>
 
                         {/* Headline */}
                         <h1 style={{ ...fd(50), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
-                            <span style={textTransition}>{currentContent.headline}</span><br />
-                            <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                            <span style={textTransition(50)}>{currentContent.headline}</span><br />
+                            <span style={{ ...textTransition(50), color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
                         </h1>
 
                         {/* Subtext */}
-                        <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
+                        <p style={{ ...textTransition(100), fontSize: 'clamp(14px, 3.5vw, 16px)', color: 'var(--lp-text-45)', lineHeight: 1.75, maxWidth: 'min(360px, 90vw)', marginBottom: 'clamp(20px, 5vw, 28px)', paddingLeft: 'clamp(8px, 2vw, 16px)', paddingRight: 'clamp(8px, 2vw, 16px)' }}>
                             {currentContent.subtext}
                         </p>
 
@@ -390,15 +390,15 @@ export function Hero() {
                             {/* Badge */}
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
                                 <span style={{ padding: '2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
-                                <span style={{ ...textTransition, fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>{currentContent.badge}</span>
+                                <span style={{ ...textTransition(0), fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>{currentContent.badge}</span>
                             </div>
 
                             <h1 style={{ ...fd(50), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
-                                <span style={textTransition}>{currentContent.headline}</span><br />
-                                <span style={{ ...textTransition, color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                                <span style={textTransition(50)}>{currentContent.headline}</span><br />
+                                <span style={{ ...textTransition(50), color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
                             </h1>
 
-                            <p style={{ ...fd(100), ...textTransition, fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
+                            <p style={{ ...textTransition(100), fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
                                 {currentContent.subtext}
                             </p>
 
