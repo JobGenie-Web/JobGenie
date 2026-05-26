@@ -29,7 +29,7 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           DATE=$(date +%Y-%m-%d_%H-%M)
-          pg_dump "$SUPABASE_DB_URL" --clean --if-exists -Fc -f "db_backup_${DATE}.dump"
+          pg_dump "${SUPABASE_DB_URL}?sslmode=require" --clean --if-exists -Fc -f "db_backup_${DATE}.dump"
           echo "Backup file: db_backup_${DATE}.dump"
 
       # ---- STORAGE BUCKETS ----
