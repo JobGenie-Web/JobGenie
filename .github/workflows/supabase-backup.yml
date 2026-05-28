@@ -29,11 +29,13 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           DATE=$(date +%Y-%m-%d_%H-%M)
-          # Use session-mode pooler URL (IPv4-compatible). sslmode=require is mandatory for pooler.
-          pg_dump "${SUPABASE_DB_URL}" --clean --if-exists -Fc -f "db_backup_${DATE}.dump" \
-            --no-password \
-            -v 2>&1 | tail -5
-          echo "Backup file: db_backup_${DATE}.dump"
+          DUMP_FILE="db_backup_${DATE}.dump"
+          pg_dump "${SUPABASE_DB_URL}" --clean --if-exists -Fc -f "${DUMP_FILE}" --no-password
+          if [ ! -s "${DUMP_FILE}" ]; then
+            echo "ERROR: Dump file is empty or missing. pg_dump may have failed."
+            exit 1
+          fi
+          echo "Backup complete: ${DUMP_FILE} ($(du -h "${DUMP_FILE}" | cut -f1))"
 
       # ---- STORAGE BUCKETS ----
       - name: Backup Storage Buckets
