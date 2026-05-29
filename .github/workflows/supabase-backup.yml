@@ -24,17 +24,34 @@ jobs:
         run: npm install @supabase/supabase-js
 
       # ---- DATABASE TABLES ----
+      # SUPABASE_DIRECT_URL must be the *direct* connection URL (not the pooler).
+      # Find it in: Supabase Dashboard → Project Settings → Database
+      #   → "Connection string" tab → URI (mode: "Session" or direct host, port 5432)
+      # Example: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
       - name: Backup DB tables
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
         run: |
           DATE=$(date +%Y-%m-%d_%H-%M)
-          DUMP_FILE="db_backup_${DATE}.dump"
-          pg_dump "${SUPABASE_DB_URL}" --clean --if-exists -Fc -f "${DUMP_FILE}" --no-password
+          DUMP_FILE="db_backup_${DATE}.sql"
+
+          # Plain SQL format (-Fp): human-readable, openable in any text editor.
+          # --schema=public: only dump your app tables, skip Supabase internals.
+          # --no-owner / --no-privileges: skip roles that don't exist on restore target.
+          pg_dump "${SUPABASE_DIRECT_URL}" \
+            --clean \
+            --if-exists \
+            --no-owner \
+            --no-privileges \
+            --schema=public \
+            -Fp \
+            -f "${DUMP_FILE}"
+
           if [ ! -s "${DUMP_FILE}" ]; then
-            echo "ERROR: Dump file is empty or missing. pg_dump may have failed."
+            echo "ERROR: Dump file is empty — pg_dump likely failed. Check the URL and credentials."
             exit 1
           fi
+
           echo "Backup complete: ${DUMP_FILE} ($(du -h "${DUMP_FILE}" | cut -f1))"
 
       # ---- STORAGE BUCKETS ----
@@ -50,6 +67,6 @@ jobs:
         with:
           name: supabase-backup-${{ github.run_id }}
           path: |
-            *.dump
+            *.sql
             bucket_backup/
           retention-days: 30
