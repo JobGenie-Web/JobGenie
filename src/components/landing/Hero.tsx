@@ -258,7 +258,7 @@ export function Hero() {
                     <div className="anim-genie-bob">
                         <Image src="/genie.png" alt="" aria-hidden width={400} height={520}
                             className="w-full h-auto"
-                            style={{ opacity: 0.2, filter: 'saturate(1.3) brightness(1.1)', maxWidth: '100%', transform: 'scaleY(-1)' }} priority />
+                            style={{ opacity: 0.2, filter: 'saturate(1.3) brightness(1.1)', maxWidth: '100%' }} priority />
                     </div>
                 </div>
 
