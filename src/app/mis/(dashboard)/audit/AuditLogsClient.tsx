@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatTimestamp } from "@/lib/date-utils";
 import type { AuditSummary } from "@/lib/audit-queries";
-import { Activity, AlertCircle, Filter, MoreHorizontal, RefreshCw } from "lucide-react";
+import { Activity, AlertCircle, Calendar, Filter, MoreHorizontal, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,31 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const PAGE = 50;
 const ALL = "all";
 const NO_ROLE_VALUE = "__none__";
+
+type DatePreset = "all" | "24h" | "7d" | "30d" | "custom";
+
+function getDateRange(preset: DatePreset, customFrom: string, customTo: string): { from: string; to: string } | null {
+    const now = new Date();
+    if (preset === "24h") {
+        const from = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        return { from: from.toISOString(), to: now.toISOString() };
+    }
+    if (preset === "7d") {
+        const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return { from: from.toISOString(), to: now.toISOString() };
+    }
+    if (preset === "30d") {
+        const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return { from: from.toISOString(), to: now.toISOString() };
+    }
+    if (preset === "custom" && customFrom) {
+        return {
+            from: new Date(customFrom).toISOString(),
+            to: customTo ? new Date(customTo + "T23:59:59").toISOString() : now.toISOString(),
+        };
+    }
+    return null;
+}
 
 interface EventLog {
     id: string;
@@ -82,6 +107,10 @@ export function AuditLogsClient() {
     const [actionQuery, setActionQuery] = useState("");
     const initActionRef = useRef(true);
 
+    const [datePreset, setDatePreset] = useState<DatePreset>("all");
+    const [customFrom, setCustomFrom] = useState("");
+    const [customTo, setCustomTo] = useState("");
+
     const [detailEvent, setDetailEvent] = useState<EventLog | null>(null);
 
     const loadSummary = useCallback(async () => {
@@ -114,6 +143,11 @@ export function AuditLogsClient() {
             if (actionQuery.trim()) {
                 params.set("action", actionQuery.trim());
             }
+            const dateRange = getDateRange(datePreset, customFrom, customTo);
+            if (dateRange) {
+                params.set("dateFrom", dateRange.from);
+                params.set("dateTo", dateRange.to);
+            }
             params.set("limit", String(PAGE));
             params.set("offset", String(eventOffset));
 
@@ -128,13 +162,18 @@ export function AuditLogsClient() {
         } finally {
             setEventsLoading(false);
         }
-    }, [categoryFilter, roleFilter, actionQuery, eventOffset]);
+    }, [categoryFilter, roleFilter, actionQuery, eventOffset, datePreset, customFrom, customTo]);
 
     const loadErrors = useCallback(async () => {
         setErrorsLoading(true);
         try {
             const params = new URLSearchParams();
             params.set("resolved", "false");
+            const dateRange = getDateRange(datePreset, customFrom, customTo);
+            if (dateRange) {
+                params.set("dateFrom", dateRange.from);
+                params.set("dateTo", dateRange.to);
+            }
             params.set("limit", String(PAGE));
             params.set("offset", String(errorOffset));
 
@@ -149,7 +188,7 @@ export function AuditLogsClient() {
         } finally {
             setErrorsLoading(false);
         }
-    }, [errorOffset]);
+    }, [errorOffset, datePreset, customFrom, customTo]);
 
     // Debounce action input -> actionQuery
     useEffect(() => {
@@ -164,6 +203,11 @@ export function AuditLogsClient() {
         }
         setEventOffset(0);
     }, [actionQuery]);
+
+    useEffect(() => {
+        setEventOffset(0);
+        setErrorOffset(0);
+    }, [datePreset, customFrom, customTo]);
 
     useEffect(() => {
         loadSummary();
@@ -317,6 +361,51 @@ export function AuditLogsClient() {
                         className="max-w-xs w-[200px]"
                     />
                 </div>
+
+                <div className="space-y-1.5">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Time range
+                    </div>
+                    <Select
+                        value={datePreset}
+                        onValueChange={(v) => setDatePreset(v as DatePreset)}
+                    >
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="All time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All time</SelectItem>
+                            <SelectItem value="24h">Past 24 hours</SelectItem>
+                            <SelectItem value="7d">Past 7 days</SelectItem>
+                            <SelectItem value="30d">Past 30 days</SelectItem>
+                            <SelectItem value="custom">Custom range</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {datePreset === "custom" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <div className="text-xs text-muted-foreground">From</div>
+                            <Input
+                                type="date"
+                                value={customFrom}
+                                onChange={(e) => setCustomFrom(e.target.value)}
+                                className="w-[160px]"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="text-xs text-muted-foreground">To</div>
+                            <Input
+                                type="date"
+                                value={customTo}
+                                onChange={(e) => setCustomTo(e.target.value)}
+                                className="w-[160px]"
+                            />
+                        </div>
+                    </>
+                )}
 
                 <Button
                     type="button"

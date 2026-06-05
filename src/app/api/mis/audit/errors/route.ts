@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const resolved = searchParams.get("resolved");
         const errorType = searchParams.get("errorType");
+        const dateFrom = searchParams.get("dateFrom");
+        const dateTo = searchParams.get("dateTo");
         const limit = parseInt(searchParams.get("limit") || "50");
         const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -37,6 +39,8 @@ export async function GET(request: NextRequest) {
 
         if (resolved !== null) query = query.eq("resolved", resolved === "true");
         if (errorType) query = query.eq("error_type", errorType);
+        if (dateFrom) query = query.gte("created_at", dateFrom);
+        if (dateTo) query = query.lte("created_at", dateTo);
 
         const { data: errors, error: errorsError, count } = await query;
 

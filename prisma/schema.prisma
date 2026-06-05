@@ -436,6 +436,12 @@ model Company {
   specialities                String[] @default([]) // Array of specialities
   map_link                    String?  @db.VarChar(1000)
 
+  // Privacy & visibility settings
+  profile_visible      Boolean @default(true)
+  show_company_size    Boolean @default(true)
+  show_company_website Boolean @default(true)
+  team_settings        Json?   @default("{}")
+
   approval_status   ApprovalStatus @default(pending)
   profile_completed Boolean        @default(false)
 
@@ -473,8 +479,9 @@ model Employer {
   address           String  @db.VarChar(255)
   job_title         String? @db.VarChar(200)
   department        String? @db.VarChar(100)
-  is_super_admin    Boolean @default(false)
-  profile_completed Boolean @default(false)
+  is_super_admin      Boolean @default(false)
+  profile_completed   Boolean @default(false)
+  hiring_preferences  Json?   @default("{}")
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)

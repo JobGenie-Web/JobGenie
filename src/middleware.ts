@@ -65,11 +65,14 @@ const roleRoutes: Record<string, string[]> = {
     mis: [
         '/mis/dashboard',
         '/mis/users',
-        '/mis/users/add',
         '/mis/candidates',
         '/mis/employers',
         '/mis/jobs',
         '/mis/settings',
+        '/mis/reports',
+        '/mis/audit',
+        '/mis/interviews',
+        '/mis/roles',
     ],
 };
 
@@ -326,6 +329,10 @@ export const config = {
         '/mis/employers/:path*',
         '/mis/jobs/:path*',
         '/mis/settings/:path*',
+        '/mis/reports/:path*',
+        '/mis/audit/:path*',
+        '/mis/interviews/:path*',
+        '/mis/roles/:path*',
         // Auth routes
         '/login',
         '/candidate/signup',

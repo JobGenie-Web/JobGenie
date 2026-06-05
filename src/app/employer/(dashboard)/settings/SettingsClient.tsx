@@ -1,31 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, SlidersHorizontal, Bell, Briefcase, ChevronRight, AlertTriangle } from "lucide-react";
+import { Shield, SlidersHorizontal, Bell, Briefcase, ChevronRight, Eye, Users, AlertTriangle } from "lucide-react";
 import { AccountSecuritySettings } from "./AccountSecuritySettings";
 import { PreferencesSettings } from "./PreferencesSettings";
 import { NotificationPreferencesSettings } from "./NotificationPreferencesSettings";
-import { JobPreferencesSettings } from "./JobPreferencesSettings";
+import { HiringPreferencesSettings } from "./HiringPreferencesSettings";
+import { PrivacyVisibilitySettings } from "./PrivacyVisibilitySettings";
+import { TeamAccessSettings } from "./TeamAccessSettings";
 import { DangerZoneSettings } from "./DangerZoneSettings";
 import { cn } from "@/lib/utils";
 
-type SectionId = "account" | "preferences" | "notifications" | "job-preferences" | "danger";
+type SectionId = "account" | "preferences" | "notifications" | "hiring" | "privacy" | "team" | "danger";
 
-const NAV_ITEMS: { id: SectionId; label: string; description: string; icon: React.ElementType }[] = [
-    { id: "account",         label: "Account & Security", description: "Password, sessions & account info",  icon: Shield },
-    { id: "preferences",     label: "Preferences",        description: "Timezone & appearance",               icon: SlidersHorizontal },
-    { id: "notifications",   label: "Notifications",      description: "Control what you're notified about",  icon: Bell },
-    { id: "job-preferences", label: "Job Preferences",    description: "Availability, salary & job type",     icon: Briefcase },
-    { id: "danger",          label: "Danger Zone",        description: "Account deletion and data removal",   icon: AlertTriangle },
-];
-
-const SECTION_CONTENT: Record<SectionId, React.ReactNode> = {
-    "account":         <AccountSecuritySettings />,
-    "preferences":     <PreferencesSettings />,
-    "notifications":   <NotificationPreferencesSettings />,
-    "job-preferences": <JobPreferencesSettings />,
-    "danger":          <DangerZoneSettings />,
-};
+interface Props {
+    isSuperAdmin: boolean;
+    email: string;
+    createdAt: string;
+    approvalStatus: string;
+    companyName: string | null;
+}
 
 /*
  * Height budget (desktop only):
@@ -33,18 +27,38 @@ const SECTION_CONTENT: Record<SectionId, React.ReactNode> = {
  *   − header:           4.25rem
  *   − PortalMain p-8:   2 × 2rem   = 4rem   → md total: 8.25rem
  *   − PortalMain p-10:  2 × 2.5rem = 5rem   → lg total: 9.25rem
- * The container is locked to this height so the outer CandidateLayout scroll
- * container never needs to scroll on the settings page. Only the right content
- * panel scrolls independently.
  */
 
-export function SettingsClient() {
+export function SettingsClient({ isSuperAdmin, email, createdAt, approvalStatus, companyName }: Props) {
     const [active, setActive] = useState<SectionId>("account");
-    const activeItem = NAV_ITEMS.find((n) => n.id === active)!;
+
+    const NAV_ITEMS: { id: SectionId; label: string; description: string; icon: React.ElementType }[] = [
+        { id: "account",       label: "Account & Security",   description: "Password, sessions & account info",       icon: Shield },
+        { id: "preferences",   label: "Preferences",          description: "Timezone & appearance",                   icon: SlidersHorizontal },
+        { id: "notifications", label: "Notifications",        description: "Control what you're notified about",      icon: Bell },
+        { id: "hiring",        label: "Hiring Preferences",   description: "Interview settings & reminders",          icon: Briefcase },
+        ...(isSuperAdmin ? [
+            { id: "privacy" as SectionId, label: "Privacy & Visibility", description: "Control your company's public visibility", icon: Eye },
+            { id: "team" as SectionId,    label: "Team & Access",         description: "Sub-admin permissions",                   icon: Users },
+        ] : []),
+        { id: "danger",        label: "Danger Zone",          description: "Account and company actions",             icon: AlertTriangle },
+    ];
+
+    const activeItem = NAV_ITEMS.find((n) => n.id === active) ?? NAV_ITEMS[0];
+
+    const SECTION_CONTENT: Record<SectionId, React.ReactNode> = {
+        "account":       <AccountSecuritySettings email={email} createdAt={createdAt} approvalStatus={approvalStatus} companyName={companyName} isSuperAdmin={isSuperAdmin} />,
+        "preferences":   <PreferencesSettings />,
+        "notifications": <NotificationPreferencesSettings />,
+        "hiring":        <HiringPreferencesSettings />,
+        "privacy":       <PrivacyVisibilitySettings isSuperAdmin={isSuperAdmin} />,
+        "team":          <TeamAccessSettings isSuperAdmin={isSuperAdmin} />,
+        "danger":        <DangerZoneSettings isSuperAdmin={isSuperAdmin} />,
+    };
 
     return (
         <>
-            {/* Mobile pill tab bar — sits in normal flow above content */}
+            {/* Mobile pill tab bar */}
             <div className="md:hidden flex gap-1.5 overflow-x-auto pb-3 -mx-1 px-1 scrollbar-none mb-4">
                 {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
                     const isActive = active === id;
@@ -65,14 +79,12 @@ export function SettingsClient() {
             {/* Main layout — on desktop: exact viewport height so only right panel scrolls */}
             <div className={cn(
                 "flex gap-6",
-                /* mobile: column, no height lock */
                 "flex-col",
-                /* desktop: row, height-locked */
                 "md:flex-row md:h-[calc(100dvh-8.25rem)]",
                 "lg:h-[calc(100dvh-9.25rem)]",
             )}>
 
-                {/* Left nav — desktop only, no overflow, never scrolls */}
+                {/* Left nav — desktop only */}
                 <aside className="hidden md:flex flex-col w-56 lg:w-64 shrink-0">
                     <nav className="space-y-1">
                         {NAV_ITEMS.map(({ id, label, description, icon: Icon }) => {
@@ -108,7 +120,7 @@ export function SettingsClient() {
                 {/* Right content — independently scrollable on desktop */}
                 <div className="flex-1 min-w-0 md:overflow-y-auto">
 
-                    {/* Section header — inside scroll panel so it scrolls away on small content */}
+                    {/* Section header */}
                     <div className="mb-6 pb-5 border-b">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
@@ -126,7 +138,6 @@ export function SettingsClient() {
                         {SECTION_CONTENT[active]}
                     </div>
 
-                    {/* Bottom breathing room */}
                     <div className="h-8" />
                 </div>
             </div>

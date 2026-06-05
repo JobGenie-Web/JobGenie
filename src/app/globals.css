@@ -1180,6 +1180,24 @@ html {
   }
 }
 
+/* ─── Print styles ────────────────────────────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  body {
+    background: white !important;
+    color: black !important;
+    background-image: none !important;
+  }
+  .card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+  .print-break { page-break-before: always; }
+  /* Ensure charts (SVG) render with sufficient width */
+  .recharts-responsive-container { width: 100% !important; }
+}
+
 /* ─── Touch optimization for mobile devices ────────────────────────────────── */
 .touch-manipulation {
   touch-action: manipulation;

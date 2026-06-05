@@ -3,21 +3,39 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const ALLOWED_KEYS = new Set([
+    // Candidate keys
     "invitation_received",
     "interview_scheduled",
     "interview_rescheduled",
     "interview_reminder",
     "offer_result_updates",
+    // Employer keys
+    "new_application_received",
+    "interview_scheduled_employer",
+    "interview_rescheduled_employer",
+    "interview_reminder_employer",
+    "invitation_accepted",
+    "invitation_declined",
+    "company_approval_status",
 ]);
 
 type NotificationPreferences = Record<string, boolean>;
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
+    // Candidate defaults
     invitation_received: true,
     interview_scheduled: true,
     interview_rescheduled: true,
     interview_reminder: true,
     offer_result_updates: true,
+    // Employer defaults
+    new_application_received: true,
+    interview_scheduled_employer: true,
+    interview_rescheduled_employer: true,
+    interview_reminder_employer: true,
+    invitation_accepted: true,
+    invitation_declined: true,
+    company_approval_status: true,
 };
 
 function mergeWithDefaults(stored: unknown): NotificationPreferences {
