@@ -38,48 +38,56 @@ const navigationItems = [
         href: "/candidate/dashboard",
         icon: LayoutDashboard,
         requiresApproval: false,
+        visibilityKey: "dashboard",
     },
     {
         title: "Browse Jobs",
         href: "/candidate/jobs",
         icon: Briefcase,
         requiresApproval: true,
+        visibilityKey: "browse-jobs",
     },
     {
         title: "Applications",
         href: "/candidate/applications",
         icon: FileText,
         requiresApproval: true,
+        visibilityKey: "applications",
     },
     {
         title: "Invitations",
         href: "/candidate/invitations",
         icon: Mail,
         requiresApproval: true,
+        visibilityKey: "invitations",
     },
     {
         title: "Calendar",
         href: "/candidate/calendar",
         icon: CalendarDays,
         requiresApproval: true,
+        visibilityKey: "calendar",
     },
     {
         title: "My Profile",
         href: "/candidate/profile",
         icon: User,
         requiresApproval: false,
+        visibilityKey: "my-profile",
     },
     {
         title: "My Resumes",
         href: "/candidate/resumes",
         icon: FileText,
         requiresApproval: false,
+        visibilityKey: "my-resumes",
     },
     {
         title: "Settings",
         href: "/candidate/settings",
         icon: Settings,
         requiresApproval: true,
+        visibilityKey: "settings",
     },
 ];
 
@@ -88,25 +96,32 @@ export function CandidateSidebar() {
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
     const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
-    
+    const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+
     // Use SWR hook for automatic revalidation and caching
     const { count: unopenedCount } = useUnopenedInvitationCount();
 
     useEffect(() => {
-        // Fetch approval status on mount
-        const fetchApprovalStatus = async () => {
+        const fetchData = async () => {
             try {
-                const profileResponse = await fetch("/api/candidate/profile");
+                const [profileResponse, visibilityResponse] = await Promise.all([
+                    fetch("/api/candidate/profile"),
+                    fetch("/api/candidate/sidebar-visibility"),
+                ]);
                 const profileData = await profileResponse.json();
                 if (profileData.success && profileData.data) {
                     setIsApproved(profileData.data.approval_status === "approved");
                 }
+                const visibilityData = await visibilityResponse.json();
+                if (visibilityData.success) {
+                    setVisibility(visibilityData.visibility);
+                }
             } catch (error) {
-                console.error("Error fetching approval status:", error);
+                console.error("Error fetching sidebar data:", error);
             }
         };
 
-        fetchApprovalStatus();
+        fetchData();
     }, []);
 
     return (
@@ -141,6 +156,11 @@ export function CandidateSidebar() {
                 <SidebarMenu>
                     <TooltipProvider delayDuration={0}>
                         {navigationItems.map((item) => {
+                            // If MIS has hidden this item, skip it entirely
+                            if (Object.keys(visibility).length > 0 && visibility[item.visibilityKey] === false) {
+                                return null;
+                            }
+
                             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                             const Icon = item.icon;
                             const isRestricted = item.requiresApproval && !isApproved;

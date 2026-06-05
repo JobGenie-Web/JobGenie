@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { InterviewRemindersSettings } from "./InterviewRemindersSettings";
+import { SidebarVisibilitySettings } from "./SidebarVisibilitySettings";
 import Papa from "papaparse";
 
 interface Industry {
@@ -286,7 +287,8 @@ export function MasterDataClient() {
                     <TabsTrigger value="seniority">
                         Seniority Levels ({SENIORITY_LEVELS.length})
                     </TabsTrigger>
-                    <TabsTrigger value="reminders">Interview reminders</TabsTrigger>
+                    <TabsTrigger value="reminders">Interview Reminders</TabsTrigger>
+                    <TabsTrigger value="sidebar-visibility">Sidebar Visibility</TabsTrigger>
                 </TabsList>
 
                 {/* Industries Tab */}
@@ -554,6 +556,10 @@ export function MasterDataClient() {
 
                 <TabsContent value="reminders">
                     <InterviewRemindersSettings />
+                </TabsContent>
+
+                <TabsContent value="sidebar-visibility">
+                    <SidebarVisibilitySettings />
                 </TabsContent>
 
                 {/* Seniority Levels Tab */}

@@ -1,4 +1,4 @@
-import { resend, EMAIL_FROM } from "./resend";
+import { resend, EMAIL_JOBS_FROM } from "./resend";
 import { getBaseUrl } from "./email";
 import { formatUTCDate, formatUTCTime } from "./date-utils";
 
@@ -69,14 +69,14 @@ ${timeSlotsHTML}
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: candidateEmail,
             subject: `Interview Invitation from ${companyName} - JobGenie`,
             html,
@@ -166,14 +166,14 @@ ${locationHTML}
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: candidateEmail,
             subject: `Interview Confirmed with ${companyName} - JobGenie`,
             html,
@@ -273,14 +273,14 @@ ${locationHTML}
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: candidateEmail,
             subject: `Reminder: Interview with ${companyName} — JobGenie`,
             html,
@@ -358,14 +358,14 @@ export async function sendCandidateCancellationEmail(
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: employerEmail,
             subject: `Interview Canceled by Candidate - JobGenie`,
             html,
@@ -446,14 +446,14 @@ export async function sendEmployerCancellationEmail(
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: candidateEmail,
             subject: `Interview Canceled - JobGenie`,
             html,
@@ -552,14 +552,14 @@ ${notesHTML}
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#3b82f6;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#3b82f6;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: candidateEmail,
             subject: `Interview Rescheduled - ${companyName} - JobGenie`,
             html,
@@ -658,14 +658,14 @@ ${notesHTML}
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#3b82f6;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#3b82f6;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table></td></tr>
 </table></body></html>`;
 
         const { error } = await resend.emails.send({
-            from: `JobGenie <${EMAIL_FROM}>`,
+            from: `JobGenie <${EMAIL_JOBS_FROM}>`,
             to: employerEmail,
             subject: `Interview Rescheduled - ${candidateName} - JobGenie`,
             html,

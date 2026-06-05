@@ -89,7 +89,7 @@ function getVerificationEmailTemplate(firstName: string, code: string): string {
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #22c55e; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #22c55e; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.
@@ -266,7 +266,7 @@ export async function sendMISInvitationEmail(
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#3b82f6;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#3b82f6;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table>
@@ -363,7 +363,7 @@ export async function sendEmployerInvitationEmail(
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;background-color:#f9fafb;border-radius:0 0 16px 16px;text-align:center;">
-<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color:#22c55e;">support@jobgenie.com</a></p>
+<p style="margin:0 0 8px;font-size:14px;color:#6b7280;">Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color:#22c55e;">support@jobgenie.biz</a></p>
 <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} JobGenie. All rights reserved.</p>
 </td></tr>
 </table>
@@ -474,7 +474,7 @@ function getApprovalEmailTemplate(firstName: string, loginUrl: string): string {
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #22c55e; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #22c55e; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.
@@ -583,7 +583,7 @@ function getRejectionEmailTemplate(firstName: string, rejectionReason: string, l
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #f59e0b; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #f59e0b; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.
@@ -789,7 +789,7 @@ function getPasswordResetEmailTemplate(firstName: string, resetUrl: string): str
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #22c55e; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #22c55e; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.

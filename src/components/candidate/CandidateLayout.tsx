@@ -47,22 +47,22 @@ export async function CandidateLayout({ children, pageTitle, pageDescription }: 
     }
 
     return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full">
-                <CandidateSidebar />
-                <SidebarInset className="flex flex-col flex-1">
-                    <CandidateHeader
-                        user={user}
-                        pageTitle={pageTitle}
-                        pageDescription={pageDescription}
-                    />
+        <SidebarProvider className="h-dvh! min-h-0! overflow-hidden">
+            <CandidateSidebar />
+            <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+                <CandidateHeader
+                    user={user}
+                    pageTitle={pageTitle}
+                    pageDescription={pageDescription}
+                />
+                <div className="flex-1 overflow-y-auto min-h-0">
                     <PageTransitionWrapper>
                         <PortalMain variant="candidate" className="p-5 md:p-8 lg:p-10">
                             {children}
                         </PortalMain>
                     </PageTransitionWrapper>
-                </SidebarInset>
-            </div>
+                </div>
+            </SidebarInset>
             <Toaster />
         </SidebarProvider>
     );

@@ -1,4 +1,4 @@
-import { resend, EMAIL_FROM } from "./resend";
+import { resend, EMAIL_JOBS_FROM } from "./resend";
 import { getBaseUrl } from "./email";
 
 /**
@@ -77,7 +77,7 @@ function getEmployerApprovalEmailTemplate(
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #22c55e; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #22c55e; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.
@@ -191,7 +191,7 @@ function getEmployerRejectionEmailTemplate(
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
                             <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
-                                Need help? Contact us at <a href="mailto:support@jobgenie.com" style="color: #f59e0b; text-decoration: none;">support@jobgenie.com</a>
+                                Need help? Contact us at <a href="mailto:support@jobgenie.biz" style="color: #f59e0b; text-decoration: none;">support@jobgenie.biz</a>
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 © ${new Date().getFullYear()} JobGenie. All rights reserved.
@@ -245,7 +245,7 @@ export async function sendEmployerApprovalEmail(
         }
 
         const { error } = await resend.emails.send({
-            from: `JobGenie Employer Support <${EMAIL_FROM}>`,
+            from: `JobGenie Employer Support <${EMAIL_JOBS_FROM}>`,
             to: email,
             subject: "🎉 Company Profile Approved - JobGenie",
             html: getEmployerApprovalEmailTemplate(companyName, firstName, loginUrl),
@@ -299,7 +299,7 @@ export async function sendEmployerRejectionEmail(
         }
 
         const { error } = await resend.emails.send({
-            from: `JobGenie Employer Support <${EMAIL_FROM}>`,
+            from: `JobGenie Employer Support <${EMAIL_JOBS_FROM}>`,
             to: email,
             subject: "Action Required: Company Profile Update - JobGenie",
             html: getEmployerRejectionEmailTemplate(companyName, firstName, rejectionReason, loginUrl),

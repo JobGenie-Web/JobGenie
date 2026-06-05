@@ -40,54 +40,63 @@ const navigationItems = [
         href: "/employer/dashboard",
         icon: LayoutDashboard,
         requiresApproval: false,
+        visibilityKey: "dashboard",
     },
     {
         title: "Job Postings",
         href: "/employer/jobs",
         icon: Briefcase,
         requiresApproval: true,
+        visibilityKey: "job-postings",
     },
     {
         title: "Applications",
         href: "/employer/applications",
         icon: FileText,
         requiresApproval: true,
+        visibilityKey: "applications",
     },
     {
         title: "Candidates",
         href: "/employer/candidates",
         icon: Users,
         requiresApproval: true,
+        visibilityKey: "candidates",
     },
     {
         title: "Invitations",
         href: "/employer/invitations",
         icon: Mail,
         requiresApproval: true,
+        visibilityKey: "invitations",
     },
     {
         title: "Calendar",
         href: "/employer/calendar",
         icon: CalendarDays,
         requiresApproval: true,
+        visibilityKey: "calendar",
     },
     {
         title: "Company Profile",
         href: "/employer/company",
         icon: Building2,
         requiresApproval: false,
+        visibilityKey: "company-profile",
     },
     {
         title: "Company Admins",
         href: "/employer/admins",
         icon: UserCog,
         requiresApproval: true,
+        visibilityKey: "company-admins",
     },
     {
         title: "Settings",
         href: "/employer/settings",
         icon: Settings,
         requiresApproval: true,
+        visibilityKey: "settings",
     },
 ];
 
@@ -96,25 +105,32 @@ export function EmployerSidebar() {
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
     const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
-    
+    const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+
     // Use SWR hook for automatic revalidation and caching
     const { count: pendingCount } = usePendingInvitationCount();
 
     useEffect(() => {
-        // Fetch company approval status on mount
-        const fetchApprovalStatus = async () => {
+        const fetchData = async () => {
             try {
-                const companyResponse = await fetch("/api/employer/company");
+                const [companyResponse, visibilityResponse] = await Promise.all([
+                    fetch("/api/employer/company"),
+                    fetch("/api/employer/sidebar-visibility"),
+                ]);
                 const companyData = await companyResponse.json();
                 if (companyData.success && companyData.data) {
                     setIsApproved(companyData.data.approval_status === "approved");
                 }
+                const visibilityData = await visibilityResponse.json();
+                if (visibilityData.success) {
+                    setVisibility(visibilityData.visibility);
+                }
             } catch (error) {
-                console.error("Error fetching company approval status:", error);
+                console.error("Error fetching sidebar data:", error);
             }
         };
 
-        fetchApprovalStatus();
+        fetchData();
     }, []);
 
     return (
@@ -149,6 +165,11 @@ export function EmployerSidebar() {
                 <SidebarMenu>
                     <TooltipProvider delayDuration={0}>
                         {navigationItems.map((item) => {
+                            // If MIS has hidden this item, skip it entirely
+                            if (Object.keys(visibility).length > 0 && visibility[item.visibilityKey] === false) {
+                                return null;
+                            }
+
                             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                             const Icon = item.icon;
                             const isRestricted = item.requiresApproval && !isApproved;

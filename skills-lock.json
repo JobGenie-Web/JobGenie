@@ -36,6 +36,12 @@
       "sourceType": "github",
       "computedHash": "075d1fc3156d5593c3e9a559ebb07f82a2991db07125ff9df16ad90270f5c584"
     },
+    "resend-cli": {
+      "source": "resend/resend-cli",
+      "sourceType": "github",
+      "skillPath": "skills/resend-cli/SKILL.md",
+      "computedHash": "c06b046b871b0d35dad79b71aa316335750d46f9557f5d25f3e533662ae4ea24"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

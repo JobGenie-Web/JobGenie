@@ -5,7 +5,7 @@ export default function ResumesPage() {
     return (
         <CandidateLayout
             pageTitle="My Resumes"
-            pageDescription="Manage and view your uploaded resume."
+            pageDescription="Upload up to 5 resumes. Mark one as primary for your profile."
         >
             <ResumesClientContent />
         </CandidateLayout>

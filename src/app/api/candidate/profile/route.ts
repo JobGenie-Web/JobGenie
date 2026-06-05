@@ -22,6 +22,7 @@ export async function GET() {
                 first_name,
                 last_name,
                 email,
+                created_at,
                 phone,
                 alternative_phone,
                 contact_no,

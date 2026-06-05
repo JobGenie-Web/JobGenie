@@ -238,7 +238,7 @@ export async function middleware(request: NextRequest) {
             // Only restrict if profile is completed but not approved
             if (candidateData?.profile_completed && candidateData.approval_status !== 'approved') {
                 // Allow access to dashboard, profile, and resume routes
-                const allowedRoutes = ['/candidate/dashboard', '/candidate/profile', '/candidate/resumes', '/candidate/create-profile'];
+                const allowedRoutes = ['/candidate/dashboard', '/candidate/profile', '/candidate/resumes', '/candidate/create-profile', '/candidate/settings'];
                 const isAllowedRoute = allowedRoutes.some(route => pathname.startsWith(route));
 
                 if (!isAllowedRoute) {
