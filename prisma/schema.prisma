@@ -36,6 +36,9 @@ model User {
   // (emails, stats). All timestamps are stored as UTC and converted on display.
   timezone String @default("UTC") @db.VarChar(64)
 
+  // Notification preferences stored as JSON map of boolean flags
+  notification_preferences Json? @default("{}")
+
   // Metadata
   last_login_at DateTime? @db.Timestamptz(6)
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
@@ -132,6 +135,9 @@ model Candidate {
   // Job invitations received
   job_invitations JobInvitation[]
 
+  // Uploaded resumes
+  resumes CandidateResume[]
+
   @@index([user_id])
   @@index([industry])
   @@index([experience_level])
@@ -139,6 +145,29 @@ model Candidate {
   @@index([country])
   @@index([approval_status])
   @@map("candidates")
+}
+
+// ============================================
+// CANDIDATE RESUMES
+// ============================================
+
+model CandidateResume {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidate_id String  @db.Uuid
+
+  file_name  String  @db.VarChar(255)
+  file_url   String  @db.VarChar(500)
+  file_path  String  @db.VarChar(500)
+  is_primary Boolean @default(false)
+
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @updatedAt @db.Timestamptz(6)
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+  @@index([is_primary])
+  @@map("candidate_resumes")
 }
 
 // ============================================
@@ -533,6 +562,20 @@ model MisRolePermission {
   @@index([role_id])
   @@index([permission_id])
   @@map("mis_role_permissions")
+}
+
+// ============================================
+// MIS SIDEBAR VISIBILITY SETTINGS
+// ============================================
+
+model MisSidebarVisibilitySettings {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  portal_type        String   @unique // "candidate" or "employer"
+  visibility_config  Json     @default("{}")
+  updated_at         DateTime @updatedAt @db.Timestamptz(6)
+  updated_by_user_id String?  @db.Uuid
+
+  @@map("mis_sidebar_visibility_settings")
 }
 
 // ============================================
