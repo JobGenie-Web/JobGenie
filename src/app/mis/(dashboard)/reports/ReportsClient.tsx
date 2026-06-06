@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,76 @@ const PERIOD_PRESETS: { id: PeriodPreset; label: string }[] = [
     { id: "all_time", label: "All Time" },
     { id: "custom", label: "Custom" },
 ];
+
+// ── Pagination ───────────────────────────────────────────────────────────────
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
+function usePagination<T>(items: T[], pageSize: number) {
+    const [page, setPage] = useState(1);
+    // Reset to page 1 whenever the item list length changes (e.g. search filter applied)
+    useEffect(() => { setPage(1); }, [items.length]);
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const slice = items.slice((safePage - 1) * pageSize, safePage * pageSize);
+    return { page: safePage, setPage, totalPages, slice, total: items.length };
+}
+
+function Pagination({
+    page, totalPages, total, pageSize, onPageChange, onPageSizeChange,
+}: {
+    page: number; totalPages: number; total: number; pageSize: number;
+    onPageChange: (p: number) => void; onPageSizeChange: (n: number) => void;
+}) {
+    const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+    const to = Math.min(page * pageSize, total);
+
+    const pages: (number | "…")[] = [];
+    if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+        pages.push(1);
+        if (page > 3) pages.push("…");
+        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+        if (page < totalPages - 2) pages.push("…");
+        pages.push(totalPages);
+    }
+
+    return (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                <span>Rows per page</span>
+                <Select value={String(pageSize)} onValueChange={v => { onPageSizeChange(Number(v)); onPageChange(1); }}>
+                    <SelectTrigger className="h-7 w-16 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {PAGE_SIZE_OPTIONS.map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <span>{from}–{to} of {total}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs"
+                    onClick={() => onPageChange(1)} disabled={page === 1}>«</Button>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs"
+                    onClick={() => onPageChange(page - 1)} disabled={page === 1}>‹</Button>
+                {pages.map((p, i) =>
+                    p === "…" ? (
+                        <span key={`e${i}`} className="px-1 text-muted-foreground">…</span>
+                    ) : (
+                        <Button key={p} variant={p === page ? "default" : "outline"} size="sm"
+                            className="h-7 w-7 p-0 text-xs" onClick={() => onPageChange(p as number)}>
+                            {p}
+                        </Button>
+                    )
+                )}
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs"
+                    onClick={() => onPageChange(page + 1)} disabled={page === totalPages}>›</Button>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs"
+                    onClick={() => onPageChange(totalPages)} disabled={page === totalPages}>»</Button>
+            </div>
+        </div>
+    );
+}
 
 function fmt(dateStr: string | null | undefined) {
     if (!dateStr) return "—";
@@ -423,12 +494,14 @@ function CandidatesView({ data }: { data: ReportData }) {
     const pending = data.pendingCount || 0;
     const rejected = data.rejectedCount || 0;
     const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(25);
 
     const filtered = (data.candidates || []).filter(c =>
         !search || c.name.toLowerCase().includes(search.toLowerCase()) ||
         c.email.toLowerCase().includes(search.toLowerCase()) ||
         c.industry?.toLowerCase().includes(search.toLowerCase())
     );
+    const { page, setPage, totalPages, slice } = usePagination(filtered, pageSize);
 
     return (
         <div className="space-y-6">
@@ -509,9 +582,9 @@ function CandidatesView({ data }: { data: ReportData }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filtered.map((c, i) => (
+                            {slice.map((c, i) => (
                                 <tr key={c.id} className="hover:bg-muted/30 transition-colors">
-                                    <TD className="text-muted-foreground">{i + 1}</TD>
+                                    <TD className="text-muted-foreground">{(page - 1) * pageSize + i + 1}</TD>
                                     <TD><span className="font-medium">{c.name}</span></TD>
                                     <TD className="text-muted-foreground">{c.email}</TD>
                                     <TD>{c.industry || "—"}</TD>
@@ -525,6 +598,8 @@ function CandidatesView({ data }: { data: ReportData }) {
                             ))}
                         </tbody>
                     </TableWrap>
+                    <Pagination page={page} totalPages={totalPages} total={filtered.length}
+                        pageSize={pageSize} onPageChange={setPage} onPageSizeChange={n => { setPageSize(n); setPage(1); }} />
                 </CardContent>
             </Card>
         </div>
@@ -533,11 +608,13 @@ function CandidatesView({ data }: { data: ReportData }) {
 
 function EmployersView({ data }: { data: ReportData }) {
     const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(25);
     const filtered = (data.employers || []).filter(e =>
         !search || e.name.toLowerCase().includes(search.toLowerCase()) ||
         e.email.toLowerCase().includes(search.toLowerCase()) ||
         e.company_name?.toLowerCase().includes(search.toLowerCase())
     );
+    const { page, setPage, totalPages, slice } = usePagination(filtered, pageSize);
 
     return (
         <div className="space-y-6">
@@ -580,9 +657,9 @@ function EmployersView({ data }: { data: ReportData }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filtered.map((e, i) => (
+                            {slice.map((e, i) => (
                                 <tr key={e.id} className="hover:bg-muted/30 transition-colors">
-                                    <TD className="text-muted-foreground">{i + 1}</TD>
+                                    <TD className="text-muted-foreground">{(page - 1) * pageSize + i + 1}</TD>
                                     <TD><span className="font-medium">{e.name}</span></TD>
                                     <TD className="text-muted-foreground">{e.email}</TD>
                                     <TD className="font-medium">{e.company_name}</TD>
@@ -596,6 +673,8 @@ function EmployersView({ data }: { data: ReportData }) {
                             ))}
                         </tbody>
                     </TableWrap>
+                    <Pagination page={page} totalPages={totalPages} total={filtered.length}
+                        pageSize={pageSize} onPageChange={setPage} onPageSizeChange={n => { setPageSize(n); setPage(1); }} />
                 </CardContent>
             </Card>
         </div>
@@ -606,11 +685,13 @@ function CompaniesView({ data }: { data: ReportData }) {
     const total = data.totalCompanies || 0;
     const approved = data.approvedCount || 0;
     const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(25);
     const filtered = (data.companies || []).filter(c =>
         !search || c.company_name.toLowerCase().includes(search.toLowerCase()) ||
         c.industry?.toLowerCase().includes(search.toLowerCase()) ||
         c.business_registration_no?.toLowerCase().includes(search.toLowerCase())
     );
+    const { page, setPage, totalPages, slice } = usePagination(filtered, pageSize);
 
     return (
         <div className="space-y-6">
@@ -663,9 +744,9 @@ function CompaniesView({ data }: { data: ReportData }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filtered.map((c, i) => (
+                            {slice.map((c, i) => (
                                 <tr key={c.id} className="hover:bg-muted/30 transition-colors">
-                                    <TD className="text-muted-foreground">{i + 1}</TD>
+                                    <TD className="text-muted-foreground">{(page - 1) * pageSize + i + 1}</TD>
                                     <TD><span className="font-medium">{c.company_name}</span></TD>
                                     <TD className="text-muted-foreground">{c.business_registration_no || "—"}</TD>
                                     <TD>{c.industry || "—"}</TD>
@@ -681,6 +762,8 @@ function CompaniesView({ data }: { data: ReportData }) {
                             ))}
                         </tbody>
                     </TableWrap>
+                    <Pagination page={page} totalPages={totalPages} total={filtered.length}
+                        pageSize={pageSize} onPageChange={setPage} onPageSizeChange={n => { setPageSize(n); setPage(1); }} />
                 </CardContent>
             </Card>
         </div>
@@ -689,11 +772,13 @@ function CompaniesView({ data }: { data: ReportData }) {
 
 function JobsView({ data }: { data: ReportData }) {
     const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(25);
     const filtered = (data.jobs || []).filter(j =>
         !search || j.job_title.toLowerCase().includes(search.toLowerCase()) ||
         j.company_name?.toLowerCase().includes(search.toLowerCase()) ||
         j.industry?.toLowerCase().includes(search.toLowerCase())
     );
+    const { page, setPage, totalPages, slice } = usePagination(filtered, pageSize);
 
     return (
         <div className="space-y-6">
@@ -766,9 +851,9 @@ function JobsView({ data }: { data: ReportData }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filtered.map((j, i) => (
+                            {slice.map((j, i) => (
                                 <tr key={j.id} className="hover:bg-muted/30 transition-colors">
-                                    <TD className="text-muted-foreground">{i + 1}</TD>
+                                    <TD className="text-muted-foreground">{(page - 1) * pageSize + i + 1}</TD>
                                     <TD><span className="font-medium">{j.job_title}</span></TD>
                                     <TD>{j.company_name}</TD>
                                     <TD>{j.industry || "—"}</TD>
@@ -782,6 +867,8 @@ function JobsView({ data }: { data: ReportData }) {
                             ))}
                         </tbody>
                     </TableWrap>
+                    <Pagination page={page} totalPages={totalPages} total={filtered.length}
+                        pageSize={pageSize} onPageChange={setPage} onPageSizeChange={n => { setPageSize(n); setPage(1); }} />
                 </CardContent>
             </Card>
         </div>
@@ -791,11 +878,13 @@ function JobsView({ data }: { data: ReportData }) {
 function ApplicationsView({ data }: { data: ReportData }) {
     const total = data.totalApplications || 0;
     const [search, setSearch] = useState("");
+    const [pageSize, setPageSize] = useState(25);
     const filtered = (data.applications || []).filter(a =>
         !search || a.candidate_name.toLowerCase().includes(search.toLowerCase()) ||
         a.company_name?.toLowerCase().includes(search.toLowerCase()) ||
         a.job_designation?.toLowerCase().includes(search.toLowerCase())
     );
+    const { page, setPage, totalPages, slice } = usePagination(filtered, pageSize);
 
     return (
         <div className="space-y-6">
@@ -843,9 +932,9 @@ function ApplicationsView({ data }: { data: ReportData }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filtered.map((a, i) => (
+                            {slice.map((a, i) => (
                                 <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                                    <TD className="text-muted-foreground">{i + 1}</TD>
+                                    <TD className="text-muted-foreground">{(page - 1) * pageSize + i + 1}</TD>
                                     <TD><span className="font-medium">{a.candidate_name}</span></TD>
                                     <TD className="text-muted-foreground">{a.candidate_email}</TD>
                                     <TD>{a.company_name}</TD>
@@ -867,6 +956,8 @@ function ApplicationsView({ data }: { data: ReportData }) {
                             ))}
                         </tbody>
                     </TableWrap>
+                    <Pagination page={page} totalPages={totalPages} total={filtered.length}
+                        pageSize={pageSize} onPageChange={setPage} onPageSizeChange={n => { setPageSize(n); setPage(1); }} />
                 </CardContent>
             </Card>
         </div>
