@@ -58,12 +58,12 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
                 </div>
 
                 {/* Profile Content */}
-                <div className="px-6 pb-6">
+                <div className="px-4 pb-6 sm:px-6">
                     {/* Avatar - Overlapping cover */}
-                    <div className="flex items-start justify-between -mt-16 mb-4">
-                        <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
+                    <div className="flex items-start justify-between -mt-12 mb-4 sm:-mt-16">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-lg sm:h-32 sm:w-32">
                             <AvatarImage src={profile.profile_image_url || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
-                            <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
+                            <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary sm:text-2xl">
                                 {initials}
                             </AvatarFallback>
                         </Avatar>
@@ -71,7 +71,7 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
                         {profile.availability_status && (
                             <Badge
                                 variant="outline"
-                                className={`mt-16 ${getAvailabilityColor(profile.availability_status)}`}
+                                className={`mt-14 sm:mt-16 ${getAvailabilityColor(profile.availability_status)}`}
                             >
                                 {formatAvailabilityStatus(profile.availability_status)}
                             </Badge>
@@ -81,7 +81,7 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
                     {/* Name and Position */}
                     <div className="space-y-2 mb-4">
                         <div>
-                            <h1 className="text-3xl font-bold">
+                            <h1 className="text-2xl font-bold sm:text-3xl">
                                 {profile.first_name} {profile.last_name}
                             </h1>
                             {profile.membership_no && (

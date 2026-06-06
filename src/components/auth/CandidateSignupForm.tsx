@@ -21,12 +21,12 @@ import { cn } from "@/lib/utils";
 
 // ── Shared input style ────────────────────────────────────────────────────────
 const inputCls = cn(
-    "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-white/25",
-    "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-    "disabled:opacity-50 transition-colors",
+    "w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60",
+    "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-background",
+    "disabled:opacity-50 transition-all",
 );
 
-const labelCls = "block text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5";
+const labelCls = "block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5";
 
 function Field({ label, id, error, children, required = true }: {
     label: React.ReactNode; id: string; error?: string[]; children: React.ReactNode; required?: boolean;
@@ -119,7 +119,7 @@ export function CandidateSignupForm() {
             )}
 
             {/* Name row */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="First Name" id="firstName" error={errors.firstName}>
                     <input id="firstName" name="firstName" placeholder="John" value={formData.firstName}
                         onChange={e => set("firstName", e.target.value)} onBlur={e => validateField("firstName", e.target.value)}
@@ -133,7 +133,7 @@ export function CandidateSignupForm() {
             </div>
 
             {/* NIC / Gender row */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="NIC / Passport" id="nicPassport" error={errors.nicPassport}>
                     <input id="nicPassport" name="nicPassport" placeholder="123456789V" maxLength={12}
                         value={formData.nicPassport} onChange={e => set("nicPassport", e.target.value)}
@@ -144,14 +144,14 @@ export function CandidateSignupForm() {
                     <input type="hidden" name="gender" value={formData.gender} />
                     <Select value={formData.gender} onValueChange={v => set("gender", v)}>
                         <SelectTrigger id="gender" className={cn(
-                            "rounded-xl border border-white/[0.10] bg-white/[0.05] text-sm text-white h-[42px]",
-                            "focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                            !formData.gender && "[&>span]:text-white/25",
+                            "rounded-xl border border-border bg-muted/40 text-sm text-foreground h-[42px]",
+                            "focus:ring-2 focus:ring-primary/40 focus:border-primary/60",
+                            !formData.gender && "[&>span]:text-muted-foreground/60",
                             errors.gender && "border-red-500/50",
                         )}>
                             <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[oklch(0.17_0.008_155)] border-white/[0.10] text-white">
+                        <SelectContent className="bg-card border-border text-foreground">
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
@@ -177,8 +177,8 @@ export function CandidateSignupForm() {
             </Field>
 
             {/* Contact / Email row */}
-            <div className="grid grid-cols-2 gap-3">
-                <Field label={<>Contact No <span className="text-[10px] text-white/30 font-normal normal-case tracking-normal">+94XXXXXXXXX</span></>} id="contactNo" error={errors.contactNo}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={<>Contact No <span className="text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">+94XXXXXXXXX</span></>} id="contactNo" error={errors.contactNo}>
                     <input id="contactNo" name="contactNo" type="tel" maxLength={15} placeholder="+94771234567"
                         value={formData.contactNo} onChange={e => set("contactNo", e.target.value)}
                         onBlur={e => validateField("contactNo", e.target.value)}
@@ -200,11 +200,11 @@ export function CandidateSignupForm() {
                         onChange={e => set("password", e.target.value)} onBlur={e => validateField("password", e.target.value)}
                         className={cn(inputCls, "pr-10", errors.password && "border-red-500/50 focus:ring-red-500/30")} />
                     <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
-                <p className="mt-1.5 text-[11px] text-white/30">
+                <p className="mt-1.5 text-[11px] text-muted-foreground/60">
                     Min 8 chars · uppercase · lowercase · number · special character
                 </p>
                 {formData.password.length > 0 && (
@@ -213,11 +213,11 @@ export function CandidateSignupForm() {
                             {[1, 2, 3, 4, 5].map(level => (
                                 <div key={level} className={cn(
                                     "h-1 flex-1 rounded-full transition-colors",
-                                    level <= passwordStrength ? (strengthBarColor[strengthColor] ?? "bg-primary") : "bg-white/[0.08]",
+                                    level <= passwordStrength ? (strengthBarColor[strengthColor] ?? "bg-primary") : "bg-border",
                                 )} />
                             ))}
                         </div>
-                        <p className="text-[11px] text-white/40">Strength: <span className="font-medium text-white/70">{strengthLabel}</span></p>
+                        <p className="text-[11px] text-muted-foreground/60">Strength: <span className="font-medium text-foreground/80">{strengthLabel}</span></p>
                     </div>
                 )}
             </Field>
@@ -241,7 +241,7 @@ export function CandidateSignupForm() {
                             </span>
                         )}
                         <button type="button" tabIndex={-1} onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="text-white/30 hover:text-white/70 transition-colors">
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors">
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                     </div>

@@ -47,10 +47,11 @@ export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
             <Link href="/"
                 className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 no-underline">
                 <div style={{ width: 'clamp(28px, 8vw, 32px)', height: 'clamp(28px, 8vw, 32px)', position: 'relative', flexShrink: 0 }}>
-                    <Image 
-                        src="/logo.jpg" 
-                        alt="JobGenie Logo" 
+                    <Image
+                        src="/logo.jpg"
+                        alt="JobGenie Logo"
                         fill
+                        sizes="32px"
                         style={{ objectFit: 'contain' }}
                         priority
                     />

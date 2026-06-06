@@ -502,7 +502,7 @@ export function Hero() {
                             <div className="absolute pointer-events-none" style={{ bottom: 100, right: 70, zIndex: 4 }}>
                                 <Image src="/genie.png" alt="" aria-hidden width={120} height={156}
                                     className="anim-genie-bob"
-                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(1, -1)' }} />
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(1, -1)', width: 120, height: 'auto' }} />
                             </div>
                             
                             <div className="absolute" style={{ bottom: 140, right: 150, zIndex: 3 }}>
@@ -513,7 +513,7 @@ export function Hero() {
                             <div className="absolute pointer-events-none" style={{ bottom: 0, left: -30, zIndex: 3 }}>
                                 <Image src="/genie2.png" alt="" aria-hidden width={110} height={143}
                                     className="anim-genie-bob"
-                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(-1, -1)' }} />
+                                    style={{ opacity: 0.85, filter: 'saturate(1.2) brightness(1.05)', transform: 'scale(-1, -1)', width: 110, height: 'auto' }} />
                             </div>
                             
                             <div className="absolute" style={{ bottom: 44, left: 50, zIndex: 2 }}>

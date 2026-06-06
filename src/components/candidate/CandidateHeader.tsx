@@ -5,6 +5,7 @@ import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { Menu } from "lucide-react";
 
 interface CandidateHeaderProps {
     user: {
@@ -19,7 +20,7 @@ interface CandidateHeaderProps {
 }
 
 export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateHeaderProps) {
-    const { toggleSidebar, state } = useSidebar();
+    const { toggleSidebar, state, isMobile } = useSidebar();
     const isCollapsed = state === "collapsed";
 
     const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -28,7 +29,7 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-[4.25rem] items-center gap-4 border-b border-primary/10 bg-card/92 px-4 shadow-[inset_0_-1px_0_oklch(var(--primary)/0.12)] backdrop-blur-sm dark:bg-card/88 md:px-6">
+        <header className="sticky top-0 z-40 flex h-[4.25rem] items-center gap-3 border-b border-primary/10 bg-card/92 px-4 shadow-[inset_0_-1px_0_oklch(var(--primary)/0.12)] backdrop-blur-sm dark:bg-card/88 md:gap-4 md:px-6">
             <button
                 onClick={handleToggle}
                 className={cn(
@@ -39,41 +40,45 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
                 )}
                 aria-label="Toggle sidebar"
             >
-                <svg
-                    className={cn(
-                        "h-4 w-4 text-primary transition-transform duration-300",
-                        isCollapsed ? "rotate-0" : "rotate-180"
-                    )}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                    />
-                </svg>
+                {isMobile ? (
+                    <Menu className="h-4 w-4 text-primary" />
+                ) : (
+                    <svg
+                        className={cn(
+                            "h-4 w-4 text-primary transition-transform duration-300",
+                            isCollapsed ? "rotate-0" : "rotate-180"
+                        )}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                        />
+                    </svg>
+                )}
             </button>
 
             {pageTitle ? (
                 <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90">
+                    <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90 sm:block">
                         Candidate
                     </p>
-                    <h1 className="truncate bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl">
+                    <h1 className="truncate bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-lg font-bold tracking-tight text-transparent sm:text-xl md:text-2xl">
                         {pageTitle}
                     </h1>
                     {pageDescription ? (
-                        <p className="truncate text-sm text-muted-foreground md:text-[15px]">{pageDescription}</p>
+                        <p className="hidden truncate text-sm text-muted-foreground sm:block md:text-[15px]">{pageDescription}</p>
                     ) : null}
                 </div>
             ) : (
                 <div className="flex-1" />
             )}
 
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <ThemeToggle />
                 <NotificationBell />
                 <UserMenu user={user} />

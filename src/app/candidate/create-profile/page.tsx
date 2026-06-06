@@ -46,14 +46,14 @@ export default async function CreateProfilePage() {
             </div>
 
             {/* Header */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-start gap-4">
-                    <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-4 text-primary">
-                        <UserCircle className="h-10 w-10" />
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                    <div className="inline-flex items-center justify-center rounded-2xl bg-primary/10 p-3 text-primary self-start sm:p-4">
+                        <UserCircle className="h-8 w-8 sm:h-10 sm:w-10" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-                        <p className="text-muted-foreground mt-1">
+                        <h1 className="text-xl font-bold sm:text-2xl">Complete Your Profile</h1>
+                        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                             Welcome{candidate?.first_name ? `, ${candidate.first_name}` : ""}!
                             Fill in your details to access your dashboard.
                         </p>

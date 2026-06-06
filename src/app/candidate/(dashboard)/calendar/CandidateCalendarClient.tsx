@@ -426,17 +426,17 @@ export default function CandidateCalendarClient() {
     }
 
     return (
-        <div className="flex flex-col gap-0 h-[calc(100vh-150px)] min-h-[600px]">
+        <div className="flex flex-col gap-0 h-[calc(100vh-150px)] min-h-[500px] md:min-h-[600px]">
             {/* ── Top bar ── */}
-            <div className="flex items-center justify-between px-1 pb-2">
-                <h1 className="text-xl font-bold text-foreground">Interview Calendar</h1>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between px-1 pb-2 gap-2">
+                <h1 className="text-base font-bold text-foreground sm:text-xl">Interview Calendar</h1>
+                <div className="flex items-center gap-1 sm:gap-2">
                     {(["Month", "Week", "Day"] as CalView[]).map(v => (
                         <button
                             key={v}
                             onClick={() => setView(v)}
                             className={cn(
-                                "px-4 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors border sm:px-4 sm:text-sm",
                                 view === v
                                     ? "bg-muted border-border text-foreground"
                                     : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50",
@@ -449,7 +449,7 @@ export default function CandidateCalendarClient() {
             </div>
 
             {/* ── Body ── */}
-            <div className="flex flex-1 gap-4 min-h-0">
+            <div className="flex flex-1 gap-4 min-h-0 overflow-hidden">
                 {/* Calendar panel */}
                 <div className="flex-1 flex flex-col min-w-0 rounded-xl border border-border bg-card overflow-hidden">
                     {/* Calendar header nav */}
@@ -490,8 +490,8 @@ export default function CandidateCalendarClient() {
                     </div>
                 </div>
 
-                {/* Sidebar */}
-                <div className="w-72 flex-shrink-0 flex flex-col gap-2">
+                {/* Sidebar — hidden on mobile, shown on lg+ */}
+                <div className="hidden lg:flex w-72 flex-shrink-0 flex-col gap-2">
                     <p className="text-sm font-semibold text-foreground px-1">Upcoming</p>
                     <SidebarList events={events} onSelectEvent={handleSelectEvent} />
                 </div>

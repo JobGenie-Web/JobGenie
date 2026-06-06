@@ -101,7 +101,7 @@ export function EmployerSignupWizard() {
     return (
         <div className="space-y-5">
             {/* Step indicator */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+            <div className="rounded-2xl border border-border bg-card/60 p-5">
                 <div className="flex items-center gap-0">
                     {steps.map((step, i) => {
                         const done = i < currentStep;
@@ -113,18 +113,18 @@ export function EmployerSignupWizard() {
                                         "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 transition-all",
                                         done  && "bg-primary ring-primary/30 text-primary-foreground",
                                         active && "bg-primary/15 ring-primary/40 text-primary",
-                                        !done && !active && "bg-white/[0.05] ring-white/[0.08] text-white/30",
+                                        !done && !active && "bg-muted ring-border text-muted-foreground/50",
                                     )}>
                                         {done ? <Check className="h-4 w-4" /> : i + 1}
                                     </div>
                                     <div className="hidden sm:block">
-                                        <p className={cn("text-xs font-semibold", active ? "text-white" : done ? "text-primary" : "text-white/30")}>{step.title}</p>
-                                        <p className={cn("text-[11px]", active ? "text-white/50" : "text-white/20")}>{step.description}</p>
+                                        <p className={cn("text-xs font-semibold", active ? "text-foreground" : done ? "text-primary" : "text-muted-foreground/60")}>{step.title}</p>
+                                        <p className={cn("text-[11px]", active ? "text-muted-foreground" : "text-muted-foreground/50")}>{step.description}</p>
                                     </div>
                                 </div>
                                 {i < steps.length - 1 && (
                                     <div className="flex-1 mx-4 h-px">
-                                        <div className={cn("h-full transition-all", done ? "bg-primary/40" : "bg-white/[0.08]")} />
+                                        <div className={cn("h-full transition-all", done ? "bg-primary/40" : "bg-border")} />
                                     </div>
                                 )}
                             </div>

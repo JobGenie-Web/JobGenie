@@ -41,7 +41,7 @@ export function UniversalLoginForm({ returnUrl }: { returnUrl?: string }) {
 
             {/* Email */}
             <div className="space-y-1.5">
-                <label htmlFor="email" className="block text-xs font-semibold text-white/60 uppercase tracking-wide">
+                <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Email Address
                 </label>
                 <input
@@ -53,16 +53,16 @@ export function UniversalLoginForm({ returnUrl }: { returnUrl?: string }) {
                     disabled={isPending}
                     autoComplete="email"
                     className={cn(
-                        "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-white/25",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                        "disabled:opacity-50 transition-colors",
+                        "w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-background",
+                        "disabled:opacity-50 transition-all",
                     )}
                 />
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
-                <label htmlFor="password" className="block text-xs font-semibold text-white/60 uppercase tracking-wide">
+                <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Password
                 </label>
                 <div className="relative">
@@ -75,9 +75,9 @@ export function UniversalLoginForm({ returnUrl }: { returnUrl?: string }) {
                         disabled={isPending}
                         autoComplete="current-password"
                         className={cn(
-                            "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 pr-10 text-sm text-white placeholder:text-white/25",
-                            "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                            "disabled:opacity-50 transition-colors",
+                            "w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60",
+                            "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-background",
+                            "disabled:opacity-50 transition-all",
                         )}
                     />
                     <button
@@ -85,7 +85,7 @@ export function UniversalLoginForm({ returnUrl }: { returnUrl?: string }) {
                         onClick={() => setShowPassword(!showPassword)}
                         tabIndex={-1}
                         disabled={isPending}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
                     >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>

@@ -126,10 +126,21 @@ export default function InvitationsClient() {
     }
 
     return (
-        <div className="flex gap-0 h-[calc(100vh-68px-2.5rem*2)] min-h-[560px] overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className={cn(
+            "flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
+            /* Mobile: show only list OR detail (stack, no height lock) */
+            "flex-col",
+            /* md+: two-panel side-by-side with height lock */
+            "md:flex-row md:h-[calc(100vh-68px-2.5rem*2)] md:min-h-[560px]",
+        )}>
 
             {/* ── Left panel: list ── */}
-            <div className="flex flex-col border-r border-border flex-shrink-0 w-80 xl:w-96">
+            <div className={cn(
+                "flex flex-col border-border flex-shrink-0",
+                /* Mobile: show list only when no detail selected */
+                selectedId ? "hidden md:flex" : "flex",
+                "w-full md:w-80 md:border-r xl:w-96",
+            )}>
                 {/* Header */}
                 <div className="px-4 pt-4 pb-3 border-b border-border flex-shrink-0">
                     <div className="flex items-center justify-between mb-3">
@@ -173,7 +184,7 @@ export default function InvitationsClient() {
                 </div>
 
                 {/* Card list */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto min-h-[300px] md:min-h-0">
                     {filteredInvitations.length === 0 ? (
                         <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
                             No invitations in this filter.
@@ -261,17 +272,32 @@ export default function InvitationsClient() {
 
             {/* ── Right panel: detail ── */}
             {selectedId ? (
-                <div className="flex-1 min-w-0 overflow-y-auto bg-background/50">
-                    <div className="p-5 md:p-6">
-                        <InvitationDetailClient
-                            key={selectedId}
-                            invitationId={selectedId}
-                            onMutateList={mutate}
-                        />
+                <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-background/50">
+                    {/* Mobile back button */}
+                    <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
+                        <button
+                            onClick={() => setSelectedId(null)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted hover:bg-accent transition-colors"
+                            aria-label="Back to list"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <span className="text-sm font-semibold">Invitation Details</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="p-4 md:p-6">
+                            <InvitationDetailClient
+                                key={selectedId}
+                                invitationId={selectedId}
+                                onMutateList={mutate}
+                            />
+                        </div>
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-12 bg-muted/10">
+                <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-12 bg-muted/10">
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border">
                         <Mail className="h-7 w-7 text-muted-foreground/40" />
                     </div>

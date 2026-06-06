@@ -29,17 +29,17 @@ export default async function EmployerSignupPage() {
         >
             <div className="mx-auto w-full max-w-4xl space-y-7">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                         Employer registration
                     </h1>
-                    <p className="mt-2 text-sm text-white/50">
+                    <p className="mt-2 text-sm text-muted-foreground">
                         Complete company details, then your admin profile — we&apos;ll guide you through both steps.
                     </p>
                 </div>
 
                 <EmployerSignupWizard />
 
-                <p className="text-center text-sm text-white/40">
+                <p className="text-center text-sm text-muted-foreground/70">
                     Already have an account?{' '}
                     <Link href="/login" className="font-semibold text-primary hover:brightness-110 transition-all">
                         Sign in

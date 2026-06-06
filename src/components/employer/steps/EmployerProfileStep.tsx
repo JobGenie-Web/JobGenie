@@ -10,10 +10,10 @@ import {
 } from "@/lib/validations/employer-schema";
 
 const inputCls = cn(
-    "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-white/25",
-    "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors",
+    "w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60",
+    "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-background transition-all",
 );
-const labelCls = "block text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5";
+const labelCls = "block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5";
 
 const strengthBarColor: Record<string, string> = {
     "bg-red-500":    "bg-red-500",
@@ -66,15 +66,15 @@ export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLo
     const passwordsDontMatch = data.confirmPassword.length > 0 && data.password !== data.confirmPassword;
 
     return (
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 space-y-5">
+        <div className="rounded-2xl border border-border bg-card/80 p-6 space-y-5 shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-xl bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center flex-shrink-0">
                     <User className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div>
-                    <h2 className="text-base font-bold text-white">Your Information</h2>
-                    <p className="text-xs text-white/40">Step 2 of 2 — Admin account</p>
+                    <h2 className="text-base font-bold text-foreground">Your Information</h2>
+                    <p className="text-xs text-muted-foreground">Step 2 of 2 — Admin account</p>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@ export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLo
             <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label htmlFor="phone" className={labelCls}>
-                        Phone <span className="text-[10px] text-white/30 font-normal normal-case tracking-normal">+94XXXXXXXXX</span> <span className="text-red-400/80">*</span>
+                        Phone <span className="text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">+94XXXXXXXXX</span> <span className="text-red-400/80">*</span>
                     </label>
                     <input id="phone" type="tel" maxLength={15} placeholder="+94771234567" value={data.phone}
                         onChange={e => set("phone", e.target.value)}
@@ -133,23 +133,23 @@ export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLo
                         value={data.password} onChange={e => set("password", e.target.value)}
                         className={cn(inputCls, "pr-10", errors.password && "border-red-500/50")} />
                     <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
                 {errors.password && <p className="mt-1.5 text-xs text-red-400">{errors.password}</p>}
-                <p className="mt-1.5 text-[11px] text-white/30">Min 8 chars · uppercase · lowercase · number · special character</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground/60">Min 8 chars · uppercase · lowercase · number · special character</p>
                 {data.password.length > 0 && (
                     <div className="mt-2 space-y-1">
                         <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map(level => (
                                 <div key={level} className={cn(
                                     "h-1 flex-1 rounded-full transition-colors",
-                                    level <= passwordStrength ? (strengthBarColor[strengthColor] ?? "bg-primary") : "bg-white/[0.08]",
+                                    level <= passwordStrength ? (strengthBarColor[strengthColor] ?? "bg-primary") : "bg-border",
                                 )} />
                             ))}
                         </div>
-                        <p className="text-[11px] text-white/40">Strength: <span className="font-medium text-white/70">{strengthLabel}</span></p>
+                        <p className="text-[11px] text-muted-foreground/60">Strength: <span className="font-medium text-foreground/80">{strengthLabel}</span></p>
                     </div>
                 )}
             </div>
@@ -173,7 +173,7 @@ export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLo
                             </span>
                         )}
                         <button type="button" tabIndex={-1} onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="text-white/30 hover:text-white/70 transition-colors">
+                            className="text-muted-foreground/50 hover:text-foreground transition-colors">
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                     </div>
@@ -193,7 +193,7 @@ export function EmployerProfileStep({ data, onChange, onPrevious, onSubmit, isLo
                     disabled={isLoading}
                     className={cn(
                         "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all",
-                        "border border-white/[0.10] bg-white/[0.03] text-white/70 hover:bg-white/[0.07] hover:text-white",
+                        "border border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground",
                         "disabled:opacity-40 disabled:cursor-not-allowed",
                     )}
                 >

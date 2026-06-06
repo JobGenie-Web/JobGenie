@@ -9,10 +9,10 @@ import { useIndustries } from "@/hooks/useIndustries";
 import { cn } from "@/lib/utils";
 
 const inputCls = cn(
-    "w-full rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-white/25",
-    "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors",
+    "w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60",
+    "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-background transition-all",
 );
-const labelCls = "block text-xs font-semibold text-white/60 uppercase tracking-wide mb-1.5";
+const labelCls = "block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5";
 
 interface CompanyInfoStepProps {
     data: { companyName: string; businessRegistrationNo: string; industry: string; businessRegisteredAddress: string; brCertificateUrl: string; };
@@ -48,15 +48,15 @@ export function CompanyInfoStep({ data, onChange, onNext, onFileVerified, onFile
     };
 
     return (
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 space-y-5">
+        <div className="rounded-2xl border border-border bg-card/80 p-6 space-y-5 shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-xl bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center flex-shrink-0">
                     <Building2 className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div>
-                    <h2 className="text-base font-bold text-white">Company Information</h2>
-                    <p className="text-xs text-white/40">Step 1 of 2 — Business details</p>
+                    <h2 className="text-base font-bold text-foreground">Company Information</h2>
+                    <p className="text-xs text-muted-foreground">Step 1 of 2 — Business details</p>
                 </div>
             </div>
 
@@ -86,16 +86,16 @@ export function CompanyInfoStep({ data, onChange, onNext, onFileVerified, onFile
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Info className="h-3.5 w-3.5 text-white/30 cursor-help hover:text-white/60 transition-colors" />
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help hover:text-foreground transition-colors" />
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs bg-[oklch(0.17_0.008_155)] border-white/[0.10] text-white p-4">
+                            <TooltipContent side="right" className="max-w-xs p-4">
                                 <p className="font-semibold text-sm mb-2 text-primary">BR Number Format</p>
-                                <div className="space-y-1 text-xs text-white/70">
-                                    <p><span className="font-bold text-white">PV</span> — Private Limited Company</p>
-                                    <p><span className="font-bold text-white">PB</span> — Public Limited Company</p>
-                                    <p><span className="font-bold text-white">GR</span> — Guarantee Company</p>
-                                    <p><span className="font-bold text-white">HP</span> — Hybrid/Other types</p>
-                                    <p className="mt-2 pt-2 border-t border-white/10">Example: <span className="font-mono text-primary">PV 12345678</span></p>
+                                <div className="space-y-1 text-xs text-muted-foreground">
+                                    <p><span className="font-bold text-foreground">PV</span> — Private Limited Company</p>
+                                    <p><span className="font-bold text-foreground">PB</span> — Public Limited Company</p>
+                                    <p><span className="font-bold text-foreground">GR</span> — Guarantee Company</p>
+                                    <p><span className="font-bold text-foreground">HP</span> — Hybrid/Other types</p>
+                                    <p className="mt-2 pt-2 border-t border-border">Example: <span className="font-mono text-primary">PV 12345678</span></p>
                                 </div>
                             </TooltipContent>
                         </Tooltip>
@@ -112,14 +112,14 @@ export function CompanyInfoStep({ data, onChange, onNext, onFileVerified, onFile
                 <label htmlFor="industry" className={labelCls}>Industry <span className="text-red-400/80">*</span></label>
                 <Select value={data.industry} onValueChange={v => set("industry", v)} disabled={industriesLoading || industries.length === 0}>
                     <SelectTrigger className={cn(
-                        "rounded-xl border border-white/[0.10] bg-white/[0.05] text-sm text-white h-[42px]",
-                        "focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                        !data.industry && "[&>span]:text-white/25",
+                        "rounded-xl border border-border bg-muted/40 text-sm text-foreground h-[42px]",
+                        "focus:ring-2 focus:ring-primary/40 focus:border-primary/60",
+                        !data.industry && "[&>span]:text-muted-foreground/60",
                         errors.industry && "border-red-500/50",
                     )}>
                         <SelectValue placeholder={industriesLoading ? "Loading…" : "Select industry"} />
                     </SelectTrigger>
-                    <SelectContent className="bg-[oklch(0.17_0.008_155)] border-white/[0.10] text-white">
+                    <SelectContent className="bg-card border-border text-foreground">
                         {industriesLoading && <SelectItem value="loading" disabled>Loading industries…</SelectItem>}
                         {!industriesLoading && industries.length === 0 && <SelectItem value="none" disabled>No industries available</SelectItem>}
                         {industries.map(ind => (
@@ -142,7 +142,7 @@ export function CompanyInfoStep({ data, onChange, onNext, onFileVerified, onFile
             {/* BR Certificate */}
             <div>
                 <label className={labelCls}>Business Registration Certificate <span className="text-red-400/80">*</span></label>
-                <p className="text-xs text-white/35 mb-3 leading-relaxed">
+                <p className="text-xs text-muted-foreground/70 mb-3 leading-relaxed">
                     Upload your BR certificate. Our AI will automatically verify it matches your company details.
                 </p>
                 <BRCertificateUpload

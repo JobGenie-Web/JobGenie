@@ -189,7 +189,7 @@ export function ExperienceDialog({ open, onOpenChange, experience }: ExperienceD
                             )}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <FormField
                                 control={form.control}
                                 name="employment_type"
@@ -274,7 +274,7 @@ export function ExperienceDialog({ open, onOpenChange, experience }: ExperienceD
                             )}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <FormField
                                 control={form.control}
                                 name="start_date"

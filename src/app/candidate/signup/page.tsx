@@ -25,16 +25,16 @@ export default function CandidateSignupPage() {
                 </div>
             </div>
 
-            <h1 className="text-center text-2xl font-bold tracking-tight text-white sm:text-[1.7rem]">
+            <h1 className="text-center text-2xl font-bold tracking-tight text-foreground sm:text-[1.7rem]">
                 Create your candidate account
             </h1>
-            <p className="mb-7 mt-2 text-center text-sm text-white/50">
+            <p className="mb-7 mt-2 text-center text-sm text-muted-foreground">
                 Join verified job seekers on JobGenie — free to get started.
             </p>
 
             <CandidateSignupForm />
 
-            <p className="mt-6 text-center text-sm text-white/40">
+            <p className="mt-6 text-center text-sm text-muted-foreground/70">
                 Already have an account?{' '}
                 <Link href="/login" className="font-semibold text-primary hover:brightness-110 transition-all">
                     Sign in
