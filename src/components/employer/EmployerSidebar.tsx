@@ -14,6 +14,7 @@ import {
     Settings,
     Mail,
     CalendarDays,
+    CreditCard,
 } from "lucide-react";
 import {
     Sidebar,
@@ -33,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { usePendingInvitationCount } from "@/hooks/useInvitationCount";
+import { usePendingPaymentCount } from "@/hooks/usePendingPaymentCount";
 
 const navigationItems = [
     {
@@ -78,6 +80,13 @@ const navigationItems = [
         visibilityKey: "calendar",
     },
     {
+        title: "Payments",
+        href: "/employer/payments",
+        icon: CreditCard,
+        requiresApproval: true,
+        visibilityKey: "payments",
+    },
+    {
         title: "Company Profile",
         href: "/employer/company",
         icon: Building2,
@@ -109,6 +118,7 @@ export function EmployerSidebar() {
 
     // Use SWR hook for automatic revalidation and caching
     const { count: pendingCount } = usePendingInvitationCount();
+    const { count: pendingPaymentCount } = usePendingPaymentCount();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -228,16 +238,19 @@ export function EmployerSidebar() {
                                                             isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
                                                         )}>{item.title}</span>
                                                     </div>
-                                                    {/* Unread invitation updates from candidates */}
+                                                    {/* Badges for pending items */}
                                                     <span className={cn(
                                                         "transition-[opacity] duration-200",
                                                         isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
                                                     )}>
                                                         {item.title === "Invitations" && pendingCount > 0 && (
-                                                            <Badge
-                                                                className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
-                                                            >
+                                                            <Badge className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold">
                                                                 {pendingCount}
+                                                            </Badge>
+                                                        )}
+                                                        {item.title === "Payments" && pendingPaymentCount > 0 && (
+                                                            <Badge className="ml-auto h-5 min-w-[20px] rounded-full bg-amber-500 px-1.5 text-xs font-semibold">
+                                                                {pendingPaymentCount}
                                                             </Badge>
                                                         )}
                                                     </span>
@@ -248,10 +261,13 @@ export function EmployerSidebar() {
                                             <TooltipContent side="right" className="font-medium">
                                                 {item.title}
                                                 {item.title === "Invitations" && pendingCount > 0 && (
-                                                    <Badge
-                                                        className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold"
-                                                    >
+                                                    <Badge className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold">
                                                         {pendingCount}
+                                                    </Badge>
+                                                )}
+                                                {item.title === "Payments" && pendingPaymentCount > 0 && (
+                                                    <Badge className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-amber-500 font-semibold">
+                                                        {pendingPaymentCount}
                                                     </Badge>
                                                 )}
                                             </TooltipContent>

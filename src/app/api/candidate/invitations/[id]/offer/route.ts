@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { logBusiness, logError } from "@/lib/logger";
+import { createPaymentRequest } from "@/lib/payments";
 
 // GET /api/candidate/invitations/[id]/offer
 // Fetch job offer for a specific invitation (candidate view)
@@ -232,6 +233,44 @@ export async function POST(
 
         if (invUpdateError) {
             console.error("Error updating invitation pipeline:", invUpdateError);
+        }
+
+        // Auto-generate hiring fee payment request when offer is accepted
+        if (action === "accept") {
+            try {
+                const { data: invDetails } = await supabase
+                    .from("job_invitations")
+                    .select(`
+                        id, company_id, employer_id,
+                        employer:employers!inner(user_id)
+                    `)
+                    .eq("id", invitationId)
+                    .single();
+
+                if (invDetails) {
+                    const empDetails = invDetails.employer as any;
+                    // Get a system MIS user to record as creator
+                    const { data: sysMis } = await supabase
+                        .from("mis_user")
+                        .select("user_id")
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (sysMis) {
+                        await createPaymentRequest({
+                            company_id: invDetails.company_id,
+                            employer_id: invDetails.employer_id,
+                            employer_user_id: empDetails?.user_id,
+                            payment_type_code: "hiring_fee",
+                            reference_invitation_id: invitationId,
+                            created_by_mis_user_id: sysMis.user_id,
+                        });
+                    }
+                }
+            } catch (payErr) {
+                // Non-blocking: log but don't fail the offer acceptance
+                console.error("Failed to create hiring fee payment request:", payErr);
+            }
         }
 
         await logBusiness(

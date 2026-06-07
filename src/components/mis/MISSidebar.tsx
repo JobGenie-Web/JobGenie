@@ -14,6 +14,7 @@ import {
     Calendar,
     Shield,
     FileText,
+    CreditCard,
 } from "lucide-react";
 import {
     Sidebar,
@@ -67,6 +68,11 @@ const navigationItems = [
         title: "Jobs",
         href: "/mis/jobs",
         icon: Briefcase,
+    },
+    {
+        title: "Payments",
+        href: "/mis/payments",
+        icon: CreditCard,
     },
     {
         title: "Reports & Analytics",

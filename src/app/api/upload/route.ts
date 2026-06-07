@@ -8,7 +8,7 @@ import { logError } from "@/lib/logger";
 // Only buckets explicitly listed here are accessible by that role.
 const ROLE_BUCKET_ALLOWLIST: Record<string, string[]> = {
     candidate: ["resume", "resume_copy", "profile-images"],
-    employer: ["profile-images", "br-certificates", "uploads", "company-logos"],
+    employer: ["profile-images", "br-certificates", "uploads", "company-logos", "payment-proofs"],
     mis: ["uploads"],
 };
 
@@ -99,6 +99,9 @@ export async function POST(request: NextRequest) {
                 break;
             case "company-logos":
                 allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+                break;
+            case "payment-proofs":
+                allowedMimeTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp"];
                 break;
             case "uploads":
             default:
