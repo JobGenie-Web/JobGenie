@@ -80,7 +80,7 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
 
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <ThemeToggle />
-                <NotificationBell />
+                <NotificationBell role="candidate" />
                 <UserMenu user={user} />
             </div>
         </header>

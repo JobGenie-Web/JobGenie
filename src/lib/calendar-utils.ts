@@ -26,7 +26,7 @@ export interface InterviewRound {
     sent_at: string | null;
     round_canceled?: boolean;
     mis_rescheduled?: boolean;
-    mis_reschedule_data?: { date?: string; time?: string } | null;
+    mis_reschedule_data?: { date?: string; time?: string; interview_mode?: string; meeting_link?: string; interview_address?: string; map_link?: string } | null;
 }
 
 export interface CalendarInvitation {
@@ -48,7 +48,7 @@ export interface CalendarInvitation {
     pipeline_status: string | null;
     current_round_number: number | null;
     mis_rescheduled: boolean;
-    mis_reschedule_data?: unknown;
+    mis_reschedule_data?: { date?: string; time?: string; interview_mode?: string; meeting_link?: string; interview_address?: string; map_link?: string } | null;
     // candidate view
     company?: { company_name: string; logo_url: string | null };
     // employer view
@@ -125,6 +125,10 @@ function confirmedTimeToRawString(value: unknown): string | null {
 
 // Determine the confirmed/relevant time slot for an invitation's initial round
 export function resolveInvitationSlot(inv: CalendarInvitation): TimeSlot | null {
+    // If MIS rescheduled, use the new date/time from reschedule data
+    if (inv.mis_rescheduled && inv.mis_reschedule_data?.date && inv.mis_reschedule_data?.time) {
+        return { date: inv.mis_reschedule_data.date, time: inv.mis_reschedule_data.time, order: 1 };
+    }
     // If employer confirmed a specific time from alternatives
     if (inv.confirmed_time != null && inv.confirmed_time !== "") {
         const raw = confirmedTimeToRawString(inv.confirmed_time);
@@ -144,6 +148,10 @@ export function resolveInvitationSlot(inv: CalendarInvitation): TimeSlot | null 
 }
 
 export function resolveRoundSlot(round: InterviewRound): TimeSlot | null {
+    // If MIS rescheduled this round, use the new date/time
+    if (round.mis_rescheduled && round.mis_reschedule_data?.date && round.mis_reschedule_data?.time) {
+        return { date: round.mis_reschedule_data.date, time: round.mis_reschedule_data.time, order: 1 };
+    }
     if (round.confirmed_time != null && round.confirmed_time !== "") {
         let raw: string | null = null;
         if (typeof round.confirmed_time === "string") {
@@ -205,6 +213,22 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                 ? `${statusLabel} ${inv.job_designation}${inv.company ? ` @ ${inv.company.company_name}` : ''}`
                 : `${statusLabel} ${inv.job_designation}${inv.candidate ? ` - ${inv.candidate.first_name} ${inv.candidate.last_name}` : ''}`;
 
+            // Rescheduled = canceled + mis_rescheduled; treat as active (not canceled)
+            const invIsCanceled = inv.invitation_canceled && !inv.mis_rescheduled;
+            // Use rescheduled meeting details if available
+            const invMode = inv.mis_rescheduled && inv.mis_reschedule_data?.interview_mode
+                ? inv.mis_reschedule_data.interview_mode
+                : inv.interview_mode;
+            const invMeetingLink = inv.mis_rescheduled && inv.mis_reschedule_data?.meeting_link
+                ? inv.mis_reschedule_data.meeting_link
+                : inv.meeting_link;
+            const invAddress = inv.mis_rescheduled && inv.mis_reschedule_data?.interview_address
+                ? inv.mis_reschedule_data.interview_address
+                : inv.interview_address;
+            const invMapLink = inv.mis_rescheduled && inv.mis_reschedule_data?.map_link
+                ? inv.mis_reschedule_data.map_link
+                : inv.map_link;
+
             events.push({
                 id: `inv-${inv.id}`,
                 title,
@@ -214,14 +238,14 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                     invitationId: inv.id,
                     jobDesignation: inv.job_designation,
                     industry: inv.industry,
-                    interviewMode: inv.interview_mode,
+                    interviewMode: invMode,
                     isConfirmed: inv.interview_confirmed,
-                    isCanceled: inv.invitation_canceled,
+                    isCanceled: invIsCanceled,
                     status: inv.status,
                     pipelineStatus: inv.pipeline_status,
-                    meetingLink: inv.meeting_link,
-                    interviewAddress: inv.interview_address,
-                    mapLink: inv.map_link,
+                    meetingLink: invMeetingLink,
+                    interviewAddress: invAddress,
+                    mapLink: invMapLink,
                     confirmedAt: inv.confirmed_at,
                     companyName: inv.company?.company_name,
                     companyLogo: inv.company?.logo_url,
@@ -249,8 +273,26 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                     ? `${statusLabel} ${inv.job_designation} (${roundLabel})${inv.company ? ` @ ${inv.company.company_name}` : ''}`
                     : `${statusLabel} ${inv.job_designation} (${roundLabel})${inv.candidate ? ` - ${inv.candidate.first_name} ${inv.candidate.last_name}` : ''}`;
 
-                const isCanceled = inv.invitation_canceled || round.status === 'canceled';
+                const roundMisRescheduled = round.mis_rescheduled ?? false;
+                // Round is canceled only if actually canceled AND NOT rescheduled by MIS
+                const roundActuallyCanceled = (round.round_canceled || round.status === 'canceled') && !roundMisRescheduled;
+                // Parent invitation canceled propagates only when not rescheduled
+                const isCanceled = roundActuallyCanceled || (inv.invitation_canceled && !inv.mis_rescheduled);
                 const isConfirmed = round.status === 'confirmed' || round.confirmed_at !== null;
+
+                // Use rescheduled details if available
+                const roundMode = roundMisRescheduled && round.mis_reschedule_data?.interview_mode
+                    ? round.mis_reschedule_data.interview_mode
+                    : (round.interview_mode ?? inv.interview_mode);
+                const roundMeetingLink = roundMisRescheduled && round.mis_reschedule_data?.meeting_link
+                    ? round.mis_reschedule_data.meeting_link
+                    : round.meeting_link;
+                const roundAddress = roundMisRescheduled && round.mis_reschedule_data?.interview_address
+                    ? round.mis_reschedule_data.interview_address
+                    : round.interview_address;
+                const roundMapLink = roundMisRescheduled && round.mis_reschedule_data?.map_link
+                    ? round.mis_reschedule_data.map_link
+                    : round.map_link;
 
                 events.push({
                     id: `round-${round.id}`,
@@ -264,14 +306,14 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                         roundLabel,
                         jobDesignation: inv.job_designation,
                         industry: inv.industry,
-                        interviewMode: round.interview_mode ?? inv.interview_mode,
+                        interviewMode: roundMode,
                         isConfirmed,
                         isCanceled,
                         status: round.status,
                         pipelineStatus: inv.pipeline_status,
-                        meetingLink: round.meeting_link,
-                        interviewAddress: round.interview_address,
-                        mapLink: round.map_link,
+                        meetingLink: roundMeetingLink,
+                        interviewAddress: roundAddress,
+                        mapLink: roundMapLink,
                         confirmedAt: round.confirmed_at,
                         companyName: inv.company?.company_name,
                         companyLogo: inv.company?.logo_url,
@@ -280,7 +322,7 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                         candidateEmail: inv.candidate?.email,
                         candidateId: inv.candidate?.id,
                         eventType: 'round',
-                        misRescheduled: inv.mis_rescheduled,
+                        misRescheduled: roundMisRescheduled,
                         jobOffers: inv.job_offers,
                     },
                 });
@@ -315,19 +357,8 @@ export function getEventColor(resource: EventResource): string {
 }
 
 export function isEventClickable(resource: EventResource): boolean {
-    const offer = normalizeEmbeddedOffer(resource.jobOffers);
-    const journey = getInvitationJourneyDisplay({
-        status: resource.status,
-        invitation_canceled: resource.isCanceled,
-        interview_confirmed: resource.isConfirmed,
-        mis_rescheduled: resource.misRescheduled,
-        pipeline_status: resource.pipelineStatus,
-        current_round_number: resource.roundNumber ?? null,
-        candidate_reschedule_requested: false,
-    }, offer);
-
-    if (journey.variant === 'success' || journey.variant === 'danger' || journey.variant === 'muted') {
-        return false;
-    }
+    // Only truly canceled/expired events (muted) are non-clickable.
+    // Confirmed, rescheduled, declined, etc. should all be clickable to view details.
+    if (resource.isCanceled) return false;
     return true;
 }

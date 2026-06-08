@@ -49,10 +49,10 @@ export async function POST(
 
         const { id } = await params;
 
-        // Verify the invitation belongs to this employer
+        // Verify the invitation belongs to this employer and is cancellable
         const { data: invitation, error: invitationError } = await supabase
             .from('job_invitations')
-            .select('id, status, interview_confirmed, invitation_canceled')
+            .select('id, status, interview_confirmed, invitation_canceled, candidate_id')
             .eq('id', id)
             .eq('employer_id', employer.id)
             .single();
@@ -64,10 +64,10 @@ export async function POST(
             );
         }
 
-        // Verify the interview is confirmed
-        if (!invitation.interview_confirmed) {
+        // Must be accepted by the candidate to cancel
+        if (invitation.status !== 'accepted') {
             return NextResponse.json(
-                { success: false, error: 'Interview is not confirmed yet' },
+                { success: false, error: 'Only accepted invitations can be cancelled' },
                 { status: 400 }
             );
         }
@@ -99,14 +99,14 @@ export async function POST(
             );
         }
 
-        // Send cancellation email to candidate (async - non-blocking)
+        // Send cancellation email + in-app notification to candidate (async - non-blocking)
         const { data: fullInvitation } = await supabase
             .from('job_invitations')
             .select(`
                 job_designation,
                 selected_time_slot,
                 confirmed_time,
-                candidate:candidates(first_name, email),
+                candidate:candidates(id, user_id, first_name, email),
                 company:companies(company_name)
             `)
             .eq('id', id)
@@ -121,6 +121,18 @@ export async function POST(
                 ? fullInvitation.confirmed_time
                 : timeSlot?.time || '';
 
+            // In-app notification to candidate
+            if (candidate?.user_id) {
+                supabase.rpc('notify_user', {
+                    p_user_id: candidate.user_id,
+                    p_type: 'invitation_cancelled',
+                    p_title: 'Interview Cancelled',
+                    p_body: `${company?.company_name ?? 'The employer'} has cancelled your interview for ${fullInvitation.job_designation}`,
+                    p_data: { invitation_id: id, reason: cancellation_reason.trim() }
+                }).then(null, (err: unknown) => console.error('Notification error:', err));
+            }
+
+            // Email notification
             getUserTimezoneByEmail(candidate.email).then(recipientTz =>
                 sendEmployerCancellationEmail(
                     candidate.email,

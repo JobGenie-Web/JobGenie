@@ -179,19 +179,49 @@ export async function POST(request: Request) {
             );
         }
 
-        // Check for existing active invitation (exclude canceled and completed interviews)
+        // Block if this candidate has been hired by ANY company
+        const { data: hiredInvitation } = await supabase
+            .from('job_invitations')
+            .select('id, company_id')
+            .eq('candidate_id', candidateId)
+            .eq('pipeline_status', 'hired')
+            .neq('invitation_canceled', true)
+            .maybeSingle();
+
+        if (hiredInvitation) {
+            const isSameCompany = hiredInvitation.company_id === employer.company_id;
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: isSameCompany
+                        ? "You have already hired this candidate."
+                        : "This candidate has already accepted a job offer from another company."
+                },
+                { status: 409 }
+            );
+        }
+
+        // Block if this company already has an active or in-progress invitation with this candidate
         const { data: existingInvitation } = await supabase
             .from('job_invitations')
-            .select('id, status, invitation_canceled')
+            .select('id, status, pipeline_status, interview_confirmed, invitation_canceled')
             .eq('candidate_id', candidateId)
-            .eq('employer_id', employer.id)
-            .neq('invitation_canceled', true)  // Not cancelled
-            .not('status', 'in', '(accepted,declined,expired)')  // Not in final status
+            .eq('company_id', employer.company_id)
+            .neq('invitation_canceled', true)
+            .not('status', 'in', '(declined,expired)')
+            .not('pipeline_status', 'in', '(rejected,withdrawn,expired)')
             .maybeSingle();
 
         if (existingInvitation) {
+            const isInterviewOngoing = existingInvitation.interview_confirmed ||
+                ['offered', 'active'].includes(existingInvitation.pipeline_status ?? '');
             return NextResponse.json(
-                { success: false, error: "You have already sent an active invitation to this candidate. Wait for their response or cancel the existing invitation first." },
+                {
+                    success: false,
+                    error: isInterviewOngoing
+                        ? "An interview or offer process with this candidate is already in progress."
+                        : "You have already sent an active invitation to this candidate. Wait for their response or cancel the existing invitation first."
+                },
                 { status: 409 }
             );
         }

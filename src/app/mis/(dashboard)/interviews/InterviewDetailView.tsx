@@ -19,9 +19,11 @@ import {
     Briefcase,
     Link as LinkIcon,
     MapPinned,
+    Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RescheduleModal } from "./RescheduleModal";
+import { RoundRescheduleModal } from "./RoundRescheduleModal";
 import { formatUTCTime, formatDate } from "@/lib/date-utils";
 import { formatIndustry } from "@/lib/utils";
 
@@ -36,6 +38,7 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+    const [rescheduleRound, setRescheduleRound] = useState<{ id: string; label: string } | null>(null);
 
     // Fetch interview details when dialog opens or ID changes
     useEffect(() => {
@@ -68,15 +71,13 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
         }
     }, [interviewId]);
 
-    const handleRescheduleSuccess = () => {
-        // Refetch interview data
+    const refetchInterview = () => {
         if (interviewId) {
             fetch(`/api/mis/interviews/${interviewId}`)
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.success) {
-                        setInterview(data.data);
-                        // Notify parent to refresh the list
+                        setInterview(data.interview);
                         onInterviewUpdate?.();
                     }
                 })
@@ -84,6 +85,10 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                     console.error("Error refetching interview:", error);
                 });
         }
+    };
+
+    const handleRescheduleSuccess = () => {
+        refetchInterview();
         setShowRescheduleModal(false);
     };
 
@@ -374,6 +379,103 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                                     )}
                                 </div>
                             </div>
+
+                            {/* Interview Rounds */}
+                            {interview.interview_rounds && interview.interview_rounds.length > 0 && (
+                                <>
+                                    <Separator />
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                            <Layers className="h-4 w-4" />
+                                            Interview Rounds ({interview.interview_rounds.length})
+                                        </div>
+                                        <div className="space-y-4">
+                                            {[...interview.interview_rounds]
+                                                .sort((a: any, b: any) => a.round_number - b.round_number)
+                                                .map((round: any) => {
+                                                    const roundLabel = round.round_label || `Round ${round.round_number}`;
+                                                    return (
+                                                        <div key={round.id} className="border rounded-lg p-4 space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-medium text-sm">{roundLabel}</span>
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className={
+                                                                            round.round_canceled
+                                                                                ? "text-red-600 border-red-300 bg-red-50"
+                                                                                : round.mis_rescheduled
+                                                                                    ? "text-green-600 border-green-300 bg-green-50"
+                                                                                    : round.status === "confirmed"
+                                                                                        ? "text-green-600 border-green-300 bg-green-50"
+                                                                                        : round.status === "completed"
+                                                                                            ? "text-blue-600 border-blue-300 bg-blue-50"
+                                                                                            : "text-amber-600 border-amber-300 bg-amber-50"
+                                                                        }
+                                                                    >
+                                                                        {round.round_canceled
+                                                                            ? "Cancelled"
+                                                                            : round.mis_rescheduled
+                                                                                ? "Rescheduled"
+                                                                                : round.status
+                                                                                    ? round.status.charAt(0).toUpperCase() + round.status.slice(1)
+                                                                                    : "Pending"}
+                                                                    </Badge>
+                                                                </div>
+                                                                {round.round_canceled && round.interview_confirmed && !round.mis_rescheduled && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="bg-green-600 text-white hover:bg-green-700"
+                                                                        onClick={() => setRescheduleRound({ id: round.id, label: roundLabel })}
+                                                                    >
+                                                                        <Calendar className="h-3 w-3 mr-1" />
+                                                                        Reschedule Round
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+
+                                                            {round.selected_time_slot && (
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Scheduled: {formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)}
+                                                                </p>
+                                                            )}
+
+                                                            {round.round_canceled && (
+                                                                <div className="rounded-md bg-red-50 border border-red-200 p-3 space-y-1">
+                                                                    <p className="text-xs font-medium text-red-700">
+                                                                        Cancelled by {round.canceled_by === "candidate" ? "Candidate" : "Employer"}
+                                                                        {round.canceled_at && (
+                                                                            <span className="font-normal ml-1">· {formatDate(round.canceled_at)}</span>
+                                                                        )}
+                                                                    </p>
+                                                                    {round.cancellation_reason && (
+                                                                        <p className="text-xs text-red-600">{round.cancellation_reason}</p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {round.mis_rescheduled && round.mis_reschedule_data && (
+                                                                <div className="rounded-md bg-green-50 border border-green-200 p-3 space-y-1">
+                                                                    <p className="text-xs font-medium text-green-700">
+                                                                        Rescheduled by MIS
+                                                                        {round.mis_rescheduled_at && (
+                                                                            <span className="font-normal ml-1">· {formatDate(round.mis_rescheduled_at)}</span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className="text-xs text-green-600">
+                                                                        {formatUTCTime(round.mis_reschedule_data.date, round.mis_reschedule_data.time)}
+                                                                        {" · "}
+                                                                        {round.mis_reschedule_data.interview_mode === "online" ? "Online" : "Physical"}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div className="flex items-center justify-center py-16">
@@ -479,9 +581,8 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                     )}
 
                     <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                        {/* Show reschedule button only for cancelled confirmed interviews that haven't been rescheduled */}
+                        {/* Show reschedule button for any cancelled invitation that hasn't been rescheduled yet */}
                         {interview &&
-                            interview.interview_confirmed &&
                             interview.invitation_canceled &&
                             !interview.mis_rescheduled && (
                                 <Button
@@ -497,17 +598,29 @@ export function InterviewDetailView({ interviewId, onClose, onInterviewUpdate }:
                 </DialogContent>
             </Dialog>
 
-            {/* Reschedule Modal */}
-            {
-                interview && (
-                    <RescheduleModal
-                        interviewId={interview.id}
-                        isOpen={showRescheduleModal}
-                        onClose={() => setShowRescheduleModal(false)}
-                        onSuccess={handleRescheduleSuccess}
-                    />
-                )
-            }
+            {/* Root Reschedule Modal */}
+            {interview && (
+                <RescheduleModal
+                    interviewId={interview.id}
+                    isOpen={showRescheduleModal}
+                    onClose={() => setShowRescheduleModal(false)}
+                    onSuccess={handleRescheduleSuccess}
+                />
+            )}
+
+            {/* Round Reschedule Modal */}
+            {rescheduleRound && (
+                <RoundRescheduleModal
+                    roundId={rescheduleRound.id}
+                    roundLabel={rescheduleRound.label}
+                    isOpen={!!rescheduleRound}
+                    onClose={() => setRescheduleRound(null)}
+                    onSuccess={() => {
+                        setRescheduleRound(null);
+                        refetchInterview();
+                    }}
+                />
+            )}
         </>
     );
 }

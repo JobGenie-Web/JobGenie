@@ -34,7 +34,7 @@ type InvitationRow = {
     pipeline_status: string | null;
     current_round_number: number | null;
     mis_rescheduled: boolean;
-    mis_reschedule_data: unknown;
+    mis_reschedule_data: { date?: string; time?: string; interview_mode?: string; meeting_link?: string; interview_address?: string; map_link?: string } | null;
     sent_at: string;
     candidate: {
         first_name: string;

@@ -53,6 +53,7 @@ interface InviteCandidateButtonProps {
     suggestedIndustry?: string;
     suggestedDesignation?: string;
     isInvited?: boolean;
+    isHiredElsewhere?: boolean;
     // Invitation journey fields — used to lock the cancel button after acceptance
     invitationStatus?: string | null;
     invitationPipelineStatus?: string | null;
@@ -62,18 +63,32 @@ interface InviteCandidateButtonProps {
     onInvitationChange?: () => void;  // Callback to refresh data
 }
 
-// Generate time options from 9 AM to 4:30 PM in 30-minute intervals
-function generateTimeOptions(): string[] {
-    const times: string[] = [];
+// All time options from 9 AM to 4:30 PM in 30-minute intervals
+const ALL_TIME_OPTIONS: { label: string; hour: number; minute: number }[] = (() => {
+    const times = [];
     for (let hour = 9; hour <= 16; hour++) {
         for (let min = 0; min < 60; min += 30) {
-            if (hour === 16 && min > 30) break;  // Stop at 4:30 PM
+            if (hour === 16 && min > 30) break;
             const h = hour.toString().padStart(2, '0');
             const m = min.toString().padStart(2, '0');
-            times.push(`${h}:${m}`);
+            times.push({ label: `${h}:${m}`, hour, minute: min });
         }
     }
     return times;
+})();
+
+function getAvailableTimeOptions(dateStr: string): string[] {
+    if (!dateStr) return ALL_TIME_OPTIONS.map(t => t.label);
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    if (dateStr !== today) return ALL_TIME_OPTIONS.map(t => t.label);
+    return ALL_TIME_OPTIONS
+        .filter(t => {
+            const slotTime = new Date(dateStr);
+            slotTime.setHours(t.hour, t.minute, 0, 0);
+            return slotTime.getTime() > now.getTime() + 30 * 60 * 1000;
+        })
+        .map(t => t.label);
 }
 
 export function InviteCandidateButton({
@@ -81,6 +96,7 @@ export function InviteCandidateButton({
     suggestedIndustry,
     suggestedDesignation,
     isInvited = false,
+    isHiredElsewhere = false,
     invitationStatus,
     invitationPipelineStatus,
     invitationInterviewConfirmed,
@@ -120,9 +136,13 @@ export function InviteCandidateButton({
     };
 
     const updateSlotDate = (id: string, date: string) => {
-        setTimeSlots(timeSlots.map(slot =>
-            slot.id === id ? { ...slot, date } : slot
-        ));
+        setTimeSlots(timeSlots.map(slot => {
+            if (slot.id !== id) return slot;
+            // Clear time if it's no longer valid for the new date
+            const available = getAvailableTimeOptions(date);
+            const time = available.includes(slot.time) ? slot.time : "";
+            return { ...slot, date, time };
+        }));
     };
 
     const updateSlotTime = (id: string, time: string) => {
@@ -236,7 +256,6 @@ export function InviteCandidateButton({
     };
 
     const today = new Date().toISOString().split('T')[0];
-    const timeOptions = generateTimeOptions();
     const isFormValid = timeSlots.length > 0 && 
                        timeSlots.every(s => s.date && s.time) &&
                        (interviewMode === 'online' || (interviewMode === 'physical' && interviewAddress.trim().length > 0));
@@ -264,7 +283,22 @@ export function InviteCandidateButton({
         ? journeyVariantToEmployerBadgeProps(journeyDisplay.variant)
         : null;
 
-    // If already invited, show cancel button (or locked status if accepted)
+    // If hired by another company, show locked state — cannot invite
+    if (isHiredElsewhere) {
+        return (
+            <div className="space-y-2">
+                <Button className="w-full" size="lg" variant="outline" disabled>
+                    <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span className="text-muted-foreground">Invite for an Interview</span>
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                    This candidate has accepted an offer from another company.
+                </p>
+            </div>
+        );
+    }
+
+    // If already invited by this company, show cancel button (or locked status if accepted)
     if (isInvited) {
         return (
             <>
@@ -413,9 +447,12 @@ export function InviteCandidateButton({
                                                 <SelectValue placeholder="Select time" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {timeOptions.map(time => (
-                                                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                                                ))}
+                                                {(() => {
+                                                    const opts = getAvailableTimeOptions(slot.date);
+                                                    return opts.length === 0
+                                                        ? <div className="px-3 py-2 text-sm text-muted-foreground">No slots available for today</div>
+                                                        : opts.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>);
+                                                })()}
                                             </SelectContent>
                                         </Select>
                                     </div>

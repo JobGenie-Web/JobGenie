@@ -59,22 +59,22 @@ export async function EmployerLayout({ children, pageTitle, pageDescription }: E
     }
 
     return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full">
-                <EmployerSidebar />
-                <SidebarInset className="flex flex-col flex-1">
-                    <EmployerHeader
-                        user={user}
-                        pageTitle={pageTitle}
-                        pageDescription={pageDescription}
-                    />
+        <SidebarProvider className="h-dvh! min-h-0! overflow-hidden">
+            <EmployerSidebar />
+            <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+                <EmployerHeader
+                    user={user}
+                    pageTitle={pageTitle}
+                    pageDescription={pageDescription}
+                />
+                <div className="flex-1 overflow-y-auto min-h-0">
                     <PageTransitionWrapper>
                         <PortalMain variant="employer" className="p-5 md:p-8 lg:p-10">
                             {children}
                         </PortalMain>
                     </PageTransitionWrapper>
-                </SidebarInset>
-            </div>
+                </div>
+            </SidebarInset>
             <Toaster />
         </SidebarProvider>
     );

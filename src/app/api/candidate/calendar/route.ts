@@ -50,6 +50,7 @@ export async function GET() {
                 pipeline_status,
                 current_round_number,
                 mis_rescheduled,
+                mis_reschedule_data,
                 company:companies(company_name, logo_url),
                 job_offers(id, status),
                 interview_rounds(
@@ -66,7 +67,10 @@ export async function GET() {
                     interview_address,
                     map_link,
                     confirmed_at,
-                    sent_at
+                    sent_at,
+                    round_canceled,
+                    mis_rescheduled,
+                    mis_reschedule_data
                 )
             `)
             .eq('candidate_id', candidate.id)

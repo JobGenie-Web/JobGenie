@@ -14,14 +14,14 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-interface RescheduleModalProps {
-    interviewId: string;
+interface RoundRescheduleModalProps {
+    roundId: string;
+    roundLabel: string;
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-// All time slots from 9 AM to 5 PM in 30-min intervals
 const ALL_TIME_SLOTS = (() => {
     const slots: { label: string; hour: number; minute: number }[] = [];
     for (let hour = 9; hour <= 17; hour++) {
@@ -35,13 +35,11 @@ const ALL_TIME_SLOTS = (() => {
     return slots;
 })();
 
-// Returns only time slots that are in the future for the given date
 function getAvailableTimeSlots(selectedDate: Date | undefined): string[] {
     if (!selectedDate) return ALL_TIME_SLOTS.map(s => s.label);
     const now = new Date();
     const isToday = selectedDate.toDateString() === now.toDateString();
     if (!isToday) return ALL_TIME_SLOTS.map(s => s.label);
-    // Filter out slots that have already passed (add 30min buffer)
     return ALL_TIME_SLOTS
         .filter(s => {
             const slotTime = new Date(selectedDate);
@@ -51,7 +49,7 @@ function getAvailableTimeSlots(selectedDate: Date | undefined): string[] {
         .map(s => s.label);
 }
 
-export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: RescheduleModalProps) {
+export function RoundRescheduleModal({ roundId, roundLabel, isOpen, onClose, onSuccess }: RoundRescheduleModalProps) {
     const [date, setDate] = useState<Date>();
     const [time, setTime] = useState<string>("");
 
@@ -59,7 +57,6 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
 
     const handleDateSelect = (d: Date | undefined) => {
         setDate(d);
-        // Clear time if it's no longer available for the new date
         if (d && time) {
             const slots = getAvailableTimeSlots(d);
             if (!slots.includes(time)) setTime("");
@@ -93,7 +90,6 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
         e.preventDefault();
         setError(null);
 
-        // Validation
         if (!date) {
             setError("Please select an interview date");
             return;
@@ -114,7 +110,6 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
             return;
         }
 
-        // URL validation for meeting link
         if (interviewMode === "online") {
             try {
                 new URL(meetingLink);
@@ -124,7 +119,6 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
             }
         }
 
-        // URL validation for map link (optional)
         if (mapLink.trim()) {
             try {
                 new URL(mapLink);
@@ -137,7 +131,7 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(`/api/mis/interviews/${interviewId}/reschedule`, {
+            const response = await fetch(`/api/mis/interview-rounds/${roundId}/reschedule`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -158,15 +152,14 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Failed to reschedule interview");
+                throw new Error(data.error || "Failed to reschedule round");
             }
 
-            // Success
             handleReset();
             onSuccess();
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to reschedule interview");
+            setError(err instanceof Error ? err.message : "Failed to reschedule round");
         } finally {
             setIsSubmitting(false);
         }
@@ -176,20 +169,19 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Reschedule Interview</DialogTitle>
+                    <DialogTitle>Reschedule {roundLabel}</DialogTitle>
                     <DialogDescription>
-                        Provide new interview details to reschedule this cancelled interview.
+                        Provide new interview details to reschedule this cancelled round.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Date Picker */}
                     <div className="space-y-2">
-                        <Label htmlFor="date">Interview Date *</Label>
+                        <Label htmlFor="round-date">Interview Date *</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
-                                    id="date"
+                                    id="round-date"
                                     variant="outline"
                                     className={cn(
                                         "w-full justify-start text-left font-normal",
@@ -212,11 +204,10 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
                         </Popover>
                     </div>
 
-                    {/* Time Slot Selector */}
                     <div className="space-y-2">
-                        <Label htmlFor="time">Interview Time *</Label>
+                        <Label htmlFor="round-time">Interview Time *</Label>
                         <Select value={time} onValueChange={setTime}>
-                            <SelectTrigger id="time">
+                            <SelectTrigger id="round-time">
                                 <SelectValue placeholder="Select time slot" />
                             </SelectTrigger>
                             <SelectContent>
@@ -231,27 +222,25 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
                         </Select>
                     </div>
 
-                    {/* Interview Mode */}
                     <div className="space-y-2">
                         <Label>Interview Mode *</Label>
                         <RadioGroup value={interviewMode} onValueChange={(value) => setInterviewMode(value as "online" | "physical")}>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="online" id="online" />
-                                <Label htmlFor="online" className="font-normal cursor-pointer">Online</Label>
+                                <RadioGroupItem value="online" id="round-online" />
+                                <Label htmlFor="round-online" className="font-normal cursor-pointer">Online</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="physical" id="physical" />
-                                <Label htmlFor="physical" className="font-normal cursor-pointer">Physical</Label>
+                                <RadioGroupItem value="physical" id="round-physical" />
+                                <Label htmlFor="round-physical" className="font-normal cursor-pointer">Physical</Label>
                             </div>
                         </RadioGroup>
                     </div>
 
-                    {/* Conditional Fields - Online */}
                     {interviewMode === "online" && (
                         <div className="space-y-2">
-                            <Label htmlFor="meeting-link">Meeting Link *</Label>
+                            <Label htmlFor="round-meeting-link">Meeting Link *</Label>
                             <Input
-                                id="meeting-link"
+                                id="round-meeting-link"
                                 type="url"
                                 placeholder="https://meet.google.com/xxx-xxxx-xxx"
                                 value={meetingLink}
@@ -260,13 +249,12 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
                         </div>
                     )}
 
-                    {/* Conditional Fields - Physical */}
                     {interviewMode === "physical" && (
                         <>
                             <div className="space-y-2">
-                                <Label htmlFor="address">Interview Address *</Label>
+                                <Label htmlFor="round-address">Interview Address *</Label>
                                 <Textarea
-                                    id="address"
+                                    id="round-address"
                                     placeholder="Enter the physical interview location"
                                     rows={3}
                                     value={interviewAddress}
@@ -274,9 +262,9 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="map-link">Map Link (Optional)</Label>
+                                <Label htmlFor="round-map-link">Map Link (Optional)</Label>
                                 <Input
-                                    id="map-link"
+                                    id="round-map-link"
                                     type="url"
                                     placeholder="https://maps.google.com/?q=..."
                                     value={mapLink}
@@ -286,33 +274,30 @@ export function RescheduleModal({ interviewId, isOpen, onClose, onSuccess }: Res
                         </>
                     )}
 
-                    {/* Notes */}
                     <div className="space-y-2">
-                        <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                        <Label htmlFor="round-notes">Additional Notes (Optional)</Label>
                         <Textarea
-                            id="notes"
-                            placeholder="Any additional information about the rescheduled interview"
+                            id="round-notes"
+                            placeholder="Any additional information about the rescheduled round"
                             rows={3}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
 
-                    {/* Error Message */}
                     {error && (
                         <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
                             {error}
                         </div>
                     )}
 
-                    {/* Footer */}
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Reschedule Interview
+                            Reschedule Round
                         </Button>
                     </DialogFooter>
                 </form>

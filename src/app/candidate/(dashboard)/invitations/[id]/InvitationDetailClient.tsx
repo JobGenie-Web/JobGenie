@@ -53,6 +53,11 @@ interface InterviewRound {
     sent_at: string;
     viewed_at: string | null;
     responded_at: string | null;
+    interview_confirmed?: boolean;
+    round_canceled?: boolean;
+    canceled_by?: string | null;
+    cancellation_reason?: string | null;
+    canceled_at?: string | null;
     mis_rescheduled?: boolean;
     mis_reschedule_data?: {
         date: string; time: string;
@@ -197,6 +202,9 @@ function buildRoadmap(
             const label = r.round_label ?? `Round ${r.round_number}`;
             if (r.outcome === "advance") {
                 steps.push({ key: `round-${r.id}`, label, sublabel: "Passed ✓", status: "completed", Icon: TrendingUp });
+            } else if (r.round_canceled) {
+                steps.push({ key: `round-${r.id}`, label, sublabel: r.mis_rescheduled ? "Rescheduled" : "Cancelled", status: r.mis_rescheduled ? "warning" : "error", Icon: r.mis_rescheduled ? RotateCcw : XCircle, isDefaultActive: !foundActive });
+                foundActive = true;
             } else if (r.outcome === "reject") {
                 steps.push({ key: `round-${r.id}`, label, sublabel: "Not selected", status: "error", Icon: XCircle, isDefaultActive: !foundActive });
                 foundActive = true;
@@ -657,11 +665,64 @@ function CanceledPanel({ inv }: { inv: InvitationDetail }) {
 }
 
 // Panel: Single round details
-function RoundPanel({ round, invitationId, onRefresh }: { round: InterviewRound; invitationId: string; onRefresh: () => void }) {
+function RoundPanel({ round, invitationId, onRefresh, onCancelRound }: { round: InterviewRound; invitationId: string; onRefresh: () => void; onCancelRound: () => void }) {
     const isPendingResponse = round.status === "pending" || round.status === "viewed";
     const isAwaiting = round.status === "accepted" && !round.confirmed_at;
     const isConfirmed = round.status === "confirmed" || !!round.confirmed_at;
     const slot = round.selected_time_slot;
+    const roundLabel = round.round_label ?? `Round ${round.round_number}`;
+
+    // Show cancelled state first
+    if (round.round_canceled) {
+        const d = round.mis_reschedule_data;
+        return (
+            <div className="space-y-4">
+                <StatusBanner
+                    icon={<XCircle className="h-4 w-4" />}
+                    title={`${roundLabel} canceled`}
+                    description={round.canceled_by ? `Canceled by ${round.canceled_by}${round.canceled_at ? ` on ${formatTimestamp(round.canceled_at, "MMMM d, yyyy")}` : ""}` : undefined}
+                    variant="error"
+                />
+                {round.cancellation_reason && (
+                    <div>
+                        <p className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-2">Reason provided</p>
+                        <div className="rounded-xl bg-muted/40 border border-border px-4 py-3">
+                            <p className="text-sm text-foreground/90">{round.cancellation_reason}</p>
+                        </div>
+                    </div>
+                )}
+                {round.mis_rescheduled && d && (
+                    <div className="space-y-3">
+                        <StatusBanner icon={<RotateCcw className="h-4 w-4" />} title="Round rescheduled by coordinator" variant="info" />
+                        <div>
+                            <p className="text-xs uppercase tracking-wide font-medium text-muted-foreground mb-2">New schedule</p>
+                            <DetailCard>
+                                <DetailRow icon={<Calendar className="h-4 w-4" />} label="Date" value={formatUTCDate(d.date, "EEEE, MMMM d, yyyy")} />
+                                <DetailRow icon={<Clock className="h-4 w-4" />} label="Time" value={formatUTCTime(d.date, d.time)} />
+                                <DetailRow icon={d.interview_mode === "online" ? <Video className="h-4 w-4" /> : <MapPinned className="h-4 w-4" />} label="Mode" value={`${d.interview_mode} Interview`} />
+                                {d.interview_mode === "online" && d.meeting_link && (
+                                    <DetailRow icon={<Video className="h-4 w-4" />} label="Meeting link">
+                                        <div className="flex gap-2 mt-1">
+                                            <Input value={d.meeting_link} readOnly className="flex-1 h-8 text-xs" />
+                                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 flex-shrink-0" onClick={() => { navigator.clipboard.writeText(d.meeting_link!); toast.success("Copied!"); }}><Copy className="h-3.5 w-3.5" /></Button>
+                                            <Button size="sm" className="h-8 flex-shrink-0" asChild><a href={d.meeting_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-1" />Join</a></Button>
+                                        </div>
+                                    </DetailRow>
+                                )}
+                                {d.interview_mode === "physical" && d.interview_address && (
+                                    <DetailRow icon={<MapPin className="h-4 w-4" />} label="Location">
+                                        <p className="text-sm text-foreground/90 mt-0.5">{d.interview_address}</p>
+                                        {d.map_link && <Button size="sm" variant="outline" className="h-7 text-xs mt-2" asChild><a href={d.map_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3 mr-1.5" />Open in Maps</a></Button>}
+                                    </DetailRow>
+                                )}
+                                {d.notes && <DetailRow icon={<MessageSquare className="h-4 w-4" />} label="Notes" value={d.notes} />}
+                            </DetailCard>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     if (isPendingResponse) {
         return (
@@ -726,6 +787,11 @@ function RoundPanel({ round, invitationId, onRefresh }: { round: InterviewRound;
                     </div>
                 </div>
             )}
+            {isConfirmed && !isDone && !round.round_canceled && (
+                <button onClick={onCancelRound} className="text-xs text-muted-foreground hover:text-red-500 transition-colors underline-offset-2 hover:underline">
+                    Cancel this round
+                </button>
+            )}
         </div>
     );
 }
@@ -743,6 +809,8 @@ export default function InvitationDetailClient({ invitationId, onMutateList }: {
     const [rescheduleReason, setRescheduleReason] = useState("");
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState("");
+    const [showRoundCancelDialog, setShowRoundCancelDialog] = useState<string | null>(null); // roundId
+    const [roundCancellationReason, setRoundCancellationReason] = useState("");
     const [activeKey, setActiveKey] = useState<string>("");
 
     const invitation: InvitationDetail | null = invitationData?.success ? invitationData.data : null;
@@ -815,6 +883,17 @@ export default function InvitationDetailClient({ invitationId, onMutateList }: {
         } catch { toast.error("An error occurred"); } finally { setIsSubmitting(false); }
     };
 
+    const handleCancelRound = async () => {
+        if (!roundCancellationReason.trim()) { toast.error("Please provide a reason"); return; }
+        if (!showRoundCancelDialog) return;
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/candidate/interview-rounds/${showRoundCancelDialog}/cancel-round`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cancellation_reason: roundCancellationReason }) });
+            const d = await res.json();
+            if (d.success) { toast.success("Round canceled"); setShowRoundCancelDialog(null); setRoundCancellationReason(""); mutateRounds(); mutateInvitation(); onMutateList?.(); } else toast.error(d.error || "Failed to cancel round");
+        } catch { toast.error("An error occurred"); } finally { setIsSubmitting(false); }
+    };
+
     if (invitationLoading) {
         return <div className="flex items-center justify-center py-24"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
@@ -872,7 +951,7 @@ export default function InvitationDetailClient({ invitationId, onMutateList }: {
         if (activeKey.startsWith("round-")) {
             const roundId = activeKey.replace("round-", "");
             const round = rounds.find(r => r.id === roundId);
-            if (round) return <RoundPanel round={round} invitationId={invitationId} onRefresh={() => { mutateRounds(); mutateInvitation(); }} />;
+            if (round) return <RoundPanel round={round} invitationId={invitationId} onRefresh={() => { mutateRounds(); mutateInvitation(); }} onCancelRound={() => setShowRoundCancelDialog(round.id)} />;
         }
         return null;
     };
@@ -987,6 +1066,23 @@ export default function InvitationDetailClient({ invitationId, onMutateList }: {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => { setShowCancelDialog(false); setCancellationReason(""); }} disabled={isSubmitting}>Keep Interview</Button>
                         <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleCancelInterview} disabled={isSubmitting || !cancellationReason.trim()}>
+                            {isSubmitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Canceling…</> : "Confirm Cancellation"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Cancel round dialog */}
+            <Dialog open={!!showRoundCancelDialog} onOpenChange={(open) => { if (!open) { setShowRoundCancelDialog(null); setRoundCancellationReason(""); } }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancel Interview Round</DialogTitle>
+                        <DialogDescription>Please provide a reason. This will be shared with the employer.</DialogDescription>
+                    </DialogHeader>
+                    <Textarea placeholder="Reason for cancellation…" value={roundCancellationReason} onChange={e => setRoundCancellationReason(e.target.value)} rows={4} className="resize-none" />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setShowRoundCancelDialog(null); setRoundCancellationReason(""); }} disabled={isSubmitting}>Keep Round</Button>
+                        <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleCancelRound} disabled={isSubmitting || !roundCancellationReason.trim()}>
                             {isSubmitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Canceling…</> : "Confirm Cancellation"}
                         </Button>
                     </DialogFooter>

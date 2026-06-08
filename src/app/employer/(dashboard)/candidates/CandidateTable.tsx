@@ -42,7 +42,8 @@ interface Candidate {
     expected_monthly_salary: number | null;
     qualifications: string[];
     expected_positions: string[];  // Positions the candidate is targeting
-    invited: boolean;  // Track if candidate has been invited
+    invited: boolean;  // Track if candidate has been invited by this company
+    isHiredElsewhere: boolean;  // Candidate hired by a different company
     // Invitation journey fields (present when invited=true)
     invitationStatus?: string | null;
     invitationPipelineStatus?: string | null;
@@ -503,6 +504,7 @@ export function CandidateTable({ candidates, industries }: CandidateTableProps) 
                     selectedIndustry={selectedIndustryName}
                     selectedDesignation={selectedDesignations.join(', ')}
                     isInvited={filteredCandidates.find(c => c.id === selectedCandidateId)?.invited || false}
+                    isHiredElsewhere={filteredCandidates.find(c => c.id === selectedCandidateId)?.isHiredElsewhere || false}
                     invitationStatus={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationStatus ?? null}
                     invitationPipelineStatus={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationPipelineStatus ?? null}
                     invitationInterviewConfirmed={filteredCandidates.find(c => c.id === selectedCandidateId)?.invitationInterviewConfirmed ?? false}

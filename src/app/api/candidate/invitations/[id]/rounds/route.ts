@@ -68,12 +68,21 @@ export async function GET(
                 alternative_dates,
                 selected_time_slot,
                 interview_mode,
+                interview_confirmed,
                 confirmed_time,
                 meeting_link,
                 interview_address,
                 map_link,
                 confirmed_at,
-                sent_at
+                round_canceled,
+                canceled_by,
+                cancellation_reason,
+                canceled_at,
+                mis_rescheduled,
+                mis_reschedule_data,
+                sent_at,
+                viewed_at,
+                responded_at
             `)
             .eq('invitation_id', invitationId)
             .order('round_number', { ascending: true });

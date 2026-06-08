@@ -17,7 +17,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  role?: "employer" | "candidate";
+}
+
+export function NotificationBell({ role = "candidate" }: NotificationBellProps) {
   const router = useRouter();
   const {
     notifications,
@@ -38,56 +42,32 @@ export function NotificationBell() {
     const data = notification.data;
     if (!data) return;
 
+    const goToInvitation = (id: string) => {
+      if (role === "employer") {
+        router.push(`/employer/invitations?id=${id}`);
+      } else {
+        router.push(`/candidate/invitations/${id}`);
+      }
+    };
+
     try {
       switch (notification.type) {
         case "invitation_received":
         case "invitation_cancelled":
-          if (data.invitation_id) {
-            router.push(`/candidate/invitations/${data.invitation_id}`);
-          }
-          break;
-
         case "invitation_accepted":
         case "invitation_declined":
         case "invitation_sent":
-          if (data.invitation_id) {
-            router.push(`/employer/invitations/${data.invitation_id}`);
-          }
-          break;
-
         case "interview_scheduled":
         case "interview_confirmed":
         case "interview_cancelled":
         case "interview_rescheduled":
-          if (data.invitation_id) {
-            // Check user role and navigate accordingly
-            const isCandidate = notification.type.includes("scheduled") || 
-                                notification.type.includes("rescheduled");
-            if (isCandidate) {
-              router.push(`/candidate/invitations/${data.invitation_id}`);
-            } else {
-              router.push(`/employer/invitations/${data.invitation_id}`);
-            }
-          }
-          break;
-
         case "interview_completed":
-          if (data.invitation_id) {
-            router.push(`/employer/invitations/${data.invitation_id}`);
-          }
-          break;
-
         case "offer_received":
         case "offer_withdrawn":
-          if (data.invitation_id) {
-            router.push(`/candidate/invitations/${data.invitation_id}`);
-          }
-          break;
-
         case "offer_accepted":
         case "offer_declined":
           if (data.invitation_id) {
-            router.push(`/employer/invitations/${data.invitation_id}`);
+            goToInvitation(data.invitation_id);
           }
           break;
 

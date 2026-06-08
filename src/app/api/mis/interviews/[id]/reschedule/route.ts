@@ -107,13 +107,6 @@ export async function POST(
         }
 
         // Verify interview is eligible for reschedule
-        if (!interview.interview_confirmed) {
-            return NextResponse.json(
-                { error: "Only confirmed interviews can be rescheduled" },
-                { status: 400 }
-            );
-        }
-
         if (!interview.invitation_canceled) {
             return NextResponse.json(
                 { error: "Only cancelled interviews can be rescheduled by MIS" },
@@ -155,12 +148,14 @@ export async function POST(
                 *,
                 candidate:candidates!inner(
                     id,
+                    user_id,
                     first_name,
                     last_name,
                     email
                 ),
                 employer:employers!inner(
                     id,
+                    user_id,
                     first_name,
                     last_name,
                     email
@@ -222,6 +217,46 @@ export async function POST(
             notes || '',
             employerTz
         );
+
+        // In-app notifications (non-blocking)
+        const notificationPayload = {
+            invitation_id: id,
+            date,
+            time,
+            interview_mode,
+        };
+
+        const inAppPromises: Promise<unknown>[] = [];
+
+        if (candidateData?.user_id) {
+            inAppPromises.push(
+                Promise.resolve(
+                    adminClient.rpc('notify_user', {
+                        p_user_id: candidateData.user_id,
+                        p_type: 'interview_rescheduled',
+                        p_title: 'Interview Rescheduled',
+                        p_body: `Your interview for ${updatedInterview.job_designation} at ${companyData.company_name} has been rescheduled by JobGenie.`,
+                        p_data: notificationPayload,
+                    })
+                ).catch((err: unknown) => console.error('Candidate notification error:', err))
+            );
+        }
+
+        if (employerData?.user_id) {
+            inAppPromises.push(
+                Promise.resolve(
+                    adminClient.rpc('notify_user', {
+                        p_user_id: employerData.user_id,
+                        p_type: 'interview_rescheduled',
+                        p_title: 'Interview Rescheduled',
+                        p_body: `The interview with ${candidateData.first_name} ${candidateData.last_name} for ${updatedInterview.job_designation} has been rescheduled by JobGenie.`,
+                        p_data: notificationPayload,
+                    })
+                ).catch((err: unknown) => console.error('Employer notification error:', err))
+            );
+        }
+
+        await Promise.all(inAppPromises);
 
         await logAudit("interview_rescheduled_by_mis", user.id, "mis", "job_invitation", id, { date, time, interview_mode });
         return NextResponse.json({

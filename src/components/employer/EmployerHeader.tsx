@@ -74,7 +74,7 @@ export function EmployerHeader({ user, pageTitle, pageDescription }: EmployerHea
 
             <div className="flex shrink-0 items-center gap-3">
                 <ThemeToggle />
-                <NotificationBell />
+                <NotificationBell role="employer" />
                 <EmployerUserMenu user={user} />
             </div>
         </header>

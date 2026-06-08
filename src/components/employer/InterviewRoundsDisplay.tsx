@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
     Calendar,
@@ -53,11 +55,18 @@ interface InterviewRound {
     outcome_at: string | null;
     outcome_by: string | null;
     confirmed_at: string | null;
+    interview_confirmed?: boolean;
     selected_time_slot: any;
     interview_mode: string | null;
     confirmed_time: any;
     meeting_link: string | null;
     interview_address: string | null;
+    round_canceled?: boolean;
+    canceled_by?: string | null;
+    cancellation_reason?: string | null;
+    canceled_at?: string | null;
+    mis_rescheduled?: boolean;
+    mis_reschedule_data?: any;
 }
 
 interface InterviewRoundsDisplayProps {
@@ -107,14 +116,22 @@ export function InterviewRoundsDisplay({
         roundLabel: string | null;
         interviewMode: string | null;
         selectedTimeSlot: any;
-    }>({ 
-        isOpen: false, 
-        roundId: "", 
+    }>({
+        isOpen: false,
+        roundId: "",
         roundNumber: 0,
         roundLabel: null,
         interviewMode: null,
         selectedTimeSlot: null
     });
+
+    const [cancelRoundDialog, setCancelRoundDialog] = useState<{
+        isOpen: boolean;
+        roundId: string;
+        roundLabel: string;
+    }>({ isOpen: false, roundId: "", roundLabel: "" });
+    const [cancelRoundReason, setCancelRoundReason] = useState("");
+    const [isCancelingRound, setIsCancelingRound] = useState(false);
 
     useEffect(() => {
         fetchRounds();
@@ -200,6 +217,28 @@ export function InterviewRoundsDisplay({
     const handleConfirmSuccess = () => {
         fetchRounds();
         if (onUpdate) onUpdate();
+    };
+
+    const handleCancelRound = async () => {
+        if (!cancelRoundReason.trim()) { toast.error("Please provide a reason"); return; }
+        setIsCancelingRound(true);
+        try {
+            const res = await fetch(`/api/employer/interview-rounds/${cancelRoundDialog.roundId}/cancel-round`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cancellation_reason: cancelRoundReason })
+            });
+            const d = await res.json();
+            if (d.success) {
+                toast.success("Round canceled successfully");
+                setCancelRoundDialog({ isOpen: false, roundId: "", roundLabel: "" });
+                setCancelRoundReason("");
+                fetchRounds();
+                if (onUpdate) onUpdate();
+            } else {
+                toast.error(d.error || "Failed to cancel round");
+            }
+        } catch { toast.error("An error occurred"); } finally { setIsCancelingRound(false); }
     };
 
     const getOutcomeInfo = (outcome: string | null) => {
@@ -400,8 +439,10 @@ export function InterviewRoundsDisplay({
                 {rounds.map((round, index) => {
                     const isExpanded = expandedRounds.has(round.id);
                     const outcomeInfo = getOutcomeInfo(round.outcome);
-                    const canAddFeedback = round.status === 'confirmed' && !round.outcome;
-                    const needsConfirmation = round.status === 'accepted' && !round.confirmed_at;
+                    const isCanceled = !!round.round_canceled;
+                    const canAddFeedback = round.status === 'confirmed' && !round.outcome && !isCanceled;
+                    const needsConfirmation = round.status === 'accepted' && !round.confirmed_at && !isCanceled;
+                    const canCancelRound = (round.status === 'confirmed' || !!round.interview_confirmed) && !round.outcome && !isCanceled;
                     
                     // Check if next round exists (to hide "Schedule Next Round" button)
                     const nextRoundExists = rounds.some(r => r.round_number === round.round_number + 1);
@@ -455,6 +496,33 @@ export function InterviewRoundsDisplay({
                                 <CollapsibleContent>
                                     <Separator />
                                     <div className="p-3 space-y-3">
+                                        {/* Cancelled state */}
+                                        {isCanceled && (
+                                            <div className="rounded-md bg-red-50 border border-red-200 p-3 space-y-1 dark:bg-red-950/20 dark:border-red-800">
+                                                <p className="text-xs font-medium text-red-700 dark:text-red-300">
+                                                    Round canceled by {round.canceled_by === "candidate" ? "Candidate" : "Employer"}
+                                                    {round.canceled_at && (
+                                                        <span className="font-normal ml-1">· {formatTimestamp(round.canceled_at, "MMM d, yyyy")}</span>
+                                                    )}
+                                                </p>
+                                                {round.cancellation_reason && (
+                                                    <p className="text-xs text-red-600 dark:text-red-400">{round.cancellation_reason}</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* MIS rescheduled state */}
+                                        {round.mis_rescheduled && round.mis_reschedule_data && (
+                                            <div className="rounded-md bg-green-50 border border-green-200 p-3 space-y-1 dark:bg-green-950/20 dark:border-green-800">
+                                                <p className="text-xs font-medium text-green-700 dark:text-green-300">Rescheduled by MIS</p>
+                                                <p className="text-xs text-green-600 dark:text-green-400">
+                                                    {formatUTCTime(round.mis_reschedule_data.date, round.mis_reschedule_data.time)}
+                                                    {" · "}
+                                                    {round.mis_reschedule_data.interview_mode === "online" ? "Online" : "Physical"}
+                                                </p>
+                                            </div>
+                                        )}
+
                                         {/* Interview Details - Hide if round was advanced to next round */}
                                         {shouldShowInterviewDetails && round.selected_time_slot && (
                                             <div className="space-y-2">
@@ -507,7 +575,7 @@ export function InterviewRoundsDisplay({
                                         )}
 
                                         {/* Action Buttons */}
-                                        <div className="flex gap-2 pt-2">
+                                        <div className="flex flex-wrap gap-2 pt-2">
                                             {needsConfirmation && (
                                                 <Button
                                                     size="sm"
@@ -638,6 +706,21 @@ export function InterviewRoundsDisplay({
                                                     </Button>
                                                 </div>
                                             )}
+                                            {canCancelRound && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCancelRoundDialog({
+                                                            isOpen: true,
+                                                            roundId: round.id,
+                                                            roundLabel: round.round_label || `Round ${round.round_number}`
+                                                        });
+                                                    }}
+                                                    className="text-xs text-muted-foreground hover:text-red-500 transition-colors underline-offset-2 hover:underline mt-1"
+                                                >
+                                                    Cancel this round
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </CollapsibleContent>
@@ -683,9 +766,9 @@ export function InterviewRoundsDisplay({
                 interviewMode={confirmDialog.interviewMode}
                 selectedTimeSlot={confirmDialog.selectedTimeSlot}
                 isOpen={confirmDialog.isOpen}
-                onClose={() => setConfirmDialog({ 
-                    isOpen: false, 
-                    roundId: "", 
+                onClose={() => setConfirmDialog({
+                    isOpen: false,
+                    roundId: "",
                     roundNumber: 0,
                     roundLabel: null,
                     interviewMode: null,
@@ -693,6 +776,29 @@ export function InterviewRoundsDisplay({
                 })}
                 onSuccess={handleConfirmSuccess}
             />
+
+            {/* Cancel round dialog */}
+            <Dialog open={cancelRoundDialog.isOpen} onOpenChange={(open) => { if (!open) { setCancelRoundDialog({ isOpen: false, roundId: "", roundLabel: "" }); setCancelRoundReason(""); } }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancel {cancelRoundDialog.roundLabel}</DialogTitle>
+                        <DialogDescription>Please provide a reason. This will be shared with the candidate.</DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        placeholder="Reason for cancellation…"
+                        value={cancelRoundReason}
+                        onChange={e => setCancelRoundReason(e.target.value)}
+                        rows={4}
+                        className="resize-none"
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setCancelRoundDialog({ isOpen: false, roundId: "", roundLabel: "" }); setCancelRoundReason(""); }} disabled={isCancelingRound}>Keep Round</Button>
+                        <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleCancelRound} disabled={isCancelingRound || !cancelRoundReason.trim()}>
+                            {isCancelingRound ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Canceling…</> : "Confirm Cancellation"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

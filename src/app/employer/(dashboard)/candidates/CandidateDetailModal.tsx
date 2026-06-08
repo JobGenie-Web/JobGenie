@@ -80,6 +80,7 @@ interface CandidateDetailModalProps {
     selectedIndustry?: string;
     selectedDesignation?: string;
     isInvited?: boolean;
+    isHiredElsewhere?: boolean;
     // Invitation journey fields — used to disable Cancel Invitation once accepted
     invitationStatus?: string | null;
     invitationPipelineStatus?: string | null;
@@ -93,7 +94,7 @@ function formatQualification(qual: string): string {
     return qual.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, invitationStatus, invitationPipelineStatus, invitationInterviewConfirmed, invitationCurrentRound, invitationMisRescheduled, onClose }: CandidateDetailModalProps) {
+export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDesignation, isInvited = false, isHiredElsewhere = false, invitationStatus, invitationPipelineStatus, invitationInterviewConfirmed, invitationCurrentRound, invitationMisRescheduled, onClose }: CandidateDetailModalProps) {
     const [candidate, setCandidate] = useState<CandidateData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showCVViewer, setShowCVViewer] = useState(false);
@@ -403,6 +404,7 @@ export function CandidateDetailModal({ candidateId, selectedIndustry, selectedDe
                                     suggestedIndustry={selectedIndustry}
                                     suggestedDesignation={selectedDesignation}
                                     isInvited={isInvited}
+                                    isHiredElsewhere={isHiredElsewhere}
                                     invitationStatus={invitationStatus}
                                     invitationPipelineStatus={invitationPipelineStatus}
                                     invitationInterviewConfirmed={invitationInterviewConfirmed}

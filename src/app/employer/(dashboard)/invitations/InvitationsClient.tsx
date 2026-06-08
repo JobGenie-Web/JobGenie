@@ -3,16 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSWRConfig } from "swr";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -32,7 +29,27 @@ interface TimeSlot {
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 import { InterviewRoundsDisplay } from "@/components/employer/InterviewRoundsDisplay";
-import { InterviewRoadmap } from "@/components/shared/InterviewRoadmap";
+
+function DetailCard({ children, className }: { children: React.ReactNode; className?: string }) {
+    return (
+        <div className={cn("rounded-2xl border border-border bg-card/50 overflow-hidden", className)}>
+            {children}
+        </div>
+    );
+}
+
+function DetailRow({ icon, label, value, children }: { icon: React.ReactNode; label: string; value?: string; children?: React.ReactNode }) {
+    return (
+        <div className="flex items-start gap-3 py-3 px-4 border-b border-border/60 last:border-b-0">
+            <div className="mt-0.5 text-muted-foreground shrink-0">{icon}</div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground mb-0.5">{label}</p>
+                {value && <p className="text-sm font-medium text-foreground">{value}</p>}
+                {children}
+            </div>
+        </div>
+    );
+}
 
 interface Invitation {
     id: string;
@@ -89,6 +106,699 @@ interface Invitation {
     job_offers?: { id: string; status: string } | { id: string; status: string }[] | null;
 }
 
+// ─── Invitation Detail Panel ──────────────────────────────────────────────────
+
+interface InvitationDetailPanelProps {
+    selectedInvitation: Invitation;
+    selectedBadge: { variant: any; className: string; label: string } | null;
+    hasInterviewOutcome: boolean;
+    setHasInterviewOutcome: (v: boolean) => void;
+    isConfirming: boolean;
+    confirmedTime: string;
+    setConfirmedTime: (v: string) => void;
+    meetingLink: string;
+    setMeetingLink: (v: string) => void;
+    interviewAddress: string;
+    setInterviewAddress: (v: string) => void;
+    mapLink: string;
+    setMapLink: (v: string) => void;
+    isCanceling: boolean;
+    handleConfirmInterview: () => void;
+    setShowCancelDialog: (v: boolean) => void;
+    fetchInvitations: () => void;
+    onBack: () => void;
+}
+
+function InvitationDetailPanel({
+    selectedInvitation,
+    selectedBadge,
+    hasInterviewOutcome,
+    setHasInterviewOutcome,
+    isConfirming,
+    confirmedTime,
+    setConfirmedTime,
+    meetingLink,
+    setMeetingLink,
+    interviewAddress,
+    setInterviewAddress,
+    mapLink,
+    setMapLink,
+    isCanceling,
+    handleConfirmInterview,
+    setShowCancelDialog,
+    fetchInvitations,
+    onBack,
+}: InvitationDetailPanelProps) {
+
+    const inv = selectedInvitation;
+    const isConfirmed = inv.interview_confirmed && !inv.invitation_canceled;
+    const isCanceled = inv.invitation_canceled;
+    const needsConfirmation = inv.status === 'accepted' && !inv.invitation_canceled && inv.selected_time_slot && !hasInterviewOutcome && !inv.interview_confirmed;
+    const awaitingConfirm = inv.status === 'accepted' && !inv.invitation_canceled && inv.selected_time_slot && !hasInterviewOutcome && inv.interview_confirmed;
+
+    return (
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-background/50">
+            {/* Mobile back */}
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden shrink-0">
+                <button
+                    onClick={onBack}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted hover:bg-accent transition-colors"
+                >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <span className="text-sm font-semibold">Invitation Details</span>
+            </div>
+
+            {/* Main scrollable body — two column on large screens */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="flex flex-col xl:flex-row xl:h-full min-h-0">
+
+                    {/* ── LEFT: current status + action ── */}
+                    <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 space-y-5">
+
+                        {/* Candidate hero card */}
+                        <div className="flex items-start gap-4 rounded-2xl border border-border bg-card/60 p-4">
+                            <Avatar className="h-14 w-14 shrink-0 ring-2 ring-border">
+                                <AvatarImage src={inv.candidate.profile_image_url || undefined} />
+                                <AvatarFallback className="text-sm font-bold">
+                                    {inv.candidate.first_name[0]}{inv.candidate.last_name[0]}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 flex-wrap">
+                                    <div>
+                                        <p className="text-base font-bold leading-snug">
+                                            {inv.candidate.first_name} {inv.candidate.last_name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{inv.job_designation} · {formatIndustry(inv.industry)}</p>
+                                    </div>
+                                    {selectedBadge && (
+                                        <Badge variant={selectedBadge.variant} className={cn(selectedBadge.className, "shrink-0 mt-0.5")}>
+                                            {selectedBadge.label}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground mt-2">
+                                    {inv.candidate.current_position && (
+                                        <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" />{inv.candidate.current_position}</span>
+                                    )}
+                                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inv.candidate.email}</span>
+                                    <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{formatPhoneNumber(inv.candidate.phone)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── CURRENT STATUS SECTION ── */}
+
+                        {/* Pending: waiting for candidate */}
+                        {inv.status === 'pending' && !isCanceled && (
+                            <StatusCard
+                                icon={<Clock className="h-5 w-5 text-amber-600" />}
+                                color="amber"
+                                title="Awaiting Candidate Response"
+                                subtitle={`Invitation sent ${formatTimestamp(inv.sent_at)}. The candidate hasn't responded yet.`}
+                            >
+                                {inv.given_time_slots?.length > 0 && (
+                                    <div className="mt-3 space-y-1.5">
+                                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide">Proposed slots</p>
+                                        <div className="grid gap-1.5 sm:grid-cols-2">
+                                            {inv.given_time_slots.map((slot, i) => (
+                                                <div key={i} className="flex items-center gap-2 rounded-lg bg-amber-100/60 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+                                                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                                                    {formatUTCDate(slot.date)} · {formatUTCTime(slot.date, slot.time)}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </StatusCard>
+                        )}
+
+                        {/* Viewed */}
+                        {inv.status === 'viewed' && !isCanceled && !inv.interview_confirmed && (
+                            <StatusCard
+                                icon={<User className="h-5 w-5 text-blue-600" />}
+                                color="blue"
+                                title="Candidate Has Viewed the Invitation"
+                                subtitle="They haven't responded yet. They may be reviewing the details."
+                            />
+                        )}
+
+                        {/* Declined with reschedule */}
+                        {inv.status === 'declined' && inv.candidate_reschedule_requested && !isCanceled && (
+                            <StatusCard
+                                icon={<Calendar className="h-5 w-5 text-amber-600" />}
+                                color="amber"
+                                title="Candidate Requested Reschedule"
+                                subtitle="They declined the proposed slots and asked for alternative dates."
+                            >
+                                {inv.reschedule_request_reason && (
+                                    <blockquote className="mt-3 border-l-2 border-amber-400 pl-3 text-xs italic text-amber-800 dark:text-amber-300">
+                                        "{inv.reschedule_request_reason}"
+                                    </blockquote>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="mt-3 w-full border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-white dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-700 dark:hover:text-amber-100"
+                                    onClick={() => toast.info("Please send a new invitation with updated slots.")}
+                                >
+                                    Review & Send New Slots
+                                </Button>
+                            </StatusCard>
+                        )}
+
+                        {/* Declined flat */}
+                        {inv.status === 'declined' && !inv.candidate_reschedule_requested && !isCanceled && (
+                            <StatusCard
+                                icon={<X className="h-5 w-5 text-red-600" />}
+                                color="red"
+                                title="Candidate Declined the Invitation"
+                                subtitle="The candidate has declined all proposed time slots."
+                            />
+                        )}
+
+                        {/* Needs confirmation (accepted, not yet confirmed by employer) */}
+                        {needsConfirmation && (
+                            <div className="rounded-2xl border-2 border-blue-300 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-950/20 p-4 space-y-4">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40">
+                                        <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Action Required: Confirm Interview</p>
+                                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                                            Candidate accepted for {formatUTCDate((inv.selected_time_slot as any)?.date, "EEEE, MMM d")}
+                                            {!((inv.selected_time_slot as any)?.is_alternative) && inv.selected_time_slot?.time &&
+                                                ` at ${formatUTCTime(inv.selected_time_slot.date, inv.selected_time_slot.time)}`}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {(inv.selected_time_slot as any)?.is_alternative && (
+                                        <div>
+                                            <label className="text-xs font-semibold mb-2 block text-blue-900 dark:text-blue-200">Select Time Slot *</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {["09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"].map(time => (
+                                                    <button
+                                                        key={time}
+                                                        type="button"
+                                                        onClick={() => setConfirmedTime(time)}
+                                                        className={cn(
+                                                            "rounded-lg py-2 text-xs font-medium border transition-all",
+                                                            confirmedTime === time
+                                                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                                                : "bg-white dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200 hover:border-blue-400"
+                                                        )}
+                                                    >{time}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {inv.interview_mode === 'online' && (
+                                        <div>
+                                            <label className="text-xs font-semibold mb-1.5 block text-blue-900 dark:text-blue-200">Meeting Link *</label>
+                                            <Input type="url" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="h-9 text-sm bg-white dark:bg-blue-950/30" placeholder="https://zoom.us/j/... or Google Meet link" />
+                                        </div>
+                                    )}
+
+                                    {inv.interview_mode === 'physical' && (
+                                        <>
+                                            <div>
+                                                <label className="text-xs font-semibold mb-1.5 block text-blue-900 dark:text-blue-200">Interview Address *</label>
+                                                <Input type="text" value={interviewAddress} onChange={e => setInterviewAddress(e.target.value)} className="h-9 text-sm bg-white dark:bg-blue-950/30" placeholder="Full address with city and postal code" />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold mb-1.5 block text-blue-900 dark:text-blue-200">Map Link (Optional)</label>
+                                                <Input type="url" value={mapLink} onChange={e => setMapLink(e.target.value)} className="h-9 text-sm bg-white dark:bg-blue-950/30" placeholder="https://maps.google.com/..." />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className="flex gap-2">
+                                        <Button onClick={handleConfirmInterview} disabled={isConfirming} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+                                            {isConfirming ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Confirming...</> : <><CheckCircle2 className="h-4 w-4 mr-2" />Confirm Interview</>}
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => setShowCancelDialog(true)} disabled={isCanceling}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Confirmed + not yet into rounds */}
+                        {awaitingConfirm && !inv.mis_rescheduled && (
+                            <StatusCard
+                                icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
+                                color="green"
+                                title="Interview Confirmed"
+                                subtitle={inv.confirmed_at ? `Confirmed on ${formatTimestamp(inv.confirmed_at)}` : "Interview is set and ready."}
+                            >
+                                <div className="mt-3 space-y-2">
+                                    <div className="grid gap-2 sm:grid-cols-3 text-xs">
+                                        {inv.selected_time_slot && (
+                                            <>
+                                                <div className="flex items-center gap-2 rounded-lg bg-green-100/60 dark:bg-green-900/20 px-3 py-2 text-green-900 dark:text-green-200">
+                                                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                                                    {formatUTCDate(inv.selected_time_slot.date, "MMM d, yyyy")}
+                                                </div>
+                                                <div className="flex items-center gap-2 rounded-lg bg-green-100/60 dark:bg-green-900/20 px-3 py-2 text-green-900 dark:text-green-200">
+                                                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                    {inv.confirmed_time
+                                                        ? formatUTCTime(inv.selected_time_slot.date, inv.confirmed_time)
+                                                        : inv.selected_time_slot.time
+                                                            ? formatUTCTime(inv.selected_time_slot.date, inv.selected_time_slot.time)
+                                                            : "TBD"}
+                                                </div>
+                                            </>
+                                        )}
+                                        {inv.interview_mode && (
+                                            <div className="flex items-center gap-2 rounded-lg bg-green-100/60 dark:bg-green-900/20 px-3 py-2 text-green-900 dark:text-green-200">
+                                                {inv.interview_mode === 'online' ? <Video className="h-3.5 w-3.5 shrink-0" /> : <MapPinned className="h-3.5 w-3.5 shrink-0" />}
+                                                {inv.interview_mode === 'online' ? 'Online' : 'Physical'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {inv.interview_mode === 'online' && inv.meeting_link && (
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Input value={inv.meeting_link} readOnly className="h-8 text-xs flex-1 bg-white/50 dark:bg-green-950/20" />
+                                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 shrink-0" onClick={() => { navigator.clipboard.writeText(inv.meeting_link!); toast.success("Copied!"); }}><Copy className="h-3.5 w-3.5" /></Button>
+                                            <Button size="sm" className="h-8 shrink-0" asChild><a href={inv.meeting_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-1" />Join</a></Button>
+                                        </div>
+                                    )}
+                                    {inv.interview_mode === 'physical' && inv.interview_address && (
+                                        <div className="space-y-1 mt-1">
+                                            <p className="text-xs text-green-800 dark:text-green-300">{inv.interview_address}</p>
+                                            {inv.map_link && (
+                                                <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                                                    <a href={inv.map_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3 mr-1.5" />Open Maps</a>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="pt-2 border-t border-green-200 dark:border-green-800">
+                                        <Button variant="outline" size="sm" className="w-full h-8 text-xs border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => setShowCancelDialog(true)}>
+                                            <X className="h-3 w-3 mr-1.5" />Cancel Interview
+                                        </Button>
+                                    </div>
+                                </div>
+                            </StatusCard>
+                        )}
+
+                        {/* MIS Rescheduled */}
+                        {inv.mis_rescheduled && inv.mis_reschedule_data && (
+                            <StatusCard
+                                icon={<Calendar className="h-5 w-5 text-primary" />}
+                                color="primary"
+                                title="Rescheduled by MIS"
+                                subtitle={inv.mis_rescheduled_at ? `Rescheduled on ${formatTimestamp(inv.mis_rescheduled_at, "MMM d, yyyy")}` : "Interview was rescheduled."}
+                            >
+                                <div className="mt-3 grid gap-2 sm:grid-cols-3 text-xs">
+                                    <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-foreground">
+                                        <Calendar className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                        {formatUTCDate(inv.mis_reschedule_data.date, "MMM d, yyyy")}
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-foreground">
+                                        <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                        {formatUTCTime(inv.mis_reschedule_data.date, inv.mis_reschedule_data.time)}
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-foreground">
+                                        {inv.mis_reschedule_data.interview_mode === 'online' ? <Video className="h-3.5 w-3.5 shrink-0 text-primary" /> : <MapPinned className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                                        {inv.mis_reschedule_data.interview_mode === 'online' ? 'Online' : 'Physical'}
+                                    </div>
+                                </div>
+                                {inv.mis_reschedule_data.meeting_link && (
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <Input value={inv.mis_reschedule_data.meeting_link} readOnly className="h-8 text-xs flex-1" />
+                                        <Button size="sm" variant="outline" className="h-8 w-8 p-0 shrink-0" onClick={() => { navigator.clipboard.writeText(inv.mis_reschedule_data!.meeting_link!); toast.success("Copied!"); }}><Copy className="h-3.5 w-3.5" /></Button>
+                                        <Button size="sm" className="h-8 shrink-0" asChild><a href={inv.mis_reschedule_data.meeting_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-1" />Join</a></Button>
+                                    </div>
+                                )}
+                                {inv.mis_reschedule_data.interview_address && (
+                                    <div className="mt-2 space-y-1">
+                                        <p className="text-xs text-muted-foreground">{inv.mis_reschedule_data.interview_address}</p>
+                                        {inv.mis_reschedule_data.map_link && (
+                                            <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                                                <a href={inv.mis_reschedule_data.map_link} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3 mr-1.5" />Open Maps</a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </StatusCard>
+                        )}
+
+                        {/* Canceled */}
+                        {isCanceled && (
+                            <StatusCard
+                                icon={<X className="h-5 w-5 text-red-600" />}
+                                color="red"
+                                title="Interview Canceled"
+                                subtitle={inv.canceled_at ? `Canceled on ${formatTimestamp(inv.canceled_at)}` : "This interview has been canceled."}
+                            >
+                                <div className="mt-3 space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-xs text-muted-foreground">Canceled by</span>
+                                        <span className="text-xs font-semibold">{inv.canceled_by === 'employer' ? 'You' : 'Candidate'}</span>
+                                    </div>
+                                    {inv.cancellation_reason && (
+                                        <div className="rounded-lg bg-red-100/60 dark:bg-red-950/20 p-3">
+                                            <p className="text-xs text-red-800 dark:text-red-300 italic">"{inv.cancellation_reason}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </StatusCard>
+                        )}
+
+                        {/* Your message */}
+                        {inv.message && (
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Your Message to Candidate</p>
+                                <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-foreground/90 italic">
+                                    "{inv.message}"
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Interview Rounds — management actions (full width, below status) */}
+                        {isConfirmed && (
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Interview Rounds</p>
+                                <InterviewRoundsDisplay
+                                    invitationId={inv.id}
+                                    candidateName={`${inv.candidate.first_name} ${inv.candidate.last_name}`}
+                                    jobTitle={inv.job_designation}
+                                    onUpdate={fetchInvitations}
+                                    onOutcomeFound={setHasInterviewOutcome}
+                                />
+                            </div>
+                        )}
+
+                        {/* Metadata footer */}
+                        <div className="pt-3 border-t border-border text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-0.5">
+                            <span>Sent by {inv.employer.first_name} {inv.employer.last_name} · {formatTimestamp(inv.sent_at)}</span>
+                            {inv.viewed_at && <span>Viewed {formatTimestamp(inv.viewed_at)}</span>}
+                            {inv.responded_at && <span>Responded {formatTimestamp(inv.responded_at)}</span>}
+                        </div>
+                    </div>
+
+                    {/* ── RIGHT: History Roadmap sidebar ── */}
+                    {isConfirmed && (
+                        <div className="xl:w-72 shrink-0 border-t xl:border-t-0 xl:border-l border-border overflow-y-auto">
+                            <InvitationRoadmapSidebar
+                                invitationId={inv.id}
+                                onOutcomeFound={setHasInterviewOutcome}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+        </div>
+    );
+}
+
+// ─── Status card helper ───────────────────────────────────────────────────────
+
+function StatusCard({ icon, color, title, subtitle, children }: {
+    icon: React.ReactNode;
+    color: "amber" | "blue" | "green" | "red" | "primary";
+    title: string;
+    subtitle?: string;
+    children?: React.ReactNode;
+}) {
+    const colorMap = {
+        amber: "bg-amber-50/80 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",
+        blue: "bg-blue-50/80 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
+        green: "bg-green-50/80 dark:bg-green-950/20 border-green-200 dark:border-green-800",
+        red: "bg-red-50/80 dark:bg-red-950/20 border-red-200 dark:border-red-800",
+        primary: "bg-primary/5 border-primary/20",
+    };
+    const iconBgMap = {
+        amber: "bg-amber-100 dark:bg-amber-900/40",
+        blue: "bg-blue-100 dark:bg-blue-900/40",
+        green: "bg-green-100 dark:bg-green-900/40",
+        red: "bg-red-100 dark:bg-red-900/40",
+        primary: "bg-primary/10",
+    };
+    return (
+        <div className={cn("rounded-2xl border p-4", colorMap[color])}>
+            <div className="flex items-start gap-3">
+                <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", iconBgMap[color])}>
+                    {icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground">{title}</p>
+                    {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Roadmap sidebar ──────────────────────────────────────────────────────────
+
+interface RoadmapRound {
+    id: string;
+    round_number: number;
+    round_label: string | null;
+    status: string;
+    outcome: string | null;
+    outcome_notes: string | null;
+    outcome_at: string | null;
+    given_time_slots: any;
+    selected_time_slot: any;
+    interview_mode: string | null;
+    confirmed_time: any;
+    meeting_link: string | null;
+    interview_address: string | null;
+    map_link: string | null;
+    confirmed_at: string | null;
+    sent_at: string;
+    round_canceled?: boolean;
+    canceled_by?: string | null;
+    cancellation_reason?: string | null;
+    canceled_at?: string | null;
+    mis_rescheduled?: boolean;
+    mis_reschedule_data?: any;
+}
+
+function InvitationRoadmapSidebar({ invitationId, onOutcomeFound }: { invitationId: string; onOutcomeFound: (v: boolean) => void }) {
+    const [rounds, setRounds] = useState<RoadmapRound[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+        const fetch_ = async () => {
+            try {
+                const res = await fetch(`/api/employer/invitations/${invitationId}/rounds`);
+                const data = await res.json();
+                if (data.success && active) {
+                    setRounds(data.data);
+                    onOutcomeFound(data.data.some((r: RoadmapRound) => r.outcome));
+                }
+            } catch { /* ignore */ }
+            finally { if (active) setLoading(false); }
+        };
+        fetch_();
+        const interval = setInterval(fetch_, 12000);
+        return () => { active = false; clearInterval(interval); };
+    }, [invitationId]);
+
+    const getStepStyle = (round: RoadmapRound) => {
+        if (round.round_canceled) return { dot: "bg-red-400 border-red-300", connector: "bg-red-200 dark:bg-red-900/30", badge: "text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" };
+        if (round.outcome === 'reject') return { dot: "bg-red-500 border-red-300", connector: "bg-red-200 dark:bg-red-900/30", badge: "text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" };
+        if (round.outcome === 'offer') return { dot: "bg-blue-500 border-blue-300", connector: "bg-blue-200 dark:bg-blue-900/30", badge: "text-blue-600 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800" };
+        if (round.outcome === 'advance') return { dot: "bg-green-500 border-green-300", connector: "bg-green-200 dark:bg-green-900/30", badge: "text-green-600 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800" };
+        if (round.status === 'confirmed') return { dot: "bg-green-400 border-green-300", connector: "bg-muted", badge: "text-green-700 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800" };
+        if (round.status === 'accepted') return { dot: "bg-amber-400 border-amber-200", connector: "bg-muted", badge: "text-amber-700 bg-amber-50 dark:bg-amber-950/30 border-amber-200" };
+        return { dot: "bg-muted-foreground/40 border-border", connector: "bg-muted", badge: "text-muted-foreground bg-muted border-border" };
+    };
+
+    const getStepLabel = (round: RoadmapRound) => {
+        if (round.round_canceled) return "Canceled";
+        if (round.outcome === 'reject') return "Not Selected";
+        if (round.outcome === 'offer') return "Offer Sent";
+        if (round.outcome === 'advance') return "Passed";
+        if (round.status === 'confirmed') return "Confirmed";
+        if (round.status === 'accepted') return "Awaiting Confirmation";
+        if (round.status === 'viewed') return "Viewed";
+        if (round.status === 'pending') return "Pending";
+        return round.status;
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (rounds.length === 0) return null;
+
+    return (
+        <div className="p-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-4">Interview Journey</p>
+
+            <div className="relative space-y-0">
+                {rounds.map((round, idx) => {
+                    const style = getStepStyle(round);
+                    const label = getStepLabel(round);
+                    const isLast = idx === rounds.length - 1;
+                    const isExpanded = expandedRoundId === round.id;
+
+                    return (
+                        <div key={round.id} className="relative flex gap-3">
+                            {/* Vertical connector */}
+                            <div className="flex flex-col items-center">
+                                <div className={cn("h-4 w-4 rounded-full border-2 shrink-0 mt-1 z-10", style.dot)} />
+                                {!isLast && <div className={cn("w-0.5 flex-1 min-h-[2rem] my-1", style.connector)} />}
+                            </div>
+
+                            {/* Card */}
+                            <div className="flex-1 mb-2 min-w-0">
+                                <button
+                                    onClick={() => setExpandedRoundId(isExpanded ? null : round.id)}
+                                    className={cn(
+                                        "w-full text-left rounded-xl border p-2.5 transition-all",
+                                        isExpanded
+                                            ? "bg-card border-primary/40 shadow-sm rounded-b-none border-b-0"
+                                            : "bg-card/60 hover:bg-card hover:border-primary/30 hover:shadow-sm active:scale-[0.98]",
+                                    )}
+                                >
+                                    <div className="flex items-start justify-between gap-1 mb-1">
+                                        <span className="text-xs font-semibold text-foreground leading-snug">
+                                            {round.round_label || `Round ${round.round_number}`}
+                                        </span>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full border", style.badge)}>
+                                                {label}
+                                            </span>
+                                            <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+                                        </div>
+                                    </div>
+                                    {round.confirmed_at && (
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {formatTimestamp(round.confirmed_at, "MMM d, yyyy")}
+                                        </p>
+                                    )}
+                                    {round.selected_time_slot && round.outcome !== 'advance' && (
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                            {formatUTCDate(round.selected_time_slot.date, "MMM d")}
+                                            {round.selected_time_slot.time && ` · ${formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)}`}
+                                            {round.interview_mode && ` · ${round.interview_mode === 'online' ? 'Online' : 'Physical'}`}
+                                        </p>
+                                    )}
+                                    {!isExpanded && round.outcome_notes && (
+                                        <p className="text-[10px] text-muted-foreground mt-1 italic truncate">"{round.outcome_notes}"</p>
+                                    )}
+                                </button>
+
+                                {/* Inline detail panel */}
+                                {isExpanded && (
+                                    <div className="rounded-b-xl border border-t-0 border-primary/40 bg-card px-3 pb-3 pt-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                                        <RoundDetailModalContent round={round} />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ─── Round detail modal content ───────────────────────────────────────────────
+
+function RoundDetailModalContent({ round }: { round: RoadmapRound }) {
+    return (
+        <div className="space-y-3 text-sm">
+            {round.round_canceled && (
+                <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-3 space-y-1">
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 flex items-center gap-1.5">
+                        <X className="h-3.5 w-3.5" />
+                        Round Canceled {round.canceled_by === 'candidate' ? '(by Candidate)' : '(by Employer)'}
+                        {round.canceled_at && ` · ${formatTimestamp(round.canceled_at, "MMM d, yyyy")}`}
+                    </p>
+                    {round.cancellation_reason && <p className="text-xs text-red-600 dark:text-red-400 italic">"{round.cancellation_reason}"</p>}
+                </div>
+            )}
+
+            {round.mis_rescheduled && round.mis_reschedule_data && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
+                    <p className="text-xs font-semibold text-primary">Rescheduled by MIS</p>
+                    <p className="text-xs text-muted-foreground">
+                        {formatUTCDate(round.mis_reschedule_data.date, "MMM d, yyyy")} · {formatUTCTime(round.mis_reschedule_data.date, round.mis_reschedule_data.time)}
+                        {" · "}{round.mis_reschedule_data.interview_mode === 'online' ? 'Online' : 'Physical'}
+                    </p>
+                </div>
+            )}
+
+            {round.selected_time_slot && round.outcome !== 'advance' && (
+                <DetailCard>
+                    <DetailRow icon={<Calendar className="h-4 w-4" />} label="Date" value={formatUTCDate(round.selected_time_slot.date, "EEEE, MMMM d, yyyy")} />
+                    {round.selected_time_slot.time && (
+                        <DetailRow icon={<Clock className="h-4 w-4" />} label="Time" value={formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)} />
+                    )}
+                    {round.interview_mode && (
+                        <DetailRow
+                            icon={round.interview_mode === 'online' ? <Video className="h-4 w-4" /> : <MapPinned className="h-4 w-4" />}
+                            label="Mode"
+                            value={round.interview_mode === 'online' ? 'Online Interview' : 'Physical Interview'}
+                        />
+                    )}
+                    {round.confirmed_at && (
+                        <DetailRow icon={<CheckCircle2 className="h-4 w-4" />} label="Confirmed" value={formatTimestamp(round.confirmed_at, "MMM d, yyyy 'at' h:mm a")} />
+                    )}
+                </DetailCard>
+            )}
+
+            {round.outcome && (
+                <div className={cn(
+                    "rounded-lg border-2 p-3",
+                    round.outcome === 'advance' && "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800",
+                    round.outcome === 'reject' && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
+                    round.outcome === 'offer' && "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
+                )}>
+                    <p className={cn(
+                        "text-sm font-semibold",
+                        round.outcome === 'advance' && "text-green-800 dark:text-green-200",
+                        round.outcome === 'reject' && "text-red-800 dark:text-red-200",
+                        round.outcome === 'offer' && "text-blue-800 dark:text-blue-200",
+                    )}>
+                        {round.outcome === 'advance' && "🎉 Advanced to Next Round"}
+                        {round.outcome === 'reject' && "Not Selected"}
+                        {round.outcome === 'offer' && "✅ Job Offer Sent"}
+                    </p>
+                    {round.outcome_at && (
+                        <p className="text-xs text-muted-foreground mt-1">Decision on {formatTimestamp(round.outcome_at, "MMM d, yyyy")}</p>
+                    )}
+                    {round.outcome_notes && (
+                        <div className="mt-2 pt-2 border-t border-current/10">
+                            <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                            <p className="text-xs whitespace-pre-wrap">{round.outcome_notes}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {!round.selected_time_slot && !round.outcome && !round.round_canceled && (
+                <p className="text-xs text-muted-foreground text-center py-4">No details available yet.</p>
+            )}
+        </div>
+    );
+}
+
+// ─── Main client ──────────────────────────────────────────────────────────────
+
 export default function InvitationsClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -105,9 +815,6 @@ export default function InvitationsClient() {
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancellationReason, setCancellationReason] = useState("");
     const [isCanceling, setIsCanceling] = useState(false);
-    const [showOriginalDetails, setShowOriginalDetails] = useState(false);
-    const [showConfirmedDetails, setShowConfirmedDetails] = useState(true);
-    const [showCanceledDetails, setShowCanceledDetails] = useState(false);
     const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
 
     useEffect(() => {
@@ -346,744 +1053,156 @@ export default function InvitationsClient() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-7rem)] flex-col gap-6">
-            <div className="relative shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-5 shadow-sm ring-1 ring-border/40 md:p-6">
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/[0.06] blur-3xl dark:bg-primary/[0.09]" aria-hidden />
-                <div className="relative">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Pipeline</p>
-                    <h2 className="mt-1 text-xl font-bold tracking-tight md:text-2xl">Invitation workspace</h2>
-                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                        Pick a thread on the left — confirm times, links, and status without losing context.
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-border/60 bg-muted/20 p-1 dark:bg-muted/10">
-                {[
-                    { key: 'all', label: 'All' },
-                    { key: 'pending', label: 'Pending' },
-                    { key: 'viewed', label: 'Viewed' },
-                    { key: 'accepted', label: 'Accepted' },
-                    { key: 'declined', label: 'Declined' },
-                    { key: 'cancelled', label: 'Cancelled' },
-                ].map(status => (
-                    <button
-                        key={status.key}
-                        onClick={() => setFilter(status.key)}
-                        className={cn(
-                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-200",
-                            filter === status.key
-                                ? "border border-primary/35 bg-primary/15 text-foreground shadow-none dark:bg-primary/20"
-                                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+        <div className={cn(
+            "flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
+            "flex-col",
+            "md:flex-row md:h-[calc(100vh-68px-2.5rem*2)] md:min-h-[560px]",
+        )}>
+            {/* ── Left panel ── */}
+            <div className={cn(
+                "flex flex-col border-border shrink-0",
+                selectedInvitation ? "hidden md:flex" : "flex",
+                "w-full md:w-80 md:border-r xl:w-96",
+            )}>
+                {/* Header */}
+                <div className="px-4 pt-4 pb-3 border-b border-border shrink-0">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 className="text-base font-bold leading-tight">Invitations</h2>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                {invitations.length} total
+                                {statusCounts.pending > 0 && <> · <span className="text-amber-600 dark:text-amber-400 font-medium">{statusCounts.pending} need action</span></>}
+                            </p>
+                        </div>
+                        {statusCounts.pending > 0 && (
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                                {statusCounts.pending}
+                            </span>
                         )}
-                    >
-                        {status.label} ({statusCounts[status.key as keyof typeof statusCounts]})
-                    </button>
-                ))}
-            </div>
+                    </div>
+                    {/* Filter tabs */}
+                    <div className="flex gap-0.5 rounded-lg bg-muted/40 p-0.5">
+                        {[
+                            { key: 'all', label: 'All' },
+                            { key: 'pending', label: 'Pending' },
+                            { key: 'accepted', label: 'Accepted' },
+                            { key: 'declined', label: 'Declined' },
+                            { key: 'cancelled', label: 'Cancelled' },
+                        ].map(status => (
+                            <button
+                                key={status.key}
+                                onClick={() => setFilter(status.key)}
+                                className={cn(
+                                    "flex-1 rounded-md px-1.5 py-1 text-[10px] font-semibold transition-colors",
+                                    filter === status.key
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                {status.label}
+                                <span className={cn("ml-0.5 opacity-60", filter === status.key && "opacity-100")}>
+                                    ({statusCounts[status.key as keyof typeof statusCounts]})
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-            {/* Split View Layout */}
-            {filteredInvitations.length === 0 ? (
-                <Card variant="glass" className="border-dashed">
-                    <CardContent className="py-14 text-center">
-                        <Mail className="mx-auto mb-4 h-12 w-12 text-primary/60" />
-                        <h3 className="mb-2 text-lg font-semibold">No invitations found</h3>
-                        <p className="text-muted-foreground">
-                            {filter === 'all'
-                                ? "You haven't sent any interview invitations yet."
-                                : `No ${filter} invitations found.`}
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-3">
-                    {/* Left Side - Compact Cards List */}
-                    <div className="scrollbar-hide space-y-2 overflow-y-auto p-1 lg:col-span-1">
+                {/* Card list */}
+                <div className="flex-1 overflow-y-auto min-h-[300px] md:min-h-0">
+                    {filteredInvitations.length === 0 ? (
+                        <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
+                            No invitations in this filter.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border/60">
                         {filteredInvitations.map((invitation) => {
                             const badge = getInvitationStatusBadge(invitation);
+                            const isSelected = selectedInvitation?.id === invitation.id;
                             return (
-                            <Card
-                                key={invitation.id}
-                                variant="glass"
-                                className={cn(
-                                    "cursor-pointer border-border/50 hover:border-primary/30",
-                                    selectedInvitation?.id === invitation.id && "ring-2 ring-primary/50"
-                                )}
-                                onClick={() => handleSelectInvitation(invitation)}
-                            >
-                                <CardContent className="p-3.5">
+                                <button
+                                    key={invitation.id}
+                                    onClick={() => handleSelectInvitation(invitation)}
+                                    className={cn(
+                                        "w-full text-left px-4 py-3.5 transition-colors relative",
+                                        isSelected ? "bg-primary/6 dark:bg-primary/10" : "hover:bg-muted/40"
+                                    )}
+                                >
+                                    {isSelected && (
+                                        <div className="absolute inset-y-0 left-0 w-0.5 bg-primary rounded-r-full" />
+                                    )}
                                     <div className="flex items-start gap-2.5">
-                                        <Avatar className="h-10 w-10 flex-shrink-0">
+                                        <Avatar className="h-9 w-9 shrink-0 mt-0.5">
                                             <AvatarImage src={invitation.candidate.profile_image_url || undefined} />
                                             <AvatarFallback className="text-xs">
                                                 {invitation.candidate.first_name[0]}{invitation.candidate.last_name[0]}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-sm truncate">
+                                            <p className={cn(
+                                                "text-[13px] font-semibold leading-snug truncate",
+                                                isSelected ? "text-foreground" : "text-foreground/90"
+                                            )}>
                                                 {invitation.candidate.first_name} {invitation.candidate.last_name}
-                                            </h3>
-                                            <p className="text-xs text-muted-foreground truncate">
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                                                 {invitation.job_designation}
                                             </p>
                                             <div className="flex items-center justify-between mt-1.5">
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatTimestamp(invitation.sent_at, "MMM d")}
-                                                </p>
-                                                <Badge variant={badge.variant} className={cn(badge.className, "text-xs px-2 py-0")}>
+                                                <span className={cn(
+                                                    "inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-1.5 py-0.5",
+                                                    badge.className
+                                                )}>
+                                                    <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-current opacity-70" />
                                                     {badge.label}
-                                                </Badge>
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground/60 tabular-nums">
+                                                    {formatTimestamp(invitation.sent_at, "MMM d")}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </button>
                             );
                         })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Right panel ── */}
+            {selectedInvitation ? (
+                <InvitationDetailPanel
+                    selectedInvitation={selectedInvitation}
+                    selectedBadge={selectedBadge}
+                    hasInterviewOutcome={hasInterviewOutcome}
+                    setHasInterviewOutcome={setHasInterviewOutcome}
+                    isConfirming={isConfirming}
+                    confirmedTime={confirmedTime}
+                    setConfirmedTime={setConfirmedTime}
+                    meetingLink={meetingLink}
+                    setMeetingLink={setMeetingLink}
+                    interviewAddress={interviewAddress}
+                    setInterviewAddress={setInterviewAddress}
+                    mapLink={mapLink}
+                    setMapLink={setMapLink}
+                    isCanceling={isCanceling}
+                    handleConfirmInterview={handleConfirmInterview}
+                    setShowCancelDialog={setShowCancelDialog}
+                    fetchInvitations={fetchInvitations}
+                    onBack={() => setSelectedInvitation(null)}
+                />
+            ) : (
+                <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-12 bg-muted/10">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border">
+                        <User className="h-8 w-8 text-muted-foreground/50" />
                     </div>
-
-                    {/* Right Side - Detailed View */}
-                    <div className="lg:col-span-2 overflow-hidden">
-                        {selectedInvitation ? (
-                            <div className="h-full overflow-y-auto scrollbar-hide">
-                                <Card variant="glass" className="overflow-hidden border-primary/15 shadow-lg">
-                                    <CardHeader className="bg-muted/50 py-3 px-4">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex items-start gap-3">
-                                                <Avatar className="h-14 w-14 flex-shrink-0">
-                                                    <AvatarImage src={selectedInvitation.candidate.profile_image_url || undefined} />
-                                                    <AvatarFallback>
-                                                        {selectedInvitation.candidate.first_name[0]}{selectedInvitation.candidate.last_name[0]}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <CardTitle className="text-lg mb-1">
-                                                        {selectedInvitation.candidate.first_name} {selectedInvitation.candidate.last_name}
-                                                    </CardTitle>
-                                                    <CardDescription className="space-y-0.5 text-xs">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Briefcase className="h-3 w-3" />
-                                                            {selectedInvitation.candidate.current_position}
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Mail className="h-3 w-3" />
-                                                            {selectedInvitation.candidate.email}
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Phone className="h-3 w-3" />
-                                                            {formatPhoneNumber(selectedInvitation.candidate.phone)}
-                                                        </div>
-                                                    </CardDescription>
-                                                </div>
-                                            </div>
-                                            {selectedBadge ? (
-                                                <Badge variant={selectedBadge.variant} className={cn(selectedBadge.className, "flex-shrink-0")}>
-                                                    {selectedBadge.label}
-                                                </Badge>
-                                            ) : null}
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent className="p-4 space-y-3">
-                                        {/* Position Details */}
-                                        <div className="grid gap-3 md:grid-cols-2">
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground">Position</p>
-                                                <p className="text-base font-semibold">{selectedInvitation.job_designation}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground">Industry</p>
-                                                <p className="text-base">{formatIndustry(selectedInvitation.industry)}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Message */}
-                                        {selectedInvitation.message && (
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground mb-1.5">Your Message</p>
-                                                <div className="bg-muted/50 rounded-md p-2.5 text-sm">
-                                                    {selectedInvitation.message}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Accepted - Show Selected Time and Mode */}
-                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && (
-                                            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md p-3">
-                                                <h4 className="font-semibold text-sm text-green-900 dark:text-green-100 mb-2">
-                                                    Interview Scheduled
-                                                </h4>
-                                                <div className="grid gap-2 md:grid-cols-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground">Date</p>
-                                                            <p className="font-semibold text-sm text-green-700 dark:text-green-300">
-                                                                {formatUTCDate(selectedInvitation.selected_time_slot.date)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    {!((selectedInvitation.selected_time_slot as any)?.is_alternative && !selectedInvitation.selected_time_slot.time) && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground">Time</p>
-                                                                <p className="font-semibold text-sm text-green-700 dark:text-green-300">
-                                                                    {selectedInvitation.selected_time_slot.time ? formatUTCTime(selectedInvitation.selected_time_slot.date, selectedInvitation.selected_time_slot.time) : 'Employer will set the time'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {selectedInvitation.interview_mode && (
-                                                        <div className="flex items-center gap-2 md:col-span-2">
-                                                            {selectedInvitation.interview_mode === 'online' ? (
-                                                                <Video className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                                                            ) : (
-                                                                <MapPinned className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            )}
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground">Interview Mode</p>
-                                                                <p className="font-semibold text-sm">
-                                                                    {selectedInvitation.interview_mode === 'online' ? 'Online Interview' : 'Physical Interview'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* MIS Reschedule Section */}
-                                        {selectedInvitation.mis_rescheduled && selectedInvitation.mis_reschedule_data && (
-                                            <>
-                                                <Separator className="my-3" />
-                                                <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800 space-y-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge className="bg-green-600 text-white">
-                                                            <Calendar className="h-3 w-3 mr-1" />
-                                                            Rescheduled by MIS
-                                                        </Badge>
-                                                        {selectedInvitation.mis_rescheduled_at && (
-                                                            <span className="text-xs text-muted-foreground">
-                                                                on {formatTimestamp(selectedInvitation.mis_rescheduled_at, "MMM d, yyyy")}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <h4 className="font-semibold text-sm text-green-900 dark:text-green-100">New Interview Schedule</h4>
-
-                                                    <div className="space-y-2 bg-white dark:bg-gray-900 rounded p-2.5 border text-sm">
-                                                        <div className="flex items-center gap-2">
-                                                            <Calendar className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            <div>
-                                                                <p className="text-xs text-green-700 dark:text-green-300">New Date</p>
-                                                                <p className="font-semibold text-sm">{formatUTCDate(selectedInvitation.mis_reschedule_data.date, "EEEE, MMMM d, yyyy")}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        <Separator />
-
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            <div>
-                                                                <p className="text-xs text-green-700 dark:text-green-300">New Time</p>
-                                                                <p className="font-semibold text-sm">{formatUTCTime(selectedInvitation.mis_reschedule_data.date, selectedInvitation.mis_reschedule_data.time)}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        <Separator />
-
-                                                        <div className="flex items-center gap-2">
-                                                            {selectedInvitation.mis_reschedule_data.interview_mode === 'online' ? (
-                                                                <Video className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            ) : (
-                                                                <MapPinned className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                                            )}
-                                                            <div>
-                                                                <p className="text-xs text-green-700 dark:text-green-300">Mode</p>
-                                                                <p className="font-semibold text-sm capitalize">{selectedInvitation.mis_reschedule_data.interview_mode} Interview</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {selectedInvitation.mis_reschedule_data.meeting_link && (
-                                                            <>
-                                                                <Separator />
-                                                                <div>
-                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1.5">Meeting Link</p>
-                                                                    <div className="flex gap-2">
-                                                                        <Input
-                                                                            value={selectedInvitation.mis_reschedule_data.meeting_link}
-                                                                            readOnly
-                                                                            className="flex-1 text-xs h-8"
-                                                                        />
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="h-8 px-2"
-                                                                            onClick={() => {
-                                                                                navigator.clipboard.writeText(selectedInvitation.mis_reschedule_data!.meeting_link!);
-                                                                                toast.success("Link copied!");
-                                                                            }}
-                                                                        >
-                                                                            <Copy className="h-3 w-3" />
-                                                                        </Button>
-                                                                        <Link href={selectedInvitation.mis_reschedule_data.meeting_link} target="_blank">
-                                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8 px-2">
-                                                                                <ExternalLink className="h-3 w-3" />
-                                                                            </Button>
-                                                                        </Link>
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        )}
-
-                                                        {selectedInvitation.mis_reschedule_data.interview_address && (
-                                                            <>
-                                                                <Separator />
-                                                                <div>
-                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Interview Address</p>
-                                                                    <p className="text-sm font-medium mb-2">{selectedInvitation.mis_reschedule_data.interview_address}</p>
-                                                                    {selectedInvitation.mis_reschedule_data.map_link && (
-                                                                        <Link href={selectedInvitation.mis_reschedule_data.map_link} target="_blank">
-                                                                            <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 h-8 text-xs">
-                                                                                <MapPinned className="h-3 w-3 mr-1.5" />
-                                                                                Open in Maps
-                                                                            </Button>
-                                                                        </Link>
-                                                                    )}
-                                                                </div>
-                                                            </>
-                                                        )}
-
-                                                        {selectedInvitation.mis_reschedule_data.notes && (
-                                                            <>
-                                                                <Separator />
-                                                                <div>
-                                                                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Notes</p>
-                                                                    <p className="text-xs">{selectedInvitation.mis_reschedule_data.notes}</p>
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Toggle for Original Details */}
-                                                    <Collapsible open={showOriginalDetails} onOpenChange={setShowOriginalDetails}>
-                                                        <CollapsibleTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
-                                                            >
-                                                                <ChevronDown className={`h-3 w-3 mr-1.5 transition-transform ${showOriginalDetails ? 'rotate-180' : ''}`} />
-                                                                {showOriginalDetails ? 'Hide' : 'View'} Original Schedule
-                                                            </Button>
-                                                        </CollapsibleTrigger>
-                                                        <CollapsibleContent className="mt-2">
-                                                            <div className="bg-muted/50 rounded p-2.5 border text-sm space-y-1.5">
-                                                                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Original Interview Details:</p>
-                                                                <div className="flex items-center gap-2 text-xs">
-                                                                    <Calendar className="h-3 w-3 text-muted-foreground" />
-                                                                    <span className="text-muted-foreground">Date:</span>
-                                                                    <span className="font-medium">{selectedInvitation.selected_time_slot && formatUTCDate(selectedInvitation.selected_time_slot.date)}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-2 text-xs">
-                                                                    <Clock className="h-3 w-3 text-muted-foreground" />
-                                                                    <span className="text-muted-foreground">Time:</span>
-                                                                    <span className="font-medium">
-                                                                        {selectedInvitation.selected_time_slot
-                                                                            ? formatUTCTime(
-                                                                                selectedInvitation.selected_time_slot.date,
-                                                                                ((selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time)
-                                                                                    ? selectedInvitation.confirmed_time
-                                                                                    : selectedInvitation.selected_time_slot.time
-                                                                            )
-                                                                            : (selectedInvitation.confirmed_time && selectedInvitation.confirmed_at
-                                                                                ? formatUTCTime(selectedInvitation.confirmed_at, selectedInvitation.confirmed_time)
-                                                                                : selectedInvitation.confirmed_time)
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                                {selectedInvitation.interview_mode && (
-                                                                    <div className="flex items-center gap-2 text-xs">
-                                                                        {selectedInvitation.interview_mode === 'online' ? (
-                                                                            <Video className="h-3 w-3 text-muted-foreground" />
-                                                                        ) : (
-                                                                            <MapPinned className="h-3 w-3 text-muted-foreground" />
-                                                                        )}
-                                                                        <span className="text-muted-foreground">Mode:</span>
-                                                                        <span className="font-medium capitalize">{selectedInvitation.interview_mode}</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </CollapsibleContent>
-                                                    </Collapsible>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Confirmation Section - Only for Accepted Invitations (hide if feedback given) */}
-                                        {selectedInvitation.status === 'accepted' && !selectedInvitation.invitation_canceled && selectedInvitation.selected_time_slot && !hasInterviewOutcome && (
-                                            <div>
-                                                {!selectedInvitation.interview_confirmed ? (
-                                                    /* Confirmation Form */
-                                                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                                                        <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
-                                                            <CheckCircle2 className="h-4 w-4" />
-                                                            Confirm Interview Details
-                                                        </h4>
-                                                        <div className="space-y-3">
-                                                            {/* Alternative Date - Time Slot Selection */}
-                                                            {(selectedInvitation.selected_time_slot as any)?.is_alternative && (
-                                                                <div>
-                                                                    <label className="text-xs font-medium mb-2 block">Select Time Slot *</label>
-                                                                    <div className="grid grid-cols-3 gap-2">
-                                                                        {[
-                                                                            "09:00", "10:00", "11:00",
-                                                                            "12:00", "13:00", "14:00",
-                                                                            "15:00", "16:00", "17:00"
-                                                                        ].map((time) => (
-                                                                            <button
-                                                                                key={time}
-                                                                                type="button"
-                                                                                onClick={() => setConfirmedTime(time)}
-                                                                                className={`px-3 py-2 rounded-md text-xs font-medium transition-all border ${confirmedTime === time
-                                                                                    ? 'bg-primary text-primary-foreground border-primary'
-                                                                                    : 'bg-background border-border hover:border-primary/50'
-                                                                                    }`}
-                                                                            >
-                                                                                {time}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                    {confirmedTime && (
-                                                                        <p className="text-xs text-muted-foreground mt-2">
-                                                                            Selected: <span className="font-semibold">{confirmedTime}</span>
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Online - Meeting Link */}
-                                                            {selectedInvitation.interview_mode === 'online' && (
-                                                                <div>
-                                                                    <label className="text-xs font-medium mb-1.5 block">Meeting Link *</label>
-                                                                    <Input
-                                                                        type="url"
-                                                                        value={meetingLink}
-                                                                        onChange={(e) => setMeetingLink(e.target.value)}
-                                                                        className="h-9 text-sm"
-                                                                        placeholder="https://zoom.us/j/... or Google Meet link"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Physical - Address & Map Link */}
-                                                            {selectedInvitation.interview_mode === 'physical' && (
-                                                                <>
-                                                                    <div>
-                                                                        <label className="text-xs font-medium mb-1.5 block">Interview Address *</label>
-                                                                        <Input
-                                                                            type="text"
-                                                                            value={interviewAddress}
-                                                                            onChange={(e) => setInterviewAddress(e.target.value)}
-                                                                            className="h-9 text-sm"
-                                                                            placeholder="Full address with city and postal code"
-                                                                        />
-                                                                    </div>
-                                                                    <div>
-                                                                        <label className="text-xs font-medium mb-1.5 block">Map Link (Optional)</label>
-                                                                        <Input
-                                                                            type="url"
-                                                                            value={mapLink}
-                                                                            onChange={(e) => setMapLink(e.target.value)}
-                                                                            className="h-9 text-sm"
-                                                                            placeholder="https://maps.google.com/..."
-                                                                        />
-                                                                    </div>
-                                                                </>
-                                                            )}
-
-                                                            <Button
-                                                                onClick={handleConfirmInterview}
-                                                                disabled={isConfirming}
-                                                                className="w-full h-9"
-                                                                size="sm"
-                                                            >
-                                                                {isConfirming ? (
-                                                                    <>
-                                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                                        Confirming...
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                                                        Confirm Interview
-                                                                    </>
-                                                                )}
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    /* Confirmed Details Display */
-                                                    <div className={selectedInvitation.invitation_canceled ? "bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-md p-3" : "bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-md p-3"}>
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <h4 className={`font-semibold text-sm ${selectedInvitation.invitation_canceled ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100'} flex items-center gap-2`}>
-                                                                {selectedInvitation.invitation_canceled ? (
-                                                                    <X className="h-4 w-4" />
-                                                                ) : (
-                                                                    <CheckCircle2 className="h-4 w-4" />
-                                                                )}
-                                                                {selectedInvitation.invitation_canceled ? 'Interview Canceled' : 'Interview Confirmed'}
-                                                            </h4>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 px-2"
-                                                                onClick={() => setShowConfirmedDetails(!showConfirmedDetails)}
-                                                            >
-                                                                <ChevronDown className={`h-3 w-3 transition-transform ${showConfirmedDetails ? '' : 'rotate-180'}`} />
-                                                            </Button>
-                                                        </div>
-                                                        <Collapsible open={showConfirmedDetails}>
-                                                            <CollapsibleContent>
-                                                                <div className="space-y-2 text-sm">
-                                                                    {/* Alternative Date - Show Confirmed Time */}
-                                                                    {(selectedInvitation.selected_time_slot as any)?.is_alternative && selectedInvitation.confirmed_time && (
-                                                                        <div>
-                                                                            <p className="text-xs text-muted-foreground">Confirmed Time</p>
-                                                                            <p className="font-semibold">
-                                                                                {formatUTCTime(selectedInvitation.selected_time_slot?.date || "", selectedInvitation.confirmed_time)}
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* Online - Show Meeting Link */}
-                                                                    {selectedInvitation.interview_mode === 'online' && selectedInvitation.meeting_link && (
-                                                                        <div>
-                                                                            <p className="text-xs text-muted-foreground mb-1">Meeting Link</p>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Input
-                                                                                    value={selectedInvitation.meeting_link}
-                                                                                    readOnly
-                                                                                    className="h-8 text-xs flex-1"
-                                                                                />
-                                                                                <Button
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    className="h-8 px-2"
-                                                                                    onClick={() => {
-                                                                                        navigator.clipboard.writeText(selectedInvitation.meeting_link!);
-                                                                                        toast.success("Link copied!");
-                                                                                    }}
-                                                                                >
-                                                                                    <Copy className="h-3 w-3" />
-                                                                                </Button>
-                                                                                <Link href={selectedInvitation.meeting_link} target="_blank">
-                                                                                    <Button size="sm" variant="outline" className="h-8 px-2">
-                                                                                        <ExternalLink className="h-3 w-3" />
-                                                                                    </Button>
-                                                                                </Link>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* Physical - Show Address & Map Link */}
-                                                                    {selectedInvitation.interview_mode === 'physical' && selectedInvitation.interview_address && (
-                                                                        <>
-                                                                            <div>
-                                                                                <p className="text-xs text-muted-foreground">Interview Address</p>
-                                                                                <p className="font-semibold">{selectedInvitation.interview_address}</p>
-                                                                            </div>
-                                                                            {selectedInvitation.map_link && (
-                                                                                <div>
-                                                                                    <Link href={selectedInvitation.map_link} target="_blank">
-                                                                                        <Button size="sm" variant="outline" className="h-8 text-xs">
-                                                                                            <MapPinned className="h-3 w-3 mr-1.5" />
-                                                                                            Open Map
-                                                                                        </Button>
-                                                                                    </Link>
-                                                                                </div>
-                                                                            )}
-                                                                        </>
-                                                                    )}
-
-                                                                    {selectedInvitation.confirmed_at && (
-                                                                        <p className="text-xs text-muted-foreground pt-2 border-t">
-                                                                            Confirmed on {formatTimestamp(selectedInvitation.confirmed_at)}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            </CollapsibleContent>
-                                                        </Collapsible>
-
-
-                                                        {/* Cancel Interview Button */}
-                                                        {!selectedInvitation.invitation_canceled && (
-                                                            <div className="mt-3 pt-3 border-t">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="w-full h-8 border-red-500 text-red-700 hover:bg-red-500 hover:text-white dark:bg-red-500 dark:text-red-100 dark:hover:bg-red-300 dark:hover:text-red-500"
-                                                                    onClick={() => setShowCancelDialog(true)}
-                                                                >
-                                                                    <X className="h-3 w-3 mr-2" />
-                                                                    Cancel Interview
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Canceled Interview Status */}
-                                        {selectedInvitation.invitation_canceled && (
-                                            <div className="mt-3">
-                                                {!showCanceledDetails ? (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                                        onClick={() => setShowCanceledDetails(true)}
-                                                    >
-                                                        <X className="h-3 w-3 mr-2" />
-                                                        View Canceled Interview Details
-                                                    </Button>
-                                                ) : (
-                                                    <div className="bg-gray-50 dark:bg-gray-900/10 border border-red-500 rounded-md p-3">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                                                <X className="h-4 w-4 text-red-700 dark:text-red-300" />
-                                                                Interview Canceled
-                                                            </h4>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 px-2"
-                                                                onClick={() => setShowCanceledDetails(false)}
-                                                            >
-                                                                <ChevronUp className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                        <div className="space-y-2 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                                                            <div>
-                                                                <p className="text-xs text-muted-foreground">Canceled By</p>
-                                                                <p className="font-semibold">
-                                                                    {selectedInvitation.canceled_by === 'employer' ? 'You' : 'Candidate'}
-                                                                </p>
-                                                            </div>
-                                                            {selectedInvitation.canceled_at && (
-                                                                <div>
-                                                                    <p className="text-xs text-muted-foreground">Canceled On</p>
-                                                                    <p className="font-semibold">
-                                                                        {formatTimestamp(selectedInvitation.canceled_at)}
-                                                                    </p>
-                                                                </div>
-                                                            )}
-                                                            {selectedInvitation.cancellation_reason && (
-                                                                <div>
-                                                                    <p className="text-xs text-muted-foreground">Reason</p>
-                                                                    <p className="text-sm whitespace-pre-wrap">{selectedInvitation.cancellation_reason}</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Candidate Reschedule Request Alert */}
-                                        {selectedInvitation.status === 'declined' && selectedInvitation.candidate_reschedule_requested && (
-                                            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
-                                                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
-                                                    <Calendar className="h-4 w-4" />
-                                                    <span className="font-semibold text-sm">Reschedule Requested</span>
-                                                </div>
-                                                <p className="text-xs text-amber-700 dark:text-amber-400">
-                                                    The candidate declined the proposed slots and requested alternative dates.
-                                                </p>
-                                                {selectedInvitation.reschedule_request_reason && (
-                                                    <div className="mt-2 text-xs bg-white/50 dark:bg-black/20 p-2 rounded border border-amber-100 dark:border-amber-900/50 italic">
-                                                        "{selectedInvitation.reschedule_request_reason}"
-                                                    </div>
-                                                )}
-                                                <div className="pt-1">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="w-full h-8 border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-white dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-700 dark:hover:text-amber-100"
-                                                        onClick={() => {
-                                                            toast.info("Please send a new invitation with updated slots.");
-                                                        }}
-                                                    >
-                                                        Review & Send New Slots
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Proposed Time Slots */}
-                                        {selectedInvitation.given_time_slots && selectedInvitation.given_time_slots.length > 0 && (
-                                            <div>
-                                                <p className="text-xs font-medium text-muted-foreground mb-1.5">Proposed Time Slots</p>
-                                                <div className="grid gap-1.5 md:grid-cols-2">
-                                                    {selectedInvitation.given_time_slots.map((slot, idx) => (
-                                                        <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md text-xs">
-                                                            <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                                            <span>{formatUTCDate(slot.date)} at {formatUTCTime(slot.date, slot.time)}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Interview Rounds Management */}
-                                        {selectedInvitation.interview_confirmed && !selectedInvitation.invitation_canceled && (
-                                            <>
-                                                <Separator className="my-4" />
-                                                {/* Visual Roadmap */}
-                                                <InterviewRoadmap
-                                                    invitationId={selectedInvitation.id}
-                                                    userRole="employer"
-                                                    onOutcomeFound={setHasInterviewOutcome}
-                                                    className="mb-4"
-                                                />
-                                                {/* Management Actions */}
-                                                <InterviewRoundsDisplay
-                                                    invitationId={selectedInvitation.id}
-                                                    candidateName={`${selectedInvitation.candidate.first_name} ${selectedInvitation.candidate.last_name}`}
-                                                    jobTitle={selectedInvitation.job_designation}
-                                                    onUpdate={fetchInvitations}
-                                                    onOutcomeFound={setHasInterviewOutcome}
-                                                />
-                                            </>
-                                        )}
-
-                                        {/* Metadata */}
-                                        <div className="pt-3 border-t text-xs text-muted-foreground space-y-0.5 items-end flex flex-col justify-end">
-                                            <p>Sent by: {selectedInvitation.employer.first_name} {selectedInvitation.employer.last_name}</p>
-                                            <p>Sent: {formatTimestamp(selectedInvitation.sent_at)}</p>
-                                            {selectedInvitation.viewed_at && (
-                                                <p>Viewed: {formatTimestamp(selectedInvitation.viewed_at)}</p>
-                                            )}
-                                            {selectedInvitation.responded_at && (
-                                                <p>Responded: {formatTimestamp(selectedInvitation.responded_at)}</p>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        ) : (
-                            <Card>
-                                <CardContent className="py-12 text-center">
-                                    <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                                    <p className="text-muted-foreground">Select an invitation to view details</p>
-                                </CardContent>
-                            </Card>
-                        )}
+                    <div className="space-y-1 max-w-xs">
+                        <p className="text-sm font-semibold text-foreground">No invitation selected</p>
+                        <p className="text-xs text-muted-foreground">Pick a thread on the left to view details.</p>
                     </div>
                 </div>
-            )
-            }
+            )}
 
 
             {/* Cancellation Dialog */}
@@ -1133,15 +1252,6 @@ export default function InvitationsClient() {
                 </DialogContent>
             </Dialog>
 
-            <style jsx global>{`
-                .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-                .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                }
-            `}</style>
-        </div >
+        </div>
     );
 }

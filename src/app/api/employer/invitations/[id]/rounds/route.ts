@@ -81,7 +81,9 @@ export async function GET(
                 outcome_by,
                 sent_at,
                 viewed_at,
-                responded_at
+                responded_at,
+                mis_rescheduled,
+                mis_reschedule_data
             `)
             .eq('invitation_id', invitationId)
             .order('round_number', { ascending: true });

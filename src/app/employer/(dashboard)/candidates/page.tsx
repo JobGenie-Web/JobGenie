@@ -23,7 +23,8 @@ interface CandidateForTable {
     highest_qualification: string | null;
     qualifications: string[];
     expected_positions: string[];  // Positions the candidate is targeting
-    invited: boolean;  // Track if candidate has been invited
+    invited: boolean;  // Track if candidate has been invited by this company
+    isHiredElsewhere: boolean;  // Candidate hired by a different company
     // Invitation journey fields (present when invited=true)
     invitationStatus?: string | null;
     invitationPipelineStatus?: string | null;
@@ -59,34 +60,49 @@ export default async function EmployerCandidatesPage() {
         redirect("/employer/login");
     }
 
-    // Get employer ID
+    // Get employer record including company_id
     const { data: employer } = await supabase
         .from('employers')
-        .select('id')
+        .select('id, company_id')
         .eq('user_id', user.id)
         .single();
 
-    // Fetch approved candidates
-    const candidates = await getApprovedCandidates();
+    const thisCompanyId = employer?.company_id ?? '';
 
-    // Fetch invitation statuses for this employer (exclude canceled invitations)
-    const { data: invitations } = await supabase
-        .from('job_invitations')
-        .select('candidate_id, status, pipeline_status, interview_confirmed, current_round_number, mis_rescheduled')
-        .eq('employer_id', employer?.id || '')
-        .eq('invitation_canceled', false);  // Only active invitations
+    // Fetch approved candidates and all invitation data in parallel
+    const [candidates, invitationsResult, hiredResult] = await Promise.all([
+        getApprovedCandidates(),
+        supabase
+            .from('job_invitations')
+            .select('candidate_id, status, pipeline_status, interview_confirmed, current_round_number, mis_rescheduled')
+            .eq('company_id', thisCompanyId)
+            .eq('invitation_canceled', false),
+        supabase
+            .from('job_invitations')
+            .select('candidate_id, company_id')
+            .eq('pipeline_status', 'hired')
+            .eq('invitation_canceled', false),
+    ]);
 
-    // Build a lookup map: candidate_id -> invitation fields
+    // Build a lookup map: candidate_id -> active invitation for this company
     const invitationMap = new Map(
-        (invitations ?? []).map(inv => [inv.candidate_id, inv])
+        (invitationsResult.data ?? [])
+            .filter(inv =>
+                !['declined', 'expired'].includes(inv.status ?? '') &&
+                !['rejected', 'withdrawn', 'expired'].includes(inv.pipeline_status ?? '')
+            )
+            .map(inv => [inv.candidate_id, inv])
     );
 
     // Add invitation status to candidates
     const candidatesWithStatus = candidates.map(candidate => {
         const inv = invitationMap.get(candidate.id);
+        const hiredEntry = (hiredResult.data ?? []).find(h => h.candidate_id === candidate.id);
+        const isHiredElsewhere = !!hiredEntry && hiredEntry.company_id !== thisCompanyId;
         return {
             ...candidate,
             invited: !!inv,
+            isHiredElsewhere,
             invitationStatus: inv?.status ?? null,
             invitationPipelineStatus: inv?.pipeline_status ?? null,
             invitationInterviewConfirmed: inv?.interview_confirmed ?? false,

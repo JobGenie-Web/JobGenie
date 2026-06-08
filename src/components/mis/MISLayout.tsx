@@ -44,24 +44,22 @@ export async function MISLayout({ children, pageTitle, pageDescription }: MISLay
     }
 
     return (
-        <SidebarProvider>
-            <div className="flex h-screen w-full overflow-hidden">
-                <MISSidebar />
-                <SidebarInset className="flex flex-col flex-1 h-screen overflow-hidden">
-                    <MISHeader
-                        user={user}
-                        pageTitle={pageTitle}
-                        pageDescription={pageDescription}
-                    />
-                    <div className="flex-1 overflow-y-auto">
-                        <PageTransitionWrapper>
-                            <div className="bg-muted/30 p-4 md:p-6 min-h-full">
-                                {children}
-                            </div>
-                        </PageTransitionWrapper>
-                    </div>
-                </SidebarInset>
-            </div>
+        <SidebarProvider className="h-dvh! min-h-0! overflow-hidden">
+            <MISSidebar />
+            <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+                <MISHeader
+                    user={user}
+                    pageTitle={pageTitle}
+                    pageDescription={pageDescription}
+                />
+                <div className="flex-1 overflow-y-auto min-h-0">
+                    <PageTransitionWrapper>
+                        <div className="bg-muted/30 p-4 md:p-6 min-h-full">
+                            {children}
+                        </div>
+                    </PageTransitionWrapper>
+                </div>
+            </SidebarInset>
         </SidebarProvider>
     );
 }
