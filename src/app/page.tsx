@@ -13,7 +13,7 @@ import {
 
 export default function Home() {
     return (
-        <div style={{ background: '#0a0a0a', minHeight: '100vh', overflowX: 'hidden', width: '100%', position: 'relative' }}>
+        <div className="landing-page" style={{ background: 'var(--lp-bg)', color: 'var(--lp-text)', minHeight: '100vh', overflowX: 'hidden', width: '100%', position: 'relative' }}>
             <Header />
             <main style={{ overflowX: 'hidden', width: '100%' }}>
                 <Hero />

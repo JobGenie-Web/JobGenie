@@ -111,14 +111,14 @@ function PipelineCard({ fluid = false }: { fluid?: boolean }) {
         { label: 'Applied', n: 124, color: '#f59e0b' },
         { label: 'Screened', n: 47, color: '#3b82f6' },
         { label: 'Interview', n: 19, color: '#8b5cf6' },
-        { label: 'Offer', n: 6, color: '#00bb30' },
+        { label: 'Offer', n: 6, color: 'var(--c-green)' },
     ];
     return (
         <div style={{ padding: 'clamp(10px, 3vw, 14px)', borderRadius: 'clamp(12px, 3.5vw, 14px)', width: fluid ? '100%' : 240, minWidth: fluid ? 0 : 200, background: 'var(--lp-glass-bg)', border: '1px solid var(--lp-glass-border)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', boxShadow: 'var(--lp-glass-shadow)', animation: 'floatB 9s ease-in-out infinite' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(8px, 2.5vw, 10px)' }}>
                 <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-60)' }}>Hiring Pipeline</span>
-                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 'clamp(2px, 0.7vw, 3px)', color: '#00aa30' }}>
-                    <span className="anim-pulse-green" style={{ width: 'clamp(3px, 1vw, 4px)', height: 'clamp(3px, 1vw, 4px)', borderRadius: '50%', background: '#00aa30', display: 'inline-block' }} />LIVE
+                <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 'clamp(2px, 0.7vw, 3px)', color: 'var(--c-green)' }}>
+                    <span className="anim-pulse-green" style={{ width: 'clamp(3px, 1vw, 4px)', height: 'clamp(3px, 1vw, 4px)', borderRadius: '50%', background: 'var(--c-green)', display: 'inline-block' }} />LIVE
                 </span>
             </div>
             {stages.map((s, i) => (
@@ -146,21 +146,21 @@ function MatchCard({ fluid = false }: { fluid?: boolean }) {
                 <div style={{ position: 'relative', width: 'clamp(35px, 10vw, 40px)', height: 'clamp(35px, 10vw, 40px)', flexShrink: 0 }}>
                     <svg width={'clamp(35px, 10vw, 40px)'} height={'clamp(35px, 10vw, 40px)'} viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
                         <circle cx="44" cy="44" r="38" fill="none" stroke="var(--lp-border)" strokeWidth="7" />
-                        <circle cx="44" cy="44" r="38" fill="none" stroke="#00cc36" strokeWidth="7" strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 9px rgba(0,200,54,0.7))' }} />
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="var(--c-green)" strokeWidth="7" strokeDasharray={`${(pct / 100) * circ} ${circ}`} strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 9px var(--c-green-60))' }} />
                     </svg>
                     <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, color: 'var(--lp-text)', fontFamily: 'monospace' }}>{pct}%</span>
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text)', marginBottom: 'clamp(1px, 0.5vw, 2px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Senior Engineer</div>
                     <div style={{ fontSize: 'clamp(8px, 2.2vw, 9px)', color: 'var(--lp-text-28)', marginBottom: 'clamp(4px, 1.2vw, 5px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>TechCorp · Remote</div>
-                    <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, padding: '2px clamp(4px, 1.2vw, 5px)', borderRadius: 'clamp(3px, 1vw, 4px)', letterSpacing: '0.05em', background: 'rgba(0,180,60,0.12)', color: '#00aa30', border: '1px solid rgba(0,180,60,0.25)', whiteSpace: 'nowrap', display: 'inline-block' }}>✦ TOP MATCH</span>
+                    <span style={{ fontSize: 'clamp(7px, 2vw, 8px)', fontWeight: 800, padding: '2px clamp(4px, 1.2vw, 5px)', borderRadius: 'clamp(3px, 1vw, 4px)', letterSpacing: '0.05em', background: 'var(--c-green-12)', color: 'var(--c-green)', border: '1px solid var(--c-green-30)', whiteSpace: 'nowrap', display: 'inline-block' }}>✦ TOP MATCH</span>
                 </div>
             </div>
         </div>
     );
 }
 
-function NotifPill({ text, sub, color = '#00aa30', animClass = 'anim-float-c', fluid = false, borderPosition = 'left' }: {
+function NotifPill({ text, sub, color = 'var(--c-green)', animClass = 'anim-float-c', fluid = false, borderPosition = 'left' }: {
     text: string; sub: string; color?: string; animClass?: string; fluid?: boolean; borderPosition?: 'left' | 'right';
 }) {
     const borderStyle = borderPosition === 'left' 
@@ -206,9 +206,47 @@ function useTextSwap(intervalMs = 5000) {
     return { isEmployer, isTransitioning };
 }
 
+const heroCtaPrimary: React.CSSProperties = {
+    background: 'var(--c-green)',
+    color: '#fff',
+    border: '1px solid transparent',
+    boxShadow: '0 0 36px var(--c-green-40)',
+};
+
+const heroCtaSecondary: React.CSSProperties = {
+    background: 'var(--lp-surface)',
+    color: 'var(--lp-text-60)',
+    border: '1px solid var(--lp-border)',
+    boxShadow: 'none',
+};
+
+function heroCtaStyle(active: boolean): React.CSSProperties {
+    return active ? heroCtaPrimary : heroCtaSecondary;
+}
+
+function heroCtaHover(el: HTMLElement, active: boolean, entering: boolean) {
+    if (active) {
+        if (entering) {
+            el.style.transform = 'translateY(-2px)';
+            el.style.boxShadow = '0 8px 48px var(--c-green-60)';
+        } else {
+            el.style.transform = 'none';
+            el.style.boxShadow = heroCtaPrimary.boxShadow as string;
+        }
+        return;
+    }
+    if (entering) {
+        el.style.borderColor = 'var(--c-green-40)';
+        el.style.color = 'var(--lp-text)';
+    } else {
+        el.style.borderColor = 'var(--lp-border)';
+        el.style.color = 'var(--lp-text-60)';
+    }
+}
+
 export function Hero() {
     const show = useFadeIn();
-    const { isEmployer, isTransitioning } = useTextSwap(5000);
+    const { isEmployer, isTransitioning } = useTextSwap(10000);
     
     const fd = (delay: number): React.CSSProperties => ({
         opacity: show ? 1 : 0,
@@ -272,7 +310,7 @@ export function Hero() {
                     { r: '22%', b: '22%', s: 3.5, d: 0.6 },
                     { r: '5%', b: '35%', s: 3, d: 1.3 },
                 ].map((p, i) => (
-                    <div key={`right-${i}`} className="pointer-events-none absolute rounded-full" style={{ right: p.r, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: i >= 4 ? 0.7 : 1 }} />
+                    <div key={`right-${i}`} className="pointer-events-none absolute rounded-full" style={{ right: p.r, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: 'var(--c-green)', boxShadow: `0 0 ${p.s * 2}px var(--c-green-60)`, animation: `sparkleUp ${1.8 + i * 0.25}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: i >= 4 ? 0.7 : 1 }} />
                 ))}
                 {/* Left side sparkles (mobile-friendly) */}
                 {[
@@ -280,7 +318,7 @@ export function Hero() {
                     { l: '15%', b: '25%', s: 3, d: 0.9 },
                     { l: '7%', b: '10%', s: 3.5, d: 1.2 },
                 ].map((p, i) => (
-                    <div key={`left-${i}`} className="pointer-events-none absolute rounded-full lg:hidden" style={{ left: p.l, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: '#00cc44', boxShadow: `0 0 ${p.s * 2}px rgba(0,200,60,0.85)`, animation: `sparkleUp ${2.0 + i * 0.3}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: 0.7 }} />
+                    <div key={`left-${i}`} className="pointer-events-none absolute rounded-full lg:hidden" style={{ left: p.l, bottom: p.b, width: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, height: `clamp(${p.s * 0.6}px, ${p.s * 0.2}vw, ${p.s}px)`, background: 'var(--c-green)', boxShadow: `0 0 ${p.s * 2}px var(--c-green-60)`, animation: `sparkleUp ${2.0 + i * 0.3}s ${p.d}s ease-out infinite`, zIndex: 2, opacity: 0.7 }} />
                 ))}
 
                 {/* ── Main content ── */}
@@ -289,15 +327,15 @@ export function Hero() {
                     {/* ═══ MOBILE LAYOUT (< lg) ═══ */}
                     <div className="lg:hidden px-4 xs:px-5 sm:px-6 pt-20 xs:pt-24 sm:pt-28 pb-8 sm:pb-10 flex flex-col items-center text-center">
                         {/* Badge */}
-                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
-                            <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border mb-4 sm:mb-6 max-w-[95vw]" style={{ ...fd(0), borderColor: 'var(--c-green-30)', background: 'var(--c-green-06)' }}>
+                            <span style={{ padding: '2px 6px sm:2px 8px', borderRadius: 99, background: 'var(--c-green)', color: '#fff', fontSize: 'clamp(8px, 2vw, 9px)', fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>NEW</span>
                             <span style={{ ...textTransition(0), fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 500, color: 'var(--lp-text-45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentContent.badge}</span>
                         </div>
 
                         {/* Headline */}
                         <h1 style={{ ...fd(50), fontSize: 'clamp(32px, 9.5vw, 58px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.06, color: 'var(--lp-heading)', marginBottom: 'clamp(12px, 3vw, 16px)', maxWidth: '100%', wordWrap: 'break-word' }}>
                             <span style={textTransition(50)}>{currentContent.headline}</span><br />
-                            <span style={{ ...textTransition(50), color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                            <span style={{ ...textTransition(50), color: 'var(--c-green)', textShadow: '0 0 60px var(--c-green-30)' }}>{currentContent.highlightWord}</span>
                         </h1>
 
                         {/* Subtext */}
@@ -312,18 +350,17 @@ export function Hero() {
                                     padding: 'clamp(12px, 3vw, 14px) clamp(20px, 5vw, 26px)', 
                                     minHeight: 44, 
                                     borderRadius: 9999, 
-                                    background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
-                                    color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
                                     fontSize: 'clamp(14px, 3.5vw, 15px)', 
                                     fontWeight: isEmployer ? 600 : 700, 
                                     textDecoration: 'none', 
-                                    boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
-                                    border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center',
-                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out',
+                                    ...heroCtaStyle(!isEmployer),
                                 }}
+                                onMouseEnter={(e) => heroCtaHover(e.currentTarget, !isEmployer, true)}
+                                onMouseLeave={(e) => heroCtaHover(e.currentTarget, !isEmployer, false)}
                             >Start as Candidate</Link>
                             <Link href="/employer/signup" className="text-center touch-manipulation"
                                 style={{ 
@@ -333,15 +370,14 @@ export function Hero() {
                                     fontSize: 'clamp(14px, 3.5vw, 15px)', 
                                     fontWeight: isEmployer ? 700 : 600, 
                                     textDecoration: 'none', 
-                                    background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
-                                    color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
-                                    boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
-                                    border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center',
-                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out'
+                                    transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out',
+                                    ...heroCtaStyle(isEmployer),
                                 }}
+                                onMouseEnter={(e) => heroCtaHover(e.currentTarget, isEmployer, true)}
+                                onMouseLeave={(e) => heroCtaHover(e.currentTarget, isEmployer, false)}
                             >Register Company</Link>
                         </div>
 
@@ -388,14 +424,14 @@ export function Hero() {
                         {/* Left copy */}
                         <div>
                             {/* Badge */}
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(0), borderColor: 'rgba(0,180,60,0.30)', background: 'rgba(0,180,60,0.07)' }}>
-                                <span style={{ padding: '2px 8px', borderRadius: 99, background: '#00cc44', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-8" style={{ ...fd(0), borderColor: 'var(--c-green-30)', background: 'var(--c-green-06)' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 99, background: 'var(--c-green)', color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em' }}>NEW</span>
                                 <span style={{ ...textTransition(0), fontSize: 12, fontWeight: 500, color: 'var(--lp-text-45)' }}>{currentContent.badge}</span>
                             </div>
 
                             <h1 style={{ ...fd(50), fontSize: 'clamp(42px, 5vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.04, color: 'var(--lp-heading)', marginBottom: 20 }}>
                                 <span style={textTransition(50)}>{currentContent.headline}</span><br />
-                                <span style={{ ...textTransition(50), color: '#00bb30', textShadow: '0 0 60px rgba(0,180,60,0.35)' }}>{currentContent.highlightWord}</span>
+                                <span style={{ ...textTransition(50), color: 'var(--c-green)', textShadow: '0 0 60px var(--c-green-30)' }}>{currentContent.highlightWord}</span>
                             </h1>
 
                             <p style={{ ...textTransition(100), fontSize: 'clamp(14px, 1.4vw, 17px)', color: 'var(--lp-text-45)', lineHeight: 1.78, maxWidth: 480, marginBottom: 32 }}>
@@ -408,33 +444,14 @@ export function Hero() {
                                     style={{ 
                                         padding: '13px 26px', 
                                         borderRadius: 9999, 
-                                        background: isEmployer ? 'rgba(255, 255, 255, 0.05)' : 'rgb(0, 204, 68)', 
-                                        color: isEmployer ? 'rgba(255, 255, 255, 0.5)' : 'rgb(255, 255, 255)', 
                                         fontSize: 15, 
                                         fontWeight: isEmployer ? 600 : 700, 
                                         textDecoration: 'none', 
-                                        boxShadow: isEmployer ? '0 0 0 rgba(0,180,60,0)' : '0 0 36px rgba(0,180,60,0.38)', 
-                                        border: isEmployer ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 204, 68, 0)',
-                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out',
+                                        ...heroCtaStyle(!isEmployer),
                                     }}
-                                    onMouseEnter={e => { 
-                                        if (!isEmployer) {
-                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
-                                        } else {
-                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
-                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
-                                        }
-                                    }}
-                                    onMouseLeave={e => { 
-                                        if (!isEmployer) {
-                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
-                                        } else {
-                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
-                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
-                                        }
-                                    }}
+                                    onMouseEnter={(e) => heroCtaHover(e.currentTarget, !isEmployer, true)}
+                                    onMouseLeave={(e) => heroCtaHover(e.currentTarget, !isEmployer, false)}
                                 >Start as Candidate</Link>
                                 <Link href="/employer/signup"
                                     style={{ 
@@ -443,31 +460,12 @@ export function Hero() {
                                         fontSize: 15, 
                                         fontWeight: isEmployer ? 700 : 600, 
                                         textDecoration: 'none', 
-                                        background: isEmployer ? 'rgb(0, 204, 68)' : 'rgba(255, 255, 255, 0.05)', 
-                                        color: isEmployer ? 'rgb(255, 255, 255)' : 'rgba(255, 255, 255, 0.5)', 
-                                        boxShadow: isEmployer ? '0 0 36px rgba(0,180,60,0.38)' : '0 0 0 rgba(0,180,60,0)',
-                                        border: isEmployer ? '1px solid rgba(0, 204, 68, 0)' : '1px solid rgba(255, 255, 255, 0.1)', 
-                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out' 
+                                        transition: 'background 400ms ease-in-out, color 400ms ease-in-out, box-shadow 400ms ease-in-out, border-color 400ms ease-in-out, font-weight 400ms ease-in-out, transform 200ms ease-out',
+                                        ...heroCtaStyle(isEmployer),
                                     }}
-                                    onMouseEnter={e => { 
-                                        if (isEmployer) {
-                                            (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; 
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 48px rgba(0,180,60,0.55)';
-                                        } else {
-                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,180,60,0.4)'; 
-                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.9)';
-                                        }
-                                    }}
-                                    onMouseLeave={e => { 
-                                        if (isEmployer) {
-                                            (e.currentTarget as HTMLElement).style.transform = 'none'; 
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 0 36px rgba(0,180,60,0.38)';
-                                        } else {
-                                            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'; 
-                                            (e.currentTarget as HTMLElement).style.color = 'rgba(255, 255, 255, 0.5)';
-                                        }
-                                    }}
-                                >Register Company</Link>
+                                    onMouseEnter={(e) => heroCtaHover(e.currentTarget, isEmployer, true)}
+                                    onMouseLeave={(e) => heroCtaHover(e.currentTarget, isEmployer, false)}
+                                >Start as Employer</Link>
                             </div>
 
                             {/* Social proof */}

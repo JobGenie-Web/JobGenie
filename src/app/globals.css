@@ -51,53 +51,85 @@
   --color-accent-sky: var(--accent-sky);
 }
 
+/* ─── Theme-aware accent colors (used in inline styles across components) ─ */
+:root {
+  --c-green:       #007a1c;
+  --c-green-60:    rgba(0,100,28,0.60);
+  --c-green-40:    rgba(0,100,28,0.40);
+  --c-green-30:    rgba(0,100,28,0.30);
+  --c-green-20:    rgba(0,100,28,0.20);
+  --c-green-12:    rgba(0,100,28,0.12);
+  --c-green-08:    rgba(0,100,28,0.08);
+  --c-green-06:    rgba(0,100,28,0.06);
+  --c-blue:        #1a4ec7;
+  --c-blue-30:     rgba(26,78,199,0.30);
+  --c-blue-20:     rgba(26,78,199,0.20);
+  --c-blue-15:     rgba(26,78,199,0.15);
+  --c-blue-10:     rgba(26,78,199,0.10);
+}
+.dark {
+  --c-green:       #00bb30;
+  --c-green-60:    rgba(0,187,48,0.60);
+  --c-green-40:    rgba(0,180,60,0.40);
+  --c-green-30:    rgba(0,180,60,0.30);
+  --c-green-20:    rgba(0,180,60,0.20);
+  --c-green-12:    rgba(0,180,60,0.12);
+  --c-green-08:    rgba(0,180,60,0.08);
+  --c-green-06:    rgba(0,180,60,0.06);
+  --c-blue:        #3b82f6;
+  --c-blue-30:     rgba(59,130,246,0.30);
+  --c-blue-20:     rgba(59,130,246,0.20);
+  --c-blue-15:     rgba(59,130,246,0.15);
+  --c-blue-10:     rgba(59,130,246,0.10);
+}
+
 /* ─── JobGenie Light — green-tinted white canvas; vibrant emerald accents ─ */
 :root {
   --radius: 0.75rem;
   --background: oklch(0.98 0.006 145);
-  --foreground: oklch(0.12 0.018 145);
+  --foreground: oklch(0.08 0.018 145);
   --card: oklch(0.995 0.004 145);
-  --card-foreground: oklch(0.12 0.018 145);
+  --card-foreground: oklch(0.08 0.018 145);
   --popover: oklch(0.995 0.004 145);
-  --popover-foreground: oklch(0.12 0.018 145);
-  --primary: oklch(0.52 0.20 155);
+  --popover-foreground: oklch(0.08 0.018 145);
+  --primary: oklch(0.40 0.22 155);
   --primary-foreground: oklch(0.99 0.005 155);
-  --secondary: oklch(0.44 0.10 265);
+  --secondary: oklch(0.34 0.14 265);
   --secondary-foreground: oklch(0.99 0.005 265);
   --muted: oklch(0.95 0.008 145);
-  --muted-foreground: oklch(0.52 0.03 155);
-  --accent: oklch(0.54 0.17 175);
+  --muted-foreground: oklch(0.38 0.03 155);
+  --accent: oklch(0.42 0.19 175);
   --accent-foreground: oklch(0.99 0.005 175);
-  --destructive: oklch(0.6 0.22 25);
+  --destructive: oklch(0.50 0.24 25);
   --border: oklch(0.89 0.012 145);
   --input: oklch(0.92 0.010 145);
-  --ring: oklch(0.52 0.20 155);
-  --chart-1: oklch(0.52 0.20 155);
-  --chart-2: oklch(0.54 0.17 175);
-  --chart-3: oklch(0.50 0.14 265);
-  --chart-4: oklch(0.60 0.18 75);
-  --chart-5: oklch(0.55 0.17 330);
+  --ring: oklch(0.40 0.22 155);
+  --chart-1: oklch(0.40 0.22 155);
+  --chart-2: oklch(0.42 0.19 175);
+  --chart-3: oklch(0.38 0.16 265);
+  --chart-4: oklch(0.48 0.20 75);
+  --chart-5: oklch(0.44 0.20 330);
   /* Sidebar — green-tinted, distinct from canvas */
   --sidebar: oklch(0.965 0.009 145);
   --sidebar-foreground: oklch(0.18 0.018 145);
-  --sidebar-primary: oklch(0.52 0.20 155);
+  --sidebar-primary: oklch(0.40 0.22 155);
   --sidebar-primary-foreground: oklch(0.99 0.005 155);
-  --sidebar-accent: oklch(0.52 0.20 155 / 0.12);
+  --sidebar-accent: oklch(0.40 0.22 155 / 0.12);
   --sidebar-accent-foreground: oklch(0.18 0.018 145);
   --sidebar-border: oklch(0.89 0.012 145);
-  --sidebar-ring: oklch(0.52 0.20 155);
+  --sidebar-ring: oklch(0.40 0.22 155);
   /* Richer accent palette */
-  --accent-violet: oklch(0.58 0.22 290);
-  --accent-amber: oklch(0.72 0.18 75);
-  --accent-rose: oklch(0.62 0.22 10);
-  --accent-sky: oklch(0.62 0.16 220);
+  --accent-violet: oklch(0.44 0.24 290);
+  --accent-amber: oklch(0.52 0.20 75);
+  --accent-rose: oklch(0.48 0.24 10);
+  --accent-sky: oklch(0.46 0.18 220);
   /* Gradient tokens */
   --gradient-primary: linear-gradient(135deg, var(--primary), var(--accent));
   --gradient-accent: linear-gradient(135deg, var(--accent), var(--chart-2));
   /* Shadow tokens */
-  --shadow-glass: 0 4px 24px -4px oklch(0 0 0 / 0.10), 0 1px 4px oklch(0 0 0 / 0.05);
-  --shadow-glow-primary: 0 0 24px oklch(0.52 0.20 155 / 0.38);
-  --shadow-glow-accent: 0 0 20px oklch(0.54 0.17 175 / 0.32);
+  --shadow-glass: 0 4px 24px -4px oklch(0 0 0 / 0.12), 0 1px 4px oklch(0 0 0 / 0.06);
+  --shadow-glow-primary: 0 0 24px oklch(0.40 0.22 155 / 0.45);
+  --shadow-glow-accent: 0 0 20px oklch(0.42 0.19 175 / 0.40);
 }
 
 /* ─── JobGenie Dark — deep gray canvas; vivid emerald accents ─ */
@@ -548,13 +580,13 @@
 
   /* Text */
   --lp-text:          #0a140a;
-  --lp-text-60:       rgba(10,20,10,0.62);
-  --lp-text-45:       rgba(10,20,10,0.48);
-  --lp-text-38:       rgba(10,20,10,0.40);
-  --lp-text-28:       rgba(10,20,10,0.30);
-  --lp-text-22:       rgba(10,20,10,0.24);
-  --lp-text-16:       rgba(10,20,10,0.18);
-  --lp-text-12:       rgba(10,20,10,0.13);
+  --lp-text-60:       rgba(10,20,10,0.78);
+  --lp-text-45:       rgba(10,20,10,0.65);
+  --lp-text-38:       rgba(10,20,10,0.58);
+  --lp-text-28:       rgba(10,20,10,0.48);
+  --lp-text-22:       rgba(10,20,10,0.40);
+  --lp-text-16:       rgba(10,20,10,0.32);
+  --lp-text-12:       rgba(10,20,10,0.26);
 
   /* Borders / surfaces — visible green-tinted strokes */
   --lp-border:        rgba(0,140,40,0.14);
@@ -589,9 +621,11 @@
   /* Nav scrolled state */
   --lp-nav-bg:        rgba(247,250,247,0.94);
   --lp-nav-border:    rgba(0,140,40,0.10);
-  --lp-nav-text:      rgba(10,20,10,0.50);
-  --lp-nav-text-hover:rgba(10,20,10,0.88);
+  --lp-nav-text:      rgba(10,20,10,0.72);
+  --lp-nav-text-hover:rgba(10,20,10,0.95);
   --lp-nav-hover-bg:  rgba(0,160,50,0.07);
+  --lp-nav-text-active:#006820;
+  --lp-nav-active-bg: rgba(0,160,50,0.10);
 
   /* Hero heading text */
   --lp-heading:       #071407;
@@ -650,15 +684,169 @@
   --lp-nav-text:      rgba(255,255,255,0.45);
   --lp-nav-text-hover:#ffffff;
   --lp-nav-hover-bg:  rgba(255,255,255,0.07);
+  --lp-nav-text-active:#00e84a;
+  --lp-nav-active-bg: rgba(0,204,68,0.12);
 
   /* Hero heading text */
   --lp-heading:       #ffffff;
 }
 
+/* Landing page — follows html light/dark theme via --lp-* tokens on :root / .dark */
+.landing-page {
+  background: var(--lp-bg);
+  color: var(--lp-text);
+}
+
+body:has(.landing-page) {
+  background: var(--lp-bg);
+  background-image: none;
+}
+
+/* Landing page — anchor offset for fixed header */
+.landing-page #features,
+.landing-page #how-it-works,
+.landing-page #testimonials,
+.landing-page #portals {
+  scroll-margin-top: 88px;
+}
+
+/* Landing page header nav links */
+.lp-header-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--lp-nav-text);
+  text-decoration: none;
+  white-space: nowrap;
+  isolation: isolate;
+  transition:
+    color 220ms ease,
+    background-color 220ms ease,
+    transform 220ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    box-shadow 220ms ease;
+}
+
+.lp-header-nav-link__label {
+  position: relative;
+  z-index: 1;
+}
+
+.lp-header-nav-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--lp-nav-hover-bg);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 220ms ease,
+    transform 220ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.lp-header-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--c-green);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  box-shadow: 0 0 0 rgba(0, 204, 68, 0);
+}
+
+.lp-header-nav-link:hover {
+  color: var(--lp-nav-text-hover);
+  transform: translateY(-2px);
+}
+
+.lp-header-nav-link:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lp-header-nav-link:hover::after {
+  transform: scaleX(0.72);
+  box-shadow: 0 0 12px rgba(0, 204, 68, 0.35);
+}
+
+.lp-header-nav-link.is-active {
+  color: var(--lp-nav-text-active);
+  font-weight: 600;
+  transform: translateY(0);
+  box-shadow: 0 0 20px rgba(0, 204, 68, 0.14);
+}
+
+.lp-header-nav-link.is-active::before {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--lp-nav-active-bg);
+}
+
+.lp-header-nav-link.is-active::after {
+  transform: scaleX(1);
+  box-shadow: 0 0 14px rgba(0, 204, 68, 0.55);
+}
+
+.lp-header-nav-link.is-active:hover {
+  color: var(--lp-nav-text-active);
+  transform: translateY(-1px);
+}
+
+.lp-header-nav-link.is-active:hover::after {
+  transform: scaleX(1);
+}
+
+.lp-header-nav-link-mobile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: clamp(13px, 3.5vw, 15px);
+  font-weight: 500;
+  color: var(--lp-text-45);
+  text-decoration: none;
+  min-height: 44px;
+  border-left: 3px solid transparent;
+  transition:
+    color 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    transform 220ms ease,
+    padding-left 220ms ease;
+}
+
+.lp-header-nav-link-mobile:hover {
+  color: var(--lp-nav-text-hover);
+  background: var(--lp-nav-hover-bg);
+  border-left-color: rgba(0, 204, 68, 0.45);
+  padding-left: 18px;
+  transform: translateX(2px);
+}
+
+.lp-header-nav-link-mobile.is-active {
+  color: var(--lp-nav-text-active);
+  background: var(--lp-nav-active-bg);
+  font-weight: 600;
+  border-left-color: #00cc44;
+  padding-left: 18px;
+  box-shadow: inset 0 0 0 1px rgba(0, 204, 68, 0.12);
+}
+
 /* ─── New landing page design system animations ───────────────────────────── */
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 24px rgba(0,255,68,0.25); }
-  50% { box-shadow: 0 0 56px rgba(0,255,68,0.55); }
+  0%, 100% { box-shadow: 0 0 24px var(--c-green-30); }
+  50% { box-shadow: 0 0 56px var(--c-green-60); }
 }
 
 @keyframes floatA {

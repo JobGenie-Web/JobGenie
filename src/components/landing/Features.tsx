@@ -15,16 +15,16 @@ function useInView(threshold = 0.1) {
 
 function AIMatchingVisual({ hover }: { hover: boolean }) {
     const candidates = [
-        { init: 'AC', name: 'Alice Chen', score: 96, color: '#00bb30' },
-        { init: 'BP', name: 'Ben Park', score: 87, color: '#3b82f6' },
+        { init: 'AC', name: 'Alice Chen', score: 96, color: 'var(--c-green)' },
+        { init: 'BP', name: 'Ben Park', score: 87, color: 'var(--c-blue)' },
         { init: 'CL', name: 'Chris Lee', score: 72, color: '#8b5cf6' },
         { init: 'DW', name: 'Dana Wu', score: 61, color: '#f59e0b' },
     ];
     return (
-        <div style={{ width: '100%', maxWidth: 'min(290px, 90vw)', borderRadius: 'clamp(12px, 3.5vw, 14px)', overflow: 'hidden', background: 'var(--lp-card-bg)', border: `1px solid ${hover ? 'rgba(59,130,246,0.45)' : 'var(--lp-border)'}`, boxShadow: hover ? '0 0 48px rgba(59,130,246,0.15)' : 'var(--lp-glass-shadow)', transition: 'border-color 280ms, box-shadow 280ms', margin: '0 auto' }}>
+        <div style={{ width: '100%', maxWidth: 'min(290px, 90vw)', borderRadius: 'clamp(12px, 3.5vw, 14px)', overflow: 'hidden', background: 'var(--lp-card-bg)', border: `1px solid ${hover ? 'var(--c-blue-30)' : 'var(--lp-border)'}`, boxShadow: hover ? '0 0 48px var(--c-blue-15)' : 'var(--lp-glass-shadow)', transition: 'border-color 280ms, box-shadow 280ms', margin: '0 auto' }}>
             <div style={{ padding: 'clamp(8px, 2.5vw, 13px)', borderBottom: '1px solid var(--lp-border-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-45)' }}>AI Match Ranking</span>
-                <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', background: 'rgba(59,130,246,0.10)', color: '#3b82f6', padding: '2px clamp(5px, 1.5vw, 7px)', borderRadius: 4, fontWeight: 700, border: '1px solid rgba(59,130,246,0.2)', whiteSpace: 'nowrap' }}>RANKED</span>
+                <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', background: 'var(--c-blue-10)', color: 'var(--c-blue)', padding: '2px clamp(5px, 1.5vw, 7px)', borderRadius: 4, fontWeight: 700, border: '1px solid var(--c-blue-20)', whiteSpace: 'nowrap' }}>RANKED</span>
             </div>
             {candidates.map((c, i) => (
                 <div key={i} style={{ padding: 'clamp(7px, 2vw, 9px) clamp(8px, 2.5vw, 13px)', borderBottom: i < 3 ? '1px solid var(--lp-border-2)' : 'none', background: i === 0 ? 'rgba(0,180,60,0.03)' : 'transparent', display: 'flex', alignItems: 'center', gap: 'clamp(7px, 2vw, 9px)' }}>
@@ -51,12 +51,12 @@ function PipelineKanbanVisual({ hover }: { hover: boolean }) {
         { label: 'Offer', color: '#00bb30', cards: [{ i: 'VP' }] },
     ];
     return (
-        <div style={{ width: '100%', maxWidth: 'min(300px, 90vw)', borderRadius: 'clamp(12px, 3.5vw, 14px)', overflow: 'hidden', background: 'var(--lp-card-bg)', border: `1px solid ${hover ? 'rgba(0,180,60,0.45)' : 'var(--lp-border)'}`, boxShadow: hover ? '0 0 48px rgba(0,180,60,0.12)' : 'var(--lp-glass-shadow)', transition: 'border-color 280ms, box-shadow 280ms', margin: '0 auto' }}>
+        <div style={{ width: '100%', maxWidth: 'min(300px, 90vw)', borderRadius: 'clamp(12px, 3.5vw, 14px)', overflow: 'hidden', background: 'var(--lp-card-bg)', border: `1px solid ${hover ? 'var(--c-green-40)' : 'var(--lp-border)'}`, boxShadow: hover ? '0 0 48px var(--c-green-12)' : 'var(--lp-glass-shadow)', transition: 'border-color 280ms, box-shadow 280ms', margin: '0 auto' }}>
             <div style={{ padding: 'clamp(8px, 2.5vw, 13px)', borderBottom: '1px solid var(--lp-border-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-45)' }}>Pipeline Board</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(3px, 1vw, 5px)' }}>
                     <span style={{ fontSize: 'clamp(8px, 2vw, 9px)', color: 'var(--lp-text-28)', whiteSpace: 'nowrap' }}>6 candidates</span>
-                    <div className="anim-pulse-green" style={{ width: 'clamp(4px, 1vw, 5px)', height: 'clamp(4px, 1vw, 5px)', minWidth: 4, minHeight: 4, borderRadius: '50%', background: '#00bb30', flexShrink: 0 }} />
+                    <div className="anim-pulse-green" style={{ width: 'clamp(4px, 1vw, 5px)', height: 'clamp(4px, 1vw, 5px)', minWidth: 4, minHeight: 4, borderRadius: '50%', background: 'var(--c-green)', flexShrink: 0 }} />
                 </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 'clamp(5px, 1.5vw, 7px)', padding: 'clamp(9px, 2.5vw, 11px)' }}>
@@ -98,8 +98,8 @@ function VerifyVisual({ hover }: { hover: boolean }) {
             <div style={{ padding: 'clamp(9px, 2.5vw, 11px) clamp(8px, 2.5vw, 13px)', display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 2vw, 8px)' }}>
                 {steps.map((s, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'clamp(7px, 2vw, 9px)' }}>
-                        <div style={{ width: 'clamp(16px, 4.5vw, 18px)', height: 'clamp(16px, 4.5vw, 18px)', minWidth: 16, minHeight: 16, borderRadius: '50%', flexShrink: 0, background: s.done ? 'rgba(0,180,60,0.12)' : s.active ? 'rgba(139,92,246,0.12)' : 'var(--lp-surface)', border: `1.5px solid ${s.done ? 'rgba(0,180,60,0.5)' : s.active ? 'rgba(139,92,246,0.55)' : 'var(--lp-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {s.done && <svg width={'clamp(7px, 2vw, 8px)'} height={'clamp(7px, 2vw, 8px)'} viewBox="0 0 24 24" fill="none" stroke="#00bb30" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>}
+                        <div style={{ width: 'clamp(16px, 4.5vw, 18px)', height: 'clamp(16px, 4.5vw, 18px)', minWidth: 16, minHeight: 16, borderRadius: '50%', flexShrink: 0, background: s.done ? 'var(--c-green-12)' : s.active ? 'rgba(139,92,246,0.12)' : 'var(--lp-surface)', border: `1.5px solid ${s.done ? 'var(--c-green-40)' : s.active ? 'rgba(139,92,246,0.55)' : 'var(--lp-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {s.done && <svg width={'clamp(7px, 2vw, 8px)'} height={'clamp(7px, 2vw, 8px)'} viewBox="0 0 24 24" fill="none" stroke="var(--c-green)" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>}
                             {s.active && <div style={{ width: 'clamp(3.5px, 1vw, 4px)', height: 'clamp(3.5px, 1vw, 4px)', minWidth: 3, minHeight: 3, borderRadius: '50%', background: '#8b5cf6' }} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -123,7 +123,7 @@ function AnalyticsVisual({ hover }: { hover: boolean }) {
         <div ref={ref} style={{ width: '100%', maxWidth: 'min(290px, 90vw)', borderRadius: 'clamp(12px, 3.5vw, 14px)', overflow: 'hidden', background: 'var(--lp-card-bg)', border: `1px solid ${hover ? 'rgba(245,158,11,0.45)' : 'var(--lp-border)'}`, boxShadow: hover ? '0 0 48px rgba(245,158,11,0.12)' : 'var(--lp-glass-shadow)', transition: 'border-color 280ms, box-shadow 280ms', margin: '0 auto' }}>
             <div style={{ padding: 'clamp(8px, 2.5vw, 13px)', borderBottom: '1px solid var(--lp-border-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', fontWeight: 600, color: 'var(--lp-text-45)' }}>Hiring Velocity</span>
-                <span style={{ fontSize: 'clamp(9px, 2.3vw, 10px)', color: '#00bb30', fontWeight: 700, background: 'rgba(0,180,60,0.08)', padding: '2px clamp(5px, 1.5vw, 7px)', borderRadius: 4, border: '1px solid rgba(0,180,60,0.18)', whiteSpace: 'nowrap' }}>↑ 34%</span>
+                <span style={{ fontSize: 'clamp(9px, 2.3vw, 10px)', color: 'var(--c-green)', fontWeight: 700, background: 'var(--c-green-08)', padding: '2px clamp(5px, 1.5vw, 7px)', borderRadius: 4, border: '1px solid var(--c-green-20)', whiteSpace: 'nowrap' }}>↑ 34%</span>
             </div>
             <div style={{ padding: 'clamp(10px, 3vw, 12px) clamp(8px, 2.5vw, 13px)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(4px, 1.2vw, 5px)', height: 'clamp(50px, 15vw, 66px)', marginBottom: 'clamp(6px, 2vw, 8px)' }}>
@@ -202,8 +202,8 @@ function FeatureRow({ row, idx, visible }: {
 export function Features() {
     const [visible, ref] = useInView();
     const rows = [
-        { tag: 'INTELLIGENT MATCHING', color: '#3b82f6', title: 'Find the right fit.\nEvery single time.', desc: 'Our AI engine scores every candidate against each job using skills, experience, location, and culture signals. No more resume pile sorting — just relevant matches, ranked by confidence.', pills: ['Skill graph analysis', 'Culture fit scoring', 'Real-time re-ranking'], Visual: AIMatchingVisual, right: false },
-        { tag: 'PIPELINE MANAGEMENT', color: '#00bb30', title: 'Every candidate.\nEvery stage. In view.', desc: 'Drag-and-drop Kanban boards replace spreadsheet chaos. Move candidates through custom stages, add round feedback, and see where every person stands in real time.', pills: ['Drag-and-drop Kanban', 'Round feedback & ratings', 'Multi-recruiter pipeline'], Visual: PipelineKanbanVisual, right: true },
+        { tag: 'INTELLIGENT MATCHING', color: 'var(--c-blue)', title: 'Find the right fit.\nEvery single time.', desc: 'Our AI engine scores every candidate against each job using skills, experience, location, and culture signals. No more resume pile sorting — just relevant matches, ranked by confidence.', pills: ['Skill graph analysis', 'Culture fit scoring', 'Real-time re-ranking'], Visual: AIMatchingVisual, right: false },
+        { tag: 'PIPELINE MANAGEMENT', color: 'var(--c-green)', title: 'Every candidate.\nEvery stage. In view.', desc: 'Drag-and-drop Kanban boards replace spreadsheet chaos. Move candidates through custom stages, add round feedback, and see where every person stands in real time.', pills: ['Drag-and-drop Kanban', 'Round feedback & ratings', 'Multi-recruiter pipeline'], Visual: PipelineKanbanVisual, right: true },
         { tag: 'TRUST & VERIFICATION', color: '#8b5cf6', title: 'Only verified parties.\nOn both sides.', desc: 'Every employer submits business registration and goes through MIS approval. Every candidate is document-verified before they can apply. No fake listings. No ghost candidates.', pills: ['Business registration check', 'Document verification', 'Admin approval gate'], Visual: VerifyVisual, right: false },
         { tag: 'REAL-TIME ANALYTICS', color: '#f59e0b', title: 'Full visibility.\nZero blind spots.', desc: 'Live dashboards track your hiring velocity, offer acceptance rate, pipeline health, and team performance. Export everything, anytime, in one click.', pills: ['Hiring funnel analytics', 'Velocity tracking', 'CSV & report exports'], Visual: AnalyticsVisual, right: true },
     ];
@@ -212,8 +212,8 @@ export function Features() {
         <section id="features" className="px-3 xs:px-4 sm:px-8 md:px-12 py-12 xs:py-14 sm:py-20 lg:py-24" style={{ background: 'var(--lp-bg)' }}>
             <div className="max-w-5xl mx-auto">
                 <div className="text-center mb-10 xs:mb-12 sm:mb-16 px-4">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full mb-3 sm:mb-4" style={{ border: '1px solid rgba(0,180,60,0.28)', background: 'rgba(0,180,60,0.06)' }}>
-                        <span style={{ fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, letterSpacing: '0.1em', color: '#00aa28' }}>PLATFORM CAPABILITIES</span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full mb-3 sm:mb-4" style={{ border: '1px solid var(--c-green-30)', background: 'var(--c-green-06)' }}>
+                        <span style={{ fontSize: 'clamp(9px, 2.5vw, 10px)', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--c-green)' }}>PLATFORM CAPABILITIES</span>
                     </div>
                     <h2 className="font-extrabold mb-2.5 sm:mb-3" style={{ fontSize: 'clamp(28px, 7vw, 48px)', letterSpacing: '-0.033em', color: 'var(--lp-text)', lineHeight: 1.1 }}>Built for every stage<br />of hiring.</h2>
                     <p className="max-w-md mx-auto" style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', color: 'var(--lp-text-38)', lineHeight: 1.72 }}>From first application to signed offer — every step is transparent and auditable.</p>
