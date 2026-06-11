@@ -11,11 +11,13 @@ export async function POST(request: Request) {
     try {
         const authClient = await createClient();
         const body = await request.json();
-        const { 
-            previous_round_id, 
+        const {
+            previous_round_id,
             round_label,
+            interview_mode,
+            interview_address,
+            map_link,
             time_slots,
-            message 
         } = body;
 
         // Validation
@@ -101,7 +103,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const invitation = previousRound.invitation as any;
+        const invitation = previousRound.invitation as unknown as { id: string; company_id: string; candidate_id: string; industry: string; job_designation: string; current_round_number: number; pipeline_status: string; candidate: { first_name: string; last_name: string; email: string }[] };
 
         // Verify the round belongs to this company
         if (invitation.company_id !== employer.company_id) {
@@ -146,6 +148,9 @@ export async function POST(request: Request) {
                 round_number: nextRoundNumber,
                 round_label: round_label || `Round ${nextRoundNumber}`,
                 status: 'pending',
+                interview_mode: interview_mode || 'online',
+                interview_address: interview_address || null,
+                map_link: map_link || null,
                 given_time_slots: time_slots,
                 alternative_dates: alternativeDates,
                 sent_at: new Date().toISOString()
@@ -207,7 +212,7 @@ export async function POST(request: Request) {
             .single();
 
         // Send email notification to candidate
-        const candidate = invitation.candidate;
+        const candidate = invitation.candidate?.[0] ?? null;
         if (candidate && company) {
             const recipientTz = await getUserTimezoneByEmail(candidate.email);
             sendInterviewInvitationEmail(
@@ -260,14 +265,14 @@ export async function POST(request: Request) {
 }
 
 // Calculate 3 working days after the latest time slot
-function calculateAlternativeDatesArray(timeSlots: any[]): any[] {
+function calculateAlternativeDatesArray(timeSlots: { date: string }[]): { date: string; time: string | null; order: number; is_alternative: boolean }[] {
     if (!timeSlots || timeSlots.length === 0) return [];
 
     const latestMs = Math.max(
-        ...timeSlots.map((s: any) => Date.parse(`${s.date}T00:00:00Z`))
+        ...timeSlots.map((s) => Date.parse(`${s.date}T00:00:00Z`))
     );
     const cursor = new Date(latestMs);
-    const alternatives: any[] = [];
+    const alternatives: { date: string; time: string | null; order: number; is_alternative: boolean }[] = [];
     let workingDaysAdded = 0;
 
     while (workingDaysAdded < 3) {

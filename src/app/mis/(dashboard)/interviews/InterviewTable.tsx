@@ -33,10 +33,10 @@ interface Interview {
     sent_at: string;
     viewed_at: string | null;
     responded_at: string | null;
-    selected_time_slot: any;
+    selected_time_slot: { date: string; time: string } | null;
     mis_rescheduled?: boolean;
     mis_rescheduled_at?: string;
-    mis_reschedule_data?: any;
+    mis_reschedule_data?: { date: string; time: string } | null;
     candidate: {
         first_name: string;
         last_name: string;
@@ -188,7 +188,7 @@ export function InterviewTable({ interviews, onViewDetails }: InterviewTableProp
         }
 
         if (interview.selected_time_slot) {
-            const slot = interview.selected_time_slot as any;
+            const slot = interview.selected_time_slot;
             return `${formatDate(slot.date)} at ${formatUTCTime(slot.date, slot.time)}`;
         }
         return "Not scheduled";

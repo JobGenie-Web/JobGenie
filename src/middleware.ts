@@ -145,7 +145,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Create response to modify cookies if needed
-    let response = NextResponse.next({
+    const response = NextResponse.next({
         request: {
             headers: request.headers,
         },
@@ -204,7 +204,7 @@ export async function middleware(request: NextRequest) {
         if (!userData) {
             const isTransientError =
                 userError?.code === 'PGRST002' ||
-                (userError as any)?.status === 503 ||
+                (userError as { status?: number })?.status === 503 ||
                 userError?.message?.toLowerCase().includes('schema cache');
 
             if (isTransientError) {
@@ -268,7 +268,7 @@ export async function middleware(request: NextRequest) {
                 .single();
 
             // Type assertion for nested company data
-            const company = (employerData as any)?.companies;
+            const company = (employerData as Record<string, unknown>)?.companies as { profile_completed?: boolean; approval_status?: string } | null;
 
             // Only restrict if company profile is completed but not approved
             if (company?.profile_completed && company.approval_status !== 'approved') {
@@ -323,15 +323,25 @@ export const config = {
         '/employer/settings/:path*',
         '/employer/calendar/:path*',
         // MIS routes
+        '/mis/dashboard',
         '/mis/dashboard/:path*',
+        '/mis/users',
         '/mis/users/:path*',
+        '/mis/candidates',
         '/mis/candidates/:path*',
+        '/mis/employers',
         '/mis/employers/:path*',
+        '/mis/jobs',
         '/mis/jobs/:path*',
+        '/mis/settings',
         '/mis/settings/:path*',
+        '/mis/reports',
         '/mis/reports/:path*',
+        '/mis/audit',
         '/mis/audit/:path*',
+        '/mis/interviews',
         '/mis/interviews/:path*',
+        '/mis/roles',
         '/mis/roles/:path*',
         // Auth routes
         '/login',

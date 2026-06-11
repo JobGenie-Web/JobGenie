@@ -1,4 +1,5 @@
-// @ts-nocheck - Suppress react-hook-form type definition conflicts
+﻿/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from "react";

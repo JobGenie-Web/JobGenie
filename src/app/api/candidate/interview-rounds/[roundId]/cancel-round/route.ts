@@ -68,7 +68,7 @@ export async function POST(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = (round.invitation as unknown as { candidate_id: string } | null);
         if (!invitation || invitation.candidate_id !== candidate.id) {
             return NextResponse.json(
                 { success: false, error: 'Interview round not found or unauthorized' },
@@ -127,10 +127,10 @@ export async function POST(
             .single();
 
         if (fullRound) {
-            const inv = fullRound.invitation as any;
-            const employer = inv?.employer as any;
-            const candidateInfo = inv?.candidate as any;
-            const timeSlot = fullRound.selected_time_slot as any;
+            const inv = fullRound.invitation as unknown as { job_designation: string; candidate: { first_name: string }[]; employer: { first_name: string; email: string }[] } | null;
+            const employer = inv?.employer?.[0] ?? null;
+            const candidateInfo = inv?.candidate?.[0] ?? null;
+            const timeSlot = fullRound.selected_time_slot as { time?: string; date?: string; is_alternative?: boolean } | null;
             const roundLabel = fullRound.round_label || `Round ${fullRound.round_number}`;
 
             const finalTime = timeSlot?.is_alternative && fullRound.confirmed_time

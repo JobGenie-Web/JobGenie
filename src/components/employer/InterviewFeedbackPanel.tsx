@@ -25,7 +25,7 @@ import { toast } from "sonner";
 interface InterviewFeedbackPanelProps {
     invitation: {
         id: string;
-        selected_time_slot: any;
+        selected_time_slot: { date?: string; time?: string; is_alternative?: boolean } | null;
         interview_mode: string | null;
         confirmed_time: string | null;
         meeting_link: string | null;
@@ -143,7 +143,7 @@ export function InterviewFeedbackPanel({
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                     <span className="font-medium">Date:</span>
-                                    <span>{formatUTCDate(invitation.selected_time_slot.date)}</span>
+                                    <span>{formatUTCDate(invitation.selected_time_slot.date ?? '')}</span>
                                 </div>
                                 
                                 {invitation.selected_time_slot.time && (
@@ -152,7 +152,7 @@ export function InterviewFeedbackPanel({
                                         <span className="font-medium">Time:</span>
                                         <span>
                                             {formatUTCTime(
-                                                invitation.selected_time_slot.date,
+                                                invitation.selected_time_slot.date ?? '',
                                                 invitation.selected_time_slot.is_alternative && invitation.confirmed_time
                                                     ? invitation.confirmed_time
                                                     : invitation.selected_time_slot.time

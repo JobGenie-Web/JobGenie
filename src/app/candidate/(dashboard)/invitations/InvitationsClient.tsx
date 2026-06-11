@@ -66,11 +66,11 @@ const FILTERS = [
 
 // Dot color per journey variant
 const variantDot: Record<string, string> = {
-    pending: "bg-blue-400",
-    info:    "bg-indigo-400",
-    success: "bg-emerald-400",
-    warning: "bg-amber-400",
-    danger:  "bg-red-400",
+    pending: "bg-blue-500",
+    info:    "bg-indigo-500",
+    success: "bg-emerald-500",
+    warning: "bg-amber-500",
+    danger:  "bg-red-500",
     muted:   "bg-slate-400",
 };
 
@@ -83,7 +83,7 @@ export default function InvitationsClient() {
 
     const filteredInvitations = invitations.filter(inv => {
         if (filter === "all") return true;
-        if (filter === "cancelled") return inv.invitation_canceled;
+        if (filter === "cancelled") return inv.invitation_canceled && !inv.mis_rescheduled;
         return inv.status === filter;
     });
 
@@ -92,7 +92,7 @@ export default function InvitationsClient() {
         pending:   invitations.filter(i => i.status === "pending" || i.status === "viewed").length,
         accepted:  invitations.filter(i => i.status === "accepted").length,
         declined:  invitations.filter(i => i.status === "declined").length,
-        cancelled: invitations.filter(i => i.invitation_canceled).length,
+        cancelled: invitations.filter(i => i.invitation_canceled && !i.mis_rescheduled).length,
     };
 
     const pendingCount = statusCounts.pending;

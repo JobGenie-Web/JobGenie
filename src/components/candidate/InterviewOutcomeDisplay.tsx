@@ -25,9 +25,9 @@ interface InterviewRound {
     outcome: string | null;
     outcome_notes: string | null;
     outcome_at: string | null;
-    selected_time_slot: any;
+    selected_time_slot: { date?: string; time?: string; is_alternative?: boolean } | null;
     interview_mode: string | null;
-    confirmed_time: any;
+    confirmed_time: string | null;
     meeting_link: string | null;
     interview_address: string | null;
     map_link: string | null;
@@ -226,7 +226,7 @@ export function InterviewOutcomeDisplay({ invitationId, onOutcomeFound }: Interv
                                             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                                             <span className="text-muted-foreground">Date:</span>
                                             <span className="font-medium">
-                                                {formatUTCDate(nextRound.selected_time_slot.date)}
+                                                {formatUTCDate(nextRound.selected_time_slot.date ?? "")}
                                             </span>
                                         </div>
                                         {nextRound.selected_time_slot.time && (
@@ -234,7 +234,7 @@ export function InterviewOutcomeDisplay({ invitationId, onOutcomeFound }: Interv
                                                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                                                 <span className="text-muted-foreground">Time:</span>
                                                 <span className="font-medium">
-                                                    {formatUTCTime(nextRound.selected_time_slot.date, nextRound.selected_time_slot.time)}
+                                                    {formatUTCTime(nextRound.selected_time_slot.date ?? "", nextRound.selected_time_slot.time ?? "")}
                                                 </span>
                                             </div>
                                         )}

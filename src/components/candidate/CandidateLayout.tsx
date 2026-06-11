@@ -55,11 +55,11 @@ export async function CandidateLayout({ children, pageTitle, pageDescription }: 
                     pageTitle={pageTitle}
                     pageDescription={pageDescription}
                 />
-                <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 bg-background">
                     <PageTransitionWrapper>
-                        <PortalMain variant="candidate" className="p-5 md:p-8 lg:p-10">
+                        <div className="p-5 md:p-6">
                             {children}
-                        </PortalMain>
+                        </div>
                     </PageTransitionWrapper>
                 </div>
             </SidebarInset>

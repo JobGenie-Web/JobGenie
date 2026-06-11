@@ -4,8 +4,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 
 interface CandidateHeaderProps {
     user: {
@@ -20,8 +19,7 @@ interface CandidateHeaderProps {
 }
 
 export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateHeaderProps) {
-    const { toggleSidebar, state, isMobile } = useSidebar();
-    const isCollapsed = state === "collapsed";
+    const { toggleSidebar } = useSidebar();
 
     const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
         toggleSidebar();
@@ -29,56 +27,30 @@ export function CandidateHeader({ user, pageTitle, pageDescription }: CandidateH
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-[4.25rem] items-center gap-3 border-b border-primary/10 bg-card/92 px-4 shadow-[inset_0_-1px_0_oklch(var(--primary)/0.12)] backdrop-blur-sm dark:bg-card/88 md:gap-4 md:px-6">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur-sm md:px-5"
+            style={{ boxShadow: "0 2px 8px 0 oklch(0 0 0 / 0.06), 0 4px 20px 0 oklch(0 0 0 / 0.04)" }}>
             <button
                 onClick={handleToggle}
-                className={cn(
-                    "group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                    "bg-gradient-to-br from-primary/20 via-primary/12 to-accent/18 ring-1 ring-primary/25",
-                    "hover:from-primary/30 hover:via-primary/18 hover:to-accent/25",
-                    "active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                )}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 aria-label="Toggle sidebar"
             >
-                {isMobile ? (
-                    <Menu className="h-4 w-4 text-primary" />
-                ) : (
-                    <svg
-                        className={cn(
-                            "h-4 w-4 text-primary transition-transform duration-300",
-                            isCollapsed ? "rotate-0" : "rotate-180"
-                        )}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                        />
-                    </svg>
-                )}
+                <PanelLeft className="h-4 w-4" />
             </button>
 
             {pageTitle ? (
                 <div className="min-w-0 flex-1">
-                    <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90 sm:block">
-                        Candidate
-                    </p>
-                    <h1 className="truncate bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-lg font-bold tracking-tight text-transparent sm:text-xl md:text-2xl">
+                    <h1 className="truncate text-base font-semibold text-foreground leading-tight">
                         {pageTitle}
                     </h1>
-                    {pageDescription ? (
-                        <p className="hidden truncate text-sm text-muted-foreground sm:block md:text-[15px]">{pageDescription}</p>
-                    ) : null}
+                    {pageDescription && (
+                        <p className="hidden truncate text-xs text-muted-foreground sm:block">{pageDescription}</p>
+                    )}
                 </div>
             ) : (
                 <div className="flex-1" />
             )}
 
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-1.5">
                 <ThemeToggle />
                 <NotificationBell role="candidate" />
                 <UserMenu user={user} />

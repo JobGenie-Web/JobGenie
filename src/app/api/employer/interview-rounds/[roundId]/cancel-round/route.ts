@@ -68,18 +68,11 @@ export async function POST(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { company_id: string } | null;
         if (!invitation || invitation.company_id !== employer.company_id) {
             return NextResponse.json(
                 { success: false, error: 'Interview round not found or unauthorized' },
                 { status: 404 }
-            );
-        }
-
-        if (!round.interview_confirmed) {
-            return NextResponse.json(
-                { success: false, error: 'Interview round is not confirmed yet' },
-                { status: 400 }
             );
         }
 
@@ -127,10 +120,10 @@ export async function POST(
             .single();
 
         if (fullRound) {
-            const inv = fullRound.invitation as any;
-            const candidateInfo = inv?.candidate as any;
-            const company = inv?.company as any;
-            const timeSlot = fullRound.selected_time_slot as any;
+            const inv = fullRound.invitation as unknown as { job_designation: string; candidate: { first_name: string; email: string }[]; company: { company_name: string }[] } | null;
+            const candidateInfo = inv?.candidate?.[0] ?? null;
+            const company = inv?.company?.[0] ?? null;
+            const timeSlot = fullRound.selected_time_slot as { time?: string; date?: string; is_alternative?: boolean } | null;
             const roundLabel = fullRound.round_label || `Round ${fullRound.round_number}`;
 
             const finalTime = timeSlot?.is_alternative && fullRound.confirmed_time

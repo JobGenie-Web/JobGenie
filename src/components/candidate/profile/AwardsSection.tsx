@@ -107,7 +107,7 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
                 <CardContent>
                     {isEmpty ? (
                         <p className="text-sm text-muted-foreground text-center py-8">
-                            No awards added yet. Click "Add Award" to get started.
+                            No awards added yet. Click &quot;Add Award&quot; to get started.
                         </p>
                     ) : (
                         <>

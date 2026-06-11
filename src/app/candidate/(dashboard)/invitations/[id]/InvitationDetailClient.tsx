@@ -728,7 +728,7 @@ function RoundPanel({ round, invitationId, onRefresh, onCancelRound }: { round: 
         return (
             <div className="space-y-4">
                 <StatusBanner icon={<AlertCircle className="h-4 w-4" />} title={`${round.round_label ?? `Round ${round.round_number}`} — response needed`} description="Select a time slot for this interview round." variant="info" />
-                <RoundResponseCard roundId={round.id} roundNumber={round.round_number} roundLabel={round.round_label} givenTimeSlots={round.given_time_slots as any} alternativeDates={round.alternative_dates as any} onResponse={onRefresh} />
+                <RoundResponseCard roundId={round.id} roundNumber={round.round_number} roundLabel={round.round_label} interviewMode={round.interview_mode} meetingLink={round.meeting_link} interviewAddress={round.interview_address} mapLink={round.map_link} givenTimeSlots={round.given_time_slots ?? []} onResponse={onRefresh} />
             </div>
         );
     }

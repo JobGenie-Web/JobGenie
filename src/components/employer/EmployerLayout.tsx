@@ -40,7 +40,7 @@ async function getCurrentEmployer() {
     }
 
     // Type assertion for nested company data
-    const company = (employer as any).companies;
+    const company = (employer as Record<string, unknown>).companies as { company_name?: string } | null;
 
     return {
         id: user.id,
@@ -67,11 +67,11 @@ export async function EmployerLayout({ children, pageTitle, pageDescription }: E
                     pageTitle={pageTitle}
                     pageDescription={pageDescription}
                 />
-                <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 bg-background">
                     <PageTransitionWrapper>
-                        <PortalMain variant="employer" className="p-5 md:p-8 lg:p-10">
+                        <div className="p-5 md:p-6">
                             {children}
-                        </PortalMain>
+                        </div>
                     </PageTransitionWrapper>
                 </div>
             </SidebarInset>

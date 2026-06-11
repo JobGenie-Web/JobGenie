@@ -169,9 +169,9 @@ export async function POST(
             .eq("job_invitation_id", round.invitation_id);
 
         if (invitation) {
-            const candidateData = invitation.candidate as any;
-            const employerData = invitation.employer as any;
-            const companyData = invitation.company as any;
+            const candidateData = (invitation.candidate as unknown as { id: string; first_name: string; last_name: string; email: string }[])?.[0];
+            const employerData = (invitation.employer as unknown as { id: string; first_name: string; last_name: string; email: string }[])?.[0];
+            const companyData = (invitation.company as unknown as { company_name: string }[])?.[0];
             const roundLabel = round.round_label || `Round ${round.round_number}`;
             const meetingLinkOrAddress = interview_mode === 'online' ? meeting_link : interview_address;
 

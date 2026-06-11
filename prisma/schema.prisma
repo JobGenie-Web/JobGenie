@@ -703,6 +703,7 @@ model JobInvitation {
   @@index([company_id])
   @@index([sent_at])
   @@index([job_id])
+  /// Supabase Realtime enabled: REPLICA IDENTITY FULL (migration: enable_realtime_for_notification_tables)
   @@map("job_invitations")
 }
 
@@ -1124,6 +1125,7 @@ model Notification {
   // Indexes matching the SQL migration
   @@index([user_id, is_read, created_at(sort: Desc)]) // For unread notifications query
   @@index([user_id, created_at(sort: Desc)])          // For notification history
+  /// Supabase Realtime enabled: REPLICA IDENTITY FULL (migration: enable_realtime_for_notification_tables)
   @@map("notifications")
 }
 
@@ -1212,6 +1214,7 @@ model PaymentRequest {
   @@index([payment_type_id])
   @@index([created_at])
   @@index([due_date])
+  /// Supabase Realtime enabled: REPLICA IDENTITY FULL (migration: enable_realtime_for_notification_tables)
   @@map("payment_requests")
 }
 

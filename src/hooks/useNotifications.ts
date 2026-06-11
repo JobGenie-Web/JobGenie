@@ -11,7 +11,7 @@ export interface Notification {
   type: string;
   title: string;
   body: string | null;
-  data: Record<string, any> | null;
+  data: Record<string, unknown> | null;
   is_read: boolean;
   created_at: string;
 }

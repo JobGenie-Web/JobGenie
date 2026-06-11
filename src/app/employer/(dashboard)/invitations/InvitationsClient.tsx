@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown } from "lucide-react";
+import { Calendar, Clock, Loader2, Mail, User, Video, MapPinned, Phone, Briefcase, ExternalLink, Copy, CheckCircle2, X, ChevronDown, LayoutList, Kanban, Pencil, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -29,6 +29,19 @@ interface TimeSlot {
 import { formatUTCTime, formatUTCDate, formatTimestamp } from "@/lib/date-utils";
 import { formatIndustry, formatPhoneNumber } from "@/lib/utils";
 import { InterviewRoundsDisplay } from "@/components/employer/InterviewRoundsDisplay";
+import { InvitationsKanban } from "./InvitationsKanban";
+
+const INTERVIEW_TIME_SLOTS = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+    "15:00", "15:30", "16:00", "16:30", "17:00",
+];
+function formatTimeSlotLabel(t: string) {
+    const [h, m] = t.split(":").map(Number);
+    const ampm = h < 12 ? "AM" : "PM";
+    const hour = h % 12 === 0 ? 12 : h % 12;
+    return `${hour}:${m === 0 ? "00" : m} ${ampm}`;
+}
 
 function DetailCard({ children, className }: { children: React.ReactNode; className?: string }) {
     return (
@@ -104,13 +117,27 @@ interface Invitation {
     candidate_reschedule_requested?: boolean;
     reschedule_request_reason?: string | null;
     job_offers?: { id: string; status: string } | { id: string; status: string }[] | null;
+    interview_rounds?: {
+        round_number: number;
+        round_label: string | null;
+        status: string;
+        outcome: string | null;
+        mis_rescheduled?: boolean;
+        round_canceled?: boolean;
+        given_time_slots?: { date: string; time: string }[] | null;
+        selected_time_slot?: { date: string; time: string } | null;
+        interview_mode?: string | null;
+        meeting_link?: string | null;
+        interview_address?: string | null;
+        map_link?: string | null;
+    }[] | null;
 }
 
 // ─── Invitation Detail Panel ──────────────────────────────────────────────────
 
 interface InvitationDetailPanelProps {
     selectedInvitation: Invitation;
-    selectedBadge: { variant: any; className: string; label: string } | null;
+    selectedBadge: { variant: "default" | "destructive" | "outline" | "secondary"; className: string; label: string } | null;
     hasInterviewOutcome: boolean;
     setHasInterviewOutcome: (v: boolean) => void;
     isConfirming: boolean;
@@ -151,10 +178,59 @@ function InvitationDetailPanel({
 }: InvitationDetailPanelProps) {
 
     const inv = selectedInvitation;
-    const isConfirmed = inv.interview_confirmed && !inv.invitation_canceled;
+    const isMisRescheduled = !!(inv.mis_rescheduled && inv.invitation_canceled);
+    const isConfirmed = (inv.interview_confirmed && !inv.invitation_canceled) || isMisRescheduled;
     const isCanceled = inv.invitation_canceled;
     const needsConfirmation = inv.status === 'accepted' && !inv.invitation_canceled && inv.selected_time_slot && !hasInterviewOutcome && !inv.interview_confirmed;
     const awaitingConfirm = inv.status === 'accepted' && !inv.invitation_canceled && inv.selected_time_slot && !hasInterviewOutcome && inv.interview_confirmed;
+    const canEdit = (inv.status === 'pending' || inv.status === 'viewed') && !isCanceled;
+
+    // Edit invitation dialog state
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [editSlots, setEditSlots] = useState<{ id: string; date: string; time: string }[]>([]);
+    const [editMode, setEditMode] = useState<string>('online');
+    const [editMeetingLink, setEditMeetingLink] = useState('');
+    const [editAddress, setEditAddress] = useState('');
+    const [editMapLink, setEditMapLink] = useState('');
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+    const openEditDialog = () => {
+        setEditSlots((inv.given_time_slots || []).map((s, i) => ({ id: String(i), date: s.date, time: s.time })));
+        setEditMode(inv.interview_mode || 'online');
+        setEditMeetingLink(inv.meeting_link || '');
+        setEditAddress(inv.interview_address || '');
+        setEditMapLink(inv.map_link || '');
+        setShowEditDialog(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (editSlots.length === 0) { toast.error("Add at least one time slot"); return; }
+        if (editSlots.some(s => !s.date || !s.time)) { toast.error("Complete all time slots"); return; }
+        if (editMode === 'physical' && !editAddress) { toast.error("Interview address is required"); return; }
+        setIsSavingEdit(true);
+        try {
+            const res = await fetch(`/api/employer/invitations/${inv.id}/edit`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    timeSlots: editSlots.map((s, i) => ({ date: s.date, time: s.time, order: i + 1 })),
+                    interviewMode: editMode,
+                    meetingLink: editMeetingLink,
+                    interviewAddress: editAddress,
+                    mapLink: editMapLink,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Invitation updated successfully");
+                setShowEditDialog(false);
+                fetchInvitations();
+            } else {
+                toast.error(data.error || "Failed to update invitation");
+            }
+        } catch { toast.error("An error occurred"); }
+        finally { setIsSavingEdit(false); }
+    };
 
     return (
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-background/50">
@@ -192,7 +268,7 @@ function InvitationDetailPanel({
                                         <p className="text-base font-bold leading-snug">
                                             {inv.candidate.first_name} {inv.candidate.last_name}
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-0.5">{inv.job_designation} · {formatIndustry(inv.industry)}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{formatIndustry(inv.industry)}</p>
                                     </div>
                                     {selectedBadge && (
                                         <Badge variant={selectedBadge.variant} className={cn(selectedBadge.className, "shrink-0 mt-0.5")}>
@@ -206,6 +282,10 @@ function InvitationDetailPanel({
                                     )}
                                     <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inv.candidate.email}</span>
                                     <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{formatPhoneNumber(inv.candidate.phone)}</span>
+                                </div>
+                                <div className="mt-1.5 flex items-center gap-1.5">
+                                    <span className="text-[10px] text-muted-foreground">Applied for</span>
+                                    <span className="inline-flex items-center rounded-md bg-primary/10 text-primary px-1.5 py-0.5 text-[11px] font-semibold">{inv.job_designation}</span>
                                 </div>
                             </div>
                         </div>
@@ -233,6 +313,9 @@ function InvitationDetailPanel({
                                         </div>
                                     </div>
                                 )}
+                                <Button size="sm" variant="outline" className="mt-3 w-full h-8 text-xs border-amber-400 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20" onClick={openEditDialog}>
+                                    <Pencil className="h-3 w-3 mr-1.5" />Edit Invitation
+                                </Button>
                             </StatusCard>
                         )}
 
@@ -243,7 +326,11 @@ function InvitationDetailPanel({
                                 color="blue"
                                 title="Candidate Has Viewed the Invitation"
                                 subtitle="They haven't responded yet. They may be reviewing the details."
-                            />
+                            >
+                                <Button size="sm" variant="outline" className="mt-3 w-full h-8 text-xs border-blue-400 text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20" onClick={openEditDialog}>
+                                    <Pencil className="h-3 w-3 mr-1.5" />Edit Invitation
+                                </Button>
+                            </StatusCard>
                         )}
 
                         {/* Declined with reschedule */}
@@ -256,7 +343,7 @@ function InvitationDetailPanel({
                             >
                                 {inv.reschedule_request_reason && (
                                     <blockquote className="mt-3 border-l-2 border-amber-400 pl-3 text-xs italic text-amber-800 dark:text-amber-300">
-                                        "{inv.reschedule_request_reason}"
+                                        &quot;{inv.reschedule_request_reason}&quot;
                                     </blockquote>
                                 )}
                                 <Button
@@ -290,15 +377,15 @@ function InvitationDetailPanel({
                                     <div>
                                         <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Action Required: Confirm Interview</p>
                                         <p className="text-xs text-blue-700 dark:text-blue-400">
-                                            Candidate accepted for {formatUTCDate((inv.selected_time_slot as any)?.date, "EEEE, MMM d")}
-                                            {!((inv.selected_time_slot as any)?.is_alternative) && inv.selected_time_slot?.time &&
+                                            Candidate accepted for {formatUTCDate(inv.selected_time_slot?.date ?? '', "EEEE, MMM d")}
+                                            {!inv.selected_time_slot?.is_alternative && inv.selected_time_slot?.time &&
                                                 ` at ${formatUTCTime(inv.selected_time_slot.date, inv.selected_time_slot.time)}`}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {(inv.selected_time_slot as any)?.is_alternative && (
+                                    {inv.selected_time_slot?.is_alternative && (
                                         <div>
                                             <label className="text-xs font-semibold mb-2 block text-blue-900 dark:text-blue-200">Select Time Slot *</label>
                                             <div className="grid grid-cols-3 gap-2">
@@ -410,8 +497,8 @@ function InvitationDetailPanel({
                             </StatusCard>
                         )}
 
-                        {/* MIS Rescheduled */}
-                        {inv.mis_rescheduled && inv.mis_reschedule_data && (
+                        {/* MIS Rescheduled — hide once interview has advanced to round 2+ */}
+                        {inv.mis_rescheduled && inv.mis_reschedule_data && !(inv.current_round_number && inv.current_round_number > 1) && (
                             <StatusCard
                                 icon={<Calendar className="h-5 w-5 text-primary" />}
                                 color="primary"
@@ -467,7 +554,7 @@ function InvitationDetailPanel({
                                     </div>
                                     {inv.cancellation_reason && (
                                         <div className="rounded-lg bg-red-100/60 dark:bg-red-950/20 p-3">
-                                            <p className="text-xs text-red-800 dark:text-red-300 italic">"{inv.cancellation_reason}"</p>
+                                            <p className="text-xs text-red-800 dark:text-red-300 italic">&quot;{inv.cancellation_reason}&quot;</p>
                                         </div>
                                     )}
                                 </div>
@@ -479,7 +566,7 @@ function InvitationDetailPanel({
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Your Message to Candidate</p>
                                 <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-foreground/90 italic">
-                                    "{inv.message}"
+                                    &quot;{inv.message}&quot;
                                 </div>
                             </div>
                         )}
@@ -494,6 +581,8 @@ function InvitationDetailPanel({
                                     jobTitle={inv.job_designation}
                                     onUpdate={fetchInvitations}
                                     onOutcomeFound={setHasInterviewOutcome}
+                                    autoSeed={true}
+                                    showActiveRoundCard
                                 />
                             </div>
                         )}
@@ -517,6 +606,104 @@ function InvitationDetailPanel({
                     )}
                 </div>
             </div>
+
+            {/* ── Edit Invitation Dialog ── */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Edit Invitation</DialogTitle>
+                        <DialogDescription>Update the time slots or interview details. The candidate will see the updated information.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        {/* Time slots */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium">Time Slots</p>
+                                {editSlots.length < 3 && (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditSlots([...editSlots, { id: crypto.randomUUID(), date: '', time: '' }])}>
+                                        <Plus className="h-3 w-3 mr-1" />Add Slot
+                                    </Button>
+                                )}
+                            </div>
+                            {editSlots.map((slot, i) => (
+                                <div key={slot.id} className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={slot.date}
+                                        onChange={e => setEditSlots(editSlots.map(s => s.id === slot.id ? { ...s, date: e.target.value } : s))}
+                                        className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-xs"
+                                    />
+                                    <select
+                                        value={slot.time}
+                                        onChange={e => setEditSlots(editSlots.map(s => s.id === slot.id ? { ...s, time: e.target.value } : s))}
+                                        className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-xs cursor-pointer"
+                                    >
+                                        <option value="">Select time</option>
+                                        {INTERVIEW_TIME_SLOTS.map(t => (
+                                            <option key={t} value={t}>{formatTimeSlotLabel(t)}</option>
+                                        ))}
+                                    </select>
+                                    {editSlots.length > 1 && (
+                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500" onClick={() => setEditSlots(editSlots.filter(s => s.id !== slot.id))}>
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Interview mode */}
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Interview Mode</p>
+                            <div className="flex gap-2">
+                                {(['online', 'physical'] as const).map(mode => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => setEditMode(mode)}
+                                        className={cn(
+                                            "flex-1 h-9 rounded-md border text-xs font-medium capitalize transition-colors",
+                                            editMode === mode
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                                        )}
+                                    >
+                                        {mode === 'online' ? <><Video className="h-3.5 w-3.5 inline mr-1.5" />Online</> : <><MapPinned className="h-3.5 w-3.5 inline mr-1.5" />Physical</>}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {editMode === 'online' && (
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium text-muted-foreground">Meeting Link (optional)</p>
+                                <Input value={editMeetingLink} onChange={e => setEditMeetingLink(e.target.value)} placeholder="https://meet.google.com/..." className="h-8 text-xs" />
+                            </div>
+                        )}
+
+                        {editMode === 'physical' && (
+                            <div className="space-y-2">
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Interview Address *</p>
+                                    <Input value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="123 Main St, City" className="h-8 text-xs" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Map Link (optional)</p>
+                                    <Input value={editMapLink} onChange={e => setEditMapLink(e.target.value)} placeholder="https://maps.google.com/..." className="h-8 text-xs" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+                        <Button onClick={handleSaveEdit} disabled={isSavingEdit}>
+                            {isSavingEdit && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
         </div>
     );
@@ -571,10 +758,10 @@ interface RoadmapRound {
     outcome: string | null;
     outcome_notes: string | null;
     outcome_at: string | null;
-    given_time_slots: any;
-    selected_time_slot: any;
+    given_time_slots: { date: string; time?: string }[] | null;
+    selected_time_slot: { date?: string; time?: string; is_alternative?: boolean } | null;
     interview_mode: string | null;
-    confirmed_time: any;
+    confirmed_time: string | null;
     meeting_link: string | null;
     interview_address: string | null;
     map_link: string | null;
@@ -585,7 +772,7 @@ interface RoadmapRound {
     cancellation_reason?: string | null;
     canceled_at?: string | null;
     mis_rescheduled?: boolean;
-    mis_reschedule_data?: any;
+    mis_reschedule_data?: { date: string; time: string; interview_mode: string } | null;
 }
 
 function InvitationRoadmapSidebar({ invitationId, onOutcomeFound }: { invitationId: string; onOutcomeFound: (v: boolean) => void }) {
@@ -691,13 +878,13 @@ function InvitationRoadmapSidebar({ invitationId, onOutcomeFound }: { invitation
                                     )}
                                     {round.selected_time_slot && round.outcome !== 'advance' && (
                                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                                            {formatUTCDate(round.selected_time_slot.date, "MMM d")}
-                                            {round.selected_time_slot.time && ` · ${formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)}`}
+                                            {formatUTCDate(round.selected_time_slot.date ?? "", "MMM d")}
+                                            {round.selected_time_slot.time && ` · ${formatUTCTime(round.selected_time_slot.date ?? "", round.selected_time_slot.time ?? "")}`}
                                             {round.interview_mode && ` · ${round.interview_mode === 'online' ? 'Online' : 'Physical'}`}
                                         </p>
                                     )}
                                     {!isExpanded && round.outcome_notes && (
-                                        <p className="text-[10px] text-muted-foreground mt-1 italic truncate">"{round.outcome_notes}"</p>
+                                        <p className="text-[10px] text-muted-foreground mt-1 italic truncate">&quot;{round.outcome_notes}&quot;</p>
                                     )}
                                 </button>
 
@@ -728,7 +915,7 @@ function RoundDetailModalContent({ round }: { round: RoadmapRound }) {
                         Round Canceled {round.canceled_by === 'candidate' ? '(by Candidate)' : '(by Employer)'}
                         {round.canceled_at && ` · ${formatTimestamp(round.canceled_at, "MMM d, yyyy")}`}
                     </p>
-                    {round.cancellation_reason && <p className="text-xs text-red-600 dark:text-red-400 italic">"{round.cancellation_reason}"</p>}
+                    {round.cancellation_reason && <p className="text-xs text-red-600 dark:text-red-400 italic">&quot;{round.cancellation_reason}&quot;</p>}
                 </div>
             )}
 
@@ -744,9 +931,9 @@ function RoundDetailModalContent({ round }: { round: RoadmapRound }) {
 
             {round.selected_time_slot && round.outcome !== 'advance' && (
                 <DetailCard>
-                    <DetailRow icon={<Calendar className="h-4 w-4" />} label="Date" value={formatUTCDate(round.selected_time_slot.date, "EEEE, MMMM d, yyyy")} />
+                    <DetailRow icon={<Calendar className="h-4 w-4" />} label="Date" value={formatUTCDate(round.selected_time_slot.date ?? "", "EEEE, MMMM d, yyyy")} />
                     {round.selected_time_slot.time && (
-                        <DetailRow icon={<Clock className="h-4 w-4" />} label="Time" value={formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)} />
+                        <DetailRow icon={<Clock className="h-4 w-4" />} label="Time" value={formatUTCTime(round.selected_time_slot.date ?? "", round.selected_time_slot.time ?? "")} />
                     )}
                     {round.interview_mode && (
                         <DetailRow
@@ -816,6 +1003,7 @@ export default function InvitationsClient() {
     const [cancellationReason, setCancellationReason] = useState("");
     const [isCanceling, setIsCanceling] = useState(false);
     const [hasInterviewOutcome, setHasInterviewOutcome] = useState(false);
+    const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
 
     useEffect(() => {
         if (selectedInvitation) {
@@ -946,7 +1134,7 @@ export default function InvitationsClient() {
     const handleConfirmInterview = async () => {
         if (!selectedInvitation) return;
 
-        const selectedSlot = selectedInvitation.selected_time_slot as any;
+        const selectedSlot = selectedInvitation.selected_time_slot;
         const isAlternative = selectedSlot?.is_alternative;
 
         // Validation
@@ -1052,6 +1240,35 @@ export default function InvitationsClient() {
         );
     }
 
+    if (viewMode === "kanban") {
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-base font-bold leading-tight">Invitations</h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {invitations.length} total
+                            {statusCounts.pending > 0 && (
+                                <> · <span className="text-amber-600 dark:text-amber-400 font-medium">{statusCounts.pending} need action</span></>
+                            )}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setViewMode("list")}
+                        className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                        <LayoutList className="h-3.5 w-3.5" />
+                        List view
+                    </button>
+                </div>
+                <InvitationsKanban
+                    invitations={invitations}
+                    fetchInvitations={fetchInvitations}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className={cn(
             "flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
@@ -1074,11 +1291,20 @@ export default function InvitationsClient() {
                                 {statusCounts.pending > 0 && <> · <span className="text-amber-600 dark:text-amber-400 font-medium">{statusCounts.pending} need action</span></>}
                             </p>
                         </div>
-                        {statusCounts.pending > 0 && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                                {statusCounts.pending}
-                            </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {statusCounts.pending > 0 && (
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                                    {statusCounts.pending}
+                                </span>
+                            )}
+                            <button
+                                onClick={() => setViewMode("kanban")}
+                                title="Switch to Kanban view"
+                                className="flex items-center justify-center h-7 w-7 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            >
+                                <Kanban className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                     </div>
                     {/* Filter tabs */}
                     <div className="flex gap-0.5 rounded-lg bg-muted/40 p-0.5">

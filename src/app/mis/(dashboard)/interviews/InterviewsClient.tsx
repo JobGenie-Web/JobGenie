@@ -8,7 +8,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface InterviewsClientProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialInterviews: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialStats: any;
     error: string | null;
 }

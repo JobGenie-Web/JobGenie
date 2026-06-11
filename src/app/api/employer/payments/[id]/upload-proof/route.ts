@@ -107,7 +107,7 @@ export async function POST(
             .eq("id", id);
 
         // Notify MIS
-        const companyData = paymentRequest.companies as any;
+        const companyData = paymentRequest.companies as { company_name?: string } | null;
         await notifyMisPaymentProofSubmitted({
             payment_request_id: id,
             company_name: companyData?.company_name ?? "Unknown Company",

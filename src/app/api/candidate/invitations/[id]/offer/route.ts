@@ -248,7 +248,7 @@ export async function POST(
                     .single();
 
                 if (invDetails) {
-                    const empDetails = invDetails.employer as any;
+                    const empDetails = invDetails.employer as unknown as { user_id: string } | null;
                     // Get a system MIS user to record as creator
                     const { data: sysMis } = await supabase
                         .from("mis_user")

@@ -53,7 +53,7 @@ export function ExperienceSection({ experiences }: ExperienceSectionProps) {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground text-center py-8">
-                        No work experience added yet. Click "Add Experience" to get started.
+                        No work experience added yet. Click &quot;Add Experience&quot; to get started.
                     </p>
                 </CardContent>
             </Card>

@@ -64,7 +64,7 @@ export default async function AddSubAdminPage() {
                     </Link>
                     <h1 className="text-3xl font-bold mt-2">Add Sub-Admin</h1>
                     <p className="text-muted-foreground mt-2">
-                        Invite a new administrator to help manage your company's job postings
+                        Invite a new administrator to help manage your company&apos;s job postings
                     </p>
                     <div className="mt-3 flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">

@@ -28,6 +28,7 @@ async function fetchMISUsers() {
         }
 
         // Transform the data: Supabase returns role as an array, but we need a single object
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transformedUsers = (misUsers || []).map((user: any) => ({
             ...user,
             role: Array.isArray(user.role) && user.role.length > 0 ? user.role[0] : null,

@@ -39,7 +39,7 @@ export function AboutSection({ profile }: AboutSectionProps) {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground text-center py-8">
-                            No about information added yet. Click "Add Information" to get started.
+                            No about information added yet. Click &quot;Add Information&quot; to get started.
                         </p>
                     </CardContent>
                 </Card>

@@ -143,7 +143,7 @@ export async function universalLogin(
                 };
             }
 
-            const companyData = (employerData as any).companies;
+            const companyData = (employerData as Record<string, unknown>).companies as { profile_completed?: boolean } | null;
             const isProfileIncomplete =
                 !employerData.profile_completed || !companyData?.profile_completed;
 

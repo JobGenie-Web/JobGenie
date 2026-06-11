@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -179,7 +179,7 @@ export async function getEmployerAndCompanyProfiles(userId: string): Promise<{
             return null;
         }
 
-        const company = (data as any).companies;
+        const company = (data as Record<string, unknown>).companies;
 
         return {
             employer: {

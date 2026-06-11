@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         const revenueByDay: Record<string, number> = {};
 
         for (const row of rows ?? []) {
-            const pt = row.payment_types as any;
+            const pt = row.payment_types as { code?: string; label?: string } | null;
             const code = pt?.code ?? "unknown";
             const label = pt?.label ?? code;
             const amount = Number(row.amount);

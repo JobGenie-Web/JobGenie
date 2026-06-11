@@ -84,7 +84,7 @@ export async function POST(
         }
 
         // Check if it's an alternative date
-        const selectedSlot = invitation.selected_time_slot as any;
+        const selectedSlot = invitation.selected_time_slot as { is_alternative?: boolean } | null;
         if (selectedSlot?.is_alternative && (!confirmed_time || confirmed_time.trim() === '')) {
             return NextResponse.json(
                 { success: false, error: "Time slot is required for alternative dates" },
@@ -93,7 +93,7 @@ export async function POST(
         }
 
         // Update invitation with confirmation details
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             interview_confirmed: true,
             confirmed_at: new Date().toISOString()
         };
@@ -142,9 +142,9 @@ export async function POST(
             .single();
 
         if (fullInvitation) {
-            const candidate = fullInvitation.candidate as any;
-            const company = fullInvitation.company as any;
-            const timeSlot = fullInvitation.selected_time_slot as any;
+            const candidate = fullInvitation.candidate as unknown as { first_name: string; email: string };
+            const company = fullInvitation.company as unknown as { company_name: string };
+            const timeSlot = fullInvitation.selected_time_slot as { time?: string; date?: string; is_alternative?: boolean } | null;
 
             const finalTime = (timeSlot?.is_alternative && confirmed_time)
                 ? confirmed_time

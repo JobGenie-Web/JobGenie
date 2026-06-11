@@ -52,7 +52,7 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground text-center py-8">
-                        No projects added yet. Click "Add Project" to get started.
+                        No projects added yet. Click &quot;Add Project&quot; to get started.
                     </p>
                 </CardContent>
             </Card>

@@ -82,7 +82,9 @@ export async function POST(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { id: string; company_id: string; candidate_id: string; pipeline_status: string } | null;
+
+        if (!invitation) return NextResponse.json({ success: false, error: "Invitation not found" }, { status: 404 });
 
         // Verify the round belongs to this company
         if (invitation.company_id !== employer.company_id) {
@@ -259,8 +261,10 @@ export async function GET(
             );
         }
 
-        const round = offer.round as any;
-        const invitation = round.invitation as any;
+        const round = offer.round as unknown as { invitation: { company_id: string } } | null;
+        const invitation = round?.invitation ?? null;
+
+        if (!invitation) return NextResponse.json({ success: false, error: "Invitation not found" }, { status: 404 });
 
         // Verify access
         if (invitation.company_id !== employer.company_id) {

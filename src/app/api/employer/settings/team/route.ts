@@ -37,7 +37,7 @@ export async function GET() {
         const employer = await getEmployerAndCompany(supabase, user.id);
         if (!employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
 
-        const company = (employer as any).companies;
+        const company = (employer as Record<string, unknown>).companies as { team_settings?: Record<string, unknown> } | null;
         return NextResponse.json({ success: true, data: mergeWithDefaults(company?.team_settings) });
     } catch (e) {
         return NextResponse.json({ error: e instanceof Error ? e.message : "Internal server error" }, { status: 500 });

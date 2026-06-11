@@ -76,7 +76,9 @@ export async function POST(
         }
 
         // Type assertion for nested invitation
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { id: string; company_id: string; candidate_id: string; candidate: { first_name: string; last_name: string; email: string }[]; pipeline_status: string } | null;
+
+        if (!invitation) return NextResponse.json({ success: false, error: "Invitation not found" }, { status: 404 });
 
         // Verify the round belongs to this company
         if (invitation.company_id !== employer.company_id) {
@@ -226,7 +228,9 @@ export async function GET(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { id: string; company_id: string; candidate_id: string; candidate: { first_name: string; last_name: string; email: string }[]; pipeline_status: string } | null;
+
+        if (!invitation) return NextResponse.json({ success: false, error: "Invitation not found" }, { status: 404 });
 
         // Verify access
         if (invitation.company_id !== employer.company_id) {

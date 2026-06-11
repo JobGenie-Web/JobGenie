@@ -1,70 +1,137 @@
-import useSWR from 'swr';
+"use client";
 
-// Fetcher function for SWR
-const fetcher = async (url: string) => {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch');
-    }
-    const data = await response.json();
-    return data;
-};
+import { useEffect, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 /**
- * Hook to fetch count of invitations not yet opened by the candidate (viewed_at is null).
- * - Auto-refreshes every 120 seconds (safety net; realtime also refreshes)
- * - Revalidates on window focus
- * - Revalidates on network reconnection
- * - Caches data to prevent unnecessary requests
+ * Returns the count of invitations not yet viewed by the candidate.
+ * Initial count is fetched once via direct Supabase query (no HTTP API).
+ * Kept live via a Postgres Changes realtime subscription — zero polling.
  */
 export function useUnopenedInvitationCount() {
-    const { data, error, isLoading, mutate } = useSWR(
-        '/api/candidate/invitations/unopened-count',
-        fetcher,
-        {
-            // Realtime invalidates this key; interval is a safety net only
-            refreshInterval: 120000,
-            revalidateOnFocus: true, // Revalidate when window gains focus
-            revalidateOnReconnect: true, // Revalidate when network reconnects
-            dedupingInterval: 5000, // Dedupe requests within 5 seconds
-            shouldRetryOnError: false, // Don't retry on error (avoid spam)
-        }
+    const [count, setCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const supabase = createClient();
+
+    const fetchCount = useCallback(
+        async (candidateId: string) => {
+            const { count: result } = await supabase
+                .from("job_invitations")
+                .select("id", { count: "exact", head: true })
+                .eq("candidate_id", candidateId)
+                .is("viewed_at", null)
+                .eq("invitation_canceled", false);
+            setCount(result ?? 0);
+            setIsLoading(false);
+        },
+        [supabase]
     );
 
-    return {
-        count: data?.success ? data.count : 0,
-        isLoading,
-        isError: error,
-        mutate, // Allows manual revalidation
-    };
+    useEffect(() => {
+        let channel: RealtimeChannel | null = null;
+        let cancelled = false;
+
+        (async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || cancelled) return;
+
+            const { data: candidate } = await supabase
+                .from("candidates")
+                .select("id")
+                .eq("user_id", user.id)
+                .single();
+
+            if (!candidate || cancelled) { setIsLoading(false); return; }
+
+            await fetchCount(candidate.id);
+
+            channel = supabase
+                .channel(`realtime-count-invitations-candidate-${candidate.id}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "job_invitations",
+                        filter: `candidate_id=eq.${candidate.id}`,
+                    },
+                    () => { if (!cancelled) fetchCount(candidate.id); }
+                )
+                .subscribe();
+        })();
+
+        return () => {
+            cancelled = true;
+            if (channel) supabase.removeChannel(channel);
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return { count, isLoading };
 }
 
 /**
- * Hook to fetch count of invitation updates the employer has not opened yet
- * (employer_last_seen_at is null — candidate activity or first candidate view).
- * - Auto-refreshes every 120 seconds (safety net; realtime also refreshes)
- * - Revalidates on window focus
- * - Revalidates on network reconnection
- * - Caches data to prevent unnecessary requests
+ * Returns the count of invitation updates the employer has not opened yet.
+ * Initial count is fetched once via direct Supabase query (no HTTP API).
+ * Kept live via a Postgres Changes realtime subscription — zero polling.
  */
 export function usePendingInvitationCount() {
-    const { data, error, isLoading, mutate } = useSWR(
-        '/api/employer/invitations/pending-count',
-        fetcher,
-        {
-            // Realtime invalidates this key; interval is a safety net only
-            refreshInterval: 120000,
-            revalidateOnFocus: true, // Revalidate when window gains focus
-            revalidateOnReconnect: true, // Revalidate when network reconnects
-            dedupingInterval: 5000, // Dedupe requests within 5 seconds
-            shouldRetryOnError: false, // Don't retry on error (avoid spam)
-        }
+    const [count, setCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const supabase = createClient();
+
+    const fetchCount = useCallback(
+        async (companyId: string) => {
+            const { count: result } = await supabase
+                .from("job_invitations")
+                .select("id", { count: "exact", head: true })
+                .eq("company_id", companyId)
+                .eq("invitation_canceled", false)
+                .is("employer_last_seen_at", null);
+            setCount(result ?? 0);
+            setIsLoading(false);
+        },
+        [supabase]
     );
 
-    return {
-        count: data?.success ? data.count : 0,
-        isLoading,
-        isError: error,
-        mutate, // Allows manual revalidation
-    };
+    useEffect(() => {
+        let channel: RealtimeChannel | null = null;
+        let cancelled = false;
+
+        (async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || cancelled) return;
+
+            const { data: employer } = await supabase
+                .from("employers")
+                .select("company_id")
+                .eq("user_id", user.id)
+                .single();
+
+            if (!employer || cancelled) { setIsLoading(false); return; }
+
+            await fetchCount(employer.company_id);
+
+            channel = supabase
+                .channel(`realtime-count-invitations-company-${employer.company_id}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "job_invitations",
+                        filter: `company_id=eq.${employer.company_id}`,
+                    },
+                    () => { if (!cancelled) fetchCount(employer.company_id); }
+                )
+                .subscribe();
+        })();
+
+        return () => {
+            cancelled = true;
+            if (channel) supabase.removeChannel(channel);
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return { count, isLoading };
 }

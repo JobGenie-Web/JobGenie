@@ -32,73 +32,26 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useUnopenedInvitationCount } from "@/hooks/useInvitationCount";
 
+const BRAND_NAME = "JobGenie";
+
 const navigationItems = [
-    {
-        title: "Dashboard",
-        href: "/candidate/dashboard",
-        icon: LayoutDashboard,
-        requiresApproval: false,
-        visibilityKey: "dashboard",
-    },
-    {
-        title: "Browse Jobs",
-        href: "/candidate/jobs",
-        icon: Briefcase,
-        requiresApproval: true,
-        visibilityKey: "browse-jobs",
-    },
-    {
-        title: "Applications",
-        href: "/candidate/applications",
-        icon: FileText,
-        requiresApproval: true,
-        visibilityKey: "applications",
-    },
-    {
-        title: "Invitations",
-        href: "/candidate/invitations",
-        icon: Mail,
-        requiresApproval: true,
-        visibilityKey: "invitations",
-    },
-    {
-        title: "Calendar",
-        href: "/candidate/calendar",
-        icon: CalendarDays,
-        requiresApproval: true,
-        visibilityKey: "calendar",
-    },
-    {
-        title: "My Profile",
-        href: "/candidate/profile",
-        icon: User,
-        requiresApproval: false,
-        visibilityKey: "my-profile",
-    },
-    {
-        title: "My Resumes",
-        href: "/candidate/resumes",
-        icon: FileText,
-        requiresApproval: false,
-        visibilityKey: "my-resumes",
-    },
-    {
-        title: "Settings",
-        href: "/candidate/settings",
-        icon: Settings,
-        requiresApproval: true,
-        visibilityKey: "settings",
-    },
+    { title: "Dashboard",  href: "/candidate/dashboard",    icon: LayoutDashboard, requiresApproval: false, visibilityKey: "dashboard" },
+    { title: "Browse Jobs",href: "/candidate/jobs",         icon: Briefcase,       requiresApproval: true,  visibilityKey: "browse-jobs" },
+    { title: "Applications",href: "/candidate/applications",icon: FileText,        requiresApproval: true,  visibilityKey: "applications" },
+    { title: "Invitations", href: "/candidate/invitations", icon: Mail,            requiresApproval: true,  visibilityKey: "invitations" },
+    { title: "Calendar",    href: "/candidate/calendar",    icon: CalendarDays,    requiresApproval: true,  visibilityKey: "calendar" },
+    { title: "My Profile",  href: "/candidate/profile",     icon: User,            requiresApproval: false, visibilityKey: "my-profile" },
+    { title: "My Resumes",  href: "/candidate/resumes",     icon: FileText,        requiresApproval: false, visibilityKey: "my-resumes" },
+    { title: "Settings",    href: "/candidate/settings",    icon: Settings,        requiresApproval: true,  visibilityKey: "settings" },
 ];
 
 export function CandidateSidebar() {
     const pathname = usePathname();
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
-    const [isApproved, setIsApproved] = useState<boolean>(true); // Default to true to avoid flash
-    const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+    const [isApproved, setIsApproved] = useState<boolean>(true);
+    const [visibility, setVisibility] = useState<Record<string, boolean> | null>(null);
 
-    // Use SWR hook for automatic revalidation and caching
     const { count: unopenedCount } = useUnopenedInvitationCount();
 
     useEffect(() => {
@@ -120,77 +73,61 @@ export function CandidateSidebar() {
                 console.error("Error fetching sidebar data:", error);
             }
         };
-
         fetchData();
     }, []);
 
     return (
-        <Sidebar collapsible="icon" className={cn("shadow-sm", "sidebar-portal")}>
-            {/* Header with Logo - height matches the header (h-16 = 64px) */}
-            <SidebarHeader className="h-16 px-4 flex items-center">
+        <Sidebar
+            collapsible="icon"
+            className="border-r border-border/60 bg-background"
+            style={{ boxShadow: "2px 0 8px 0 oklch(0 0 0 / 0.06), 4px 0 20px 0 oklch(0 0 0 / 0.04)" }}
+        >
+            {/* Logo — height matches header */}
+            <SidebarHeader className="h-14 px-3 flex items-center">
                 <Link href="/candidate/dashboard" className="flex items-center gap-3">
-                    {/* Logo */}
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden"
-                         style={{ background: "var(--gradient-primary)" }}>
-                        <Image
-                            src="/logo.jpg"
-                            alt="JobGenie"
-                            width={36}
-                            height={36}
-                            className="object-contain"
-                            priority
-                        />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-primary">
+                        <Image src="/logo.jpg" alt={BRAND_NAME} width={36} height={36} className="object-contain" priority />
                     </div>
                     <span className={cn(
-                        "sidebar-brand-wordmark text-lg font-semibold tracking-tight",
-                        "transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
-                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[160px]"
+                        "text-base font-bold tracking-tight text-foreground",
+                        "transition-[opacity,max-width] duration-200 overflow-hidden whitespace-nowrap",
+                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[140px]"
                     )}>
-                        JobGenie
+                        {BRAND_NAME}
                     </span>
                 </Link>
             </SidebarHeader>
 
-            {/* Navigation */}
-            <SidebarContent className="p-2">
-                <SidebarMenu>
+            <SidebarContent className="px-3 py-10">
+                <SidebarMenu className="gap-4">
                     <TooltipProvider delayDuration={0}>
                         {navigationItems.map((item) => {
-                            // If MIS has hidden this item, skip it entirely
-                            if (Object.keys(visibility).length > 0 && visibility[item.visibilityKey] === false) {
-                                return null;
-                            }
+                            if (visibility === null) return null;
+                            if (visibility[item.visibilityKey] === false) return null;
 
                             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                             const Icon = item.icon;
                             const isRestricted = item.requiresApproval && !isApproved;
 
-                            // For restricted items, show disabled state
                             if (isRestricted) {
                                 return (
                                     <SidebarMenuItem key={item.href}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <div
-                                                    className={cn(
-                                                        "flex items-center gap-3 px-3 py-2 rounded-md cursor-not-allowed opacity-50",
-                                                        "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3"
-                                                    )}
-                                                >
-                                                    <Icon className="h-6 w-6 shrink-0 text-muted-foreground" />
+                                                <div className={cn(
+                                                    "flex items-center gap-3 px-4 py-2.5 rounded-md cursor-not-allowed opacity-40",
+                                                    "group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-10! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center!"
+                                                )}>
+                                                    <Icon className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
                                                     <span className={cn(
-                                                        "text-muted-foreground transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
-                                                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
+                                                        "text-sm text-muted-foreground transition-[opacity,max-width] duration-200 overflow-hidden whitespace-nowrap",
+                                                        isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[180px]"
                                                     )}>{item.title}</span>
                                                 </div>
                                             </TooltipTrigger>
-                                            <TooltipContent side="right" className="font-medium">
-                                                <div className="flex flex-col gap-1">
-                                                    <span>{item.title}</span>
-                                                    <span className="text-xs text-amber-500">
-                                                        Awaiting MIS approval
-                                                    </span>
-                                                </div>
+                                            <TooltipContent side="right">
+                                                <span>{item.title}</span>
+                                                <span className="block text-xs text-amber-500">Awaiting MIS approval</span>
                                             </TooltipContent>
                                         </Tooltip>
                                     </SidebarMenuItem>
@@ -204,30 +141,25 @@ export function CandidateSidebar() {
                                             <SidebarMenuButton
                                                 asChild
                                                 isActive={isActive}
-                                                size="lg"
                                                 className={cn(
-                                                    "transition-colors duration-150 hover:bg-sidebar-accent/8",
-                                                    "group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-12 group-data-[collapsible=icon]:!p-3",
-                                                    isActive && "sidebar-item-active"
+                                                    "h-10 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+                                                    "group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-10! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center!",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 )}
                                             >
-                                                <Link href={item.href} className="gap-3 flex items-center justify-between w-full">
+                                                <Link href={item.href} className="flex items-center justify-between w-full gap-3">
                                                     <div className="flex items-center gap-3">
-                                                        <Icon className="h-6 w-6 shrink-0" />
+                                                        <Icon className="h-[18px] w-[18px] shrink-0" />
                                                         <span className={cn(
-                                                            "transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden whitespace-nowrap",
-                                                            isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]"
+                                                            "transition-[opacity,max-width] duration-200 overflow-hidden whitespace-nowrap",
+                                                            isCollapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[180px]"
                                                         )}>{item.title}</span>
                                                     </div>
-                                                    {/* Invitations not yet opened (viewed_at null) */}
-                                                    <span className={cn(
-                                                        "transition-[opacity] duration-200",
-                                                        isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-                                                    )}>
+                                                    <span className={cn("transition-opacity duration-200", isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100")}>
                                                         {item.title === "Invitations" && unopenedCount > 0 && (
-                                                            <Badge
-                                                                className="ml-auto h-5 min-w-[20px] rounded-full bg-green-500 px-1.5 text-xs font-semibold"
-                                                            >
+                                                            <Badge className="h-4 min-w-4 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
                                                                 {unopenedCount}
                                                             </Badge>
                                                         )}
@@ -236,14 +168,10 @@ export function CandidateSidebar() {
                                             </SidebarMenuButton>
                                         </TooltipTrigger>
                                         {isCollapsed && (
-                                            <TooltipContent side="right" className="font-medium">
+                                            <TooltipContent side="right">
                                                 {item.title}
                                                 {item.title === "Invitations" && unopenedCount > 0 && (
-                                                    <Badge
-                                                        className="ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs bg-green-500 font-semibold"
-                                                    >
-                                                        {unopenedCount}
-                                                    </Badge>
+                                                    <Badge className="ml-1.5 h-4 min-w-4 rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{unopenedCount}</Badge>
                                                 )}
                                             </TooltipContent>
                                         )}
@@ -257,4 +185,3 @@ export function CandidateSidebar() {
         </Sidebar>
     );
 }
-

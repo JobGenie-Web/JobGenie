@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Check, Trash2, X } from "lucide-react";
+import { Bell, Check, Trash2, Calendar, CheckCircle2, XCircle, Clock, Gift, Send, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
@@ -9,9 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +16,32 @@ import { cn } from "@/lib/utils";
 
 interface NotificationBellProps {
   role?: "employer" | "candidate";
+}
+
+function getNotificationMeta(type: string): {
+  Icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
+} {
+  if (type.includes("confirmed") || type.includes("accepted") || type.includes("offer_received")) {
+    return { Icon: CheckCircle2, iconBg: "bg-emerald-100 dark:bg-emerald-500/15", iconColor: "text-emerald-600 dark:text-emerald-400" };
+  }
+  if (type.includes("declined") || type.includes("cancelled") || type.includes("withdrawn")) {
+    return { Icon: XCircle, iconBg: "bg-red-100 dark:bg-red-500/15", iconColor: "text-red-500 dark:text-red-400" };
+  }
+  if (type.includes("rescheduled")) {
+    return { Icon: RefreshCw, iconBg: "bg-amber-100 dark:bg-amber-500/15", iconColor: "text-amber-600 dark:text-amber-400" };
+  }
+  if (type.includes("offer")) {
+    return { Icon: Gift, iconBg: "bg-violet-100 dark:bg-violet-500/15", iconColor: "text-violet-600 dark:text-violet-400" };
+  }
+  if (type.includes("scheduled") || type.includes("interview")) {
+    return { Icon: Calendar, iconBg: "bg-blue-100 dark:bg-blue-500/15", iconColor: "text-blue-600 dark:text-blue-400" };
+  }
+  if (type.includes("sent") || type.includes("received") || type.includes("invitation")) {
+    return { Icon: Send, iconBg: "bg-sky-100 dark:bg-sky-500/15", iconColor: "text-sky-600 dark:text-sky-400" };
+  }
+  return { Icon: Clock, iconBg: "bg-muted", iconColor: "text-muted-foreground" };
 }
 
 export function NotificationBell({ role = "candidate" }: NotificationBellProps) {
@@ -33,12 +56,10 @@ export function NotificationBell({ role = "candidate" }: NotificationBellProps) 
   } = useNotifications();
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Mark as read
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
 
-    // Navigate based on notification type
     const data = notification.data;
     if (!data) return;
 
@@ -67,47 +88,15 @@ export function NotificationBell({ role = "candidate" }: NotificationBellProps) 
         case "offer_accepted":
         case "offer_declined":
           if (data.invitation_id) {
-            goToInvitation(data.invitation_id);
+            goToInvitation(data.invitation_id as string);
           }
           break;
-
         default:
           break;
       }
     } catch (error) {
       console.error("Error navigating:", error);
     }
-  };
-
-  const getNotificationIcon = (type: string) => {
-    // Return appropriate icon or styling based on notification type
-    const baseClasses = "w-2 h-2 rounded-full";
-    
-    if (
-      type.includes("accepted") ||
-      type.includes("confirmed") ||
-      type.includes("offer_received")
-    ) {
-      return <span className={cn(baseClasses, "bg-green-500")} />;
-    }
-    
-    if (
-      type.includes("declined") ||
-      type.includes("cancelled") ||
-      type.includes("withdrawn")
-    ) {
-      return <span className={cn(baseClasses, "bg-red-500")} />;
-    }
-    
-    if (
-      type.includes("scheduled") ||
-      type.includes("sent") ||
-      type.includes("received")
-    ) {
-      return <span className={cn(baseClasses, "bg-blue-500")} />;
-    }
-    
-    return <span className={cn(baseClasses, "bg-gray-500")} />;
   };
 
   return (
@@ -126,109 +115,107 @@ export function NotificationBell({ role = "candidate" }: NotificationBellProps) 
           <span className="sr-only">Notifications</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 md:w-96">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
+
+      <DropdownMenuContent align="end" className="w-80 md:w-96 p-0 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span className="text-sm font-semibold">Notifications</span>
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={markAllAsRead}
-              className="h-auto p-1 text-xs"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Check className="h-3 w-3 mr-1" />
+              <Check className="h-3 w-3" />
               Mark all read
-            </Button>
+            </button>
           )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        
+        </div>
+
+        {/* Body */}
         {loading ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            Loading notifications...
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Loading…
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No notifications yet
+          <div className="py-10 flex flex-col items-center gap-2 text-center">
+            <Bell className="h-7 w-7 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No notifications yet</p>
           </div>
         ) : (
-          <ScrollArea className="h-[400px]">
-            {notifications.slice(0, 10).map((notification) => (
-              <div
-                key={notification.id}
-                className={cn(
-                  "group relative",
-                  !notification.is_read && "bg-accent/50"
-                )}
-              >
-                <DropdownMenuItem
-                  className="flex items-start gap-3 p-3 cursor-pointer"
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="mt-1">
-                    {getNotificationIcon(notification.type)}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium leading-none">
-                        {notification.title}
-                      </p>
-                      {!notification.is_read && (
-                        <Badge variant="secondary" className="h-2 w-2 p-0 rounded-full" />
-                      )}
+          <ScrollArea className="h-[420px]">
+            <div className="py-1">
+              {notifications.slice(0, 10).map((notification) => {
+                const { Icon, iconBg, iconColor } = getNotificationMeta(notification.type);
+                const unread = !notification.is_read;
+
+                return (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "group relative flex items-start gap-3 px-4 py-3 cursor-pointer",
+                      "hover:bg-accent/60 transition-colors duration-100",
+                      unread && "bg-accent/30"
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    {/* Type icon */}
+                    <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", iconBg)}>
+                      <Icon className={cn("h-4 w-4", iconColor)} />
                     </div>
-                    {notification.body && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {notification.body}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={cn("text-[13px] leading-snug", unread ? "font-semibold" : "font-medium")}>
+                          {notification.title}
+                        </p>
+                        {unread && (
+                          <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      {notification.body && (
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {notification.body}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-muted-foreground/60">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                       </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!notification.is_read && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAsRead(notification.id);
-                        }}
+                    </div>
+
+                    {/* Actions (on hover) */}
+                    <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {unread && (
+                        <button
+                          className="flex h-6 w-6 items-center justify-center rounded hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={(e) => { e.stopPropagation(); markAsRead(notification.id); }}
+                          title="Mark as read"
+                        >
+                          <Check className="h-3 w-3" />
+                        </button>
+                      )}
+                      <button
+                        className="flex h-6 w-6 items-center justify-center rounded hover:bg-background text-muted-foreground hover:text-red-500 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); deleteNotification(notification.id); }}
+                        title="Delete"
                       >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
-                </DropdownMenuItem>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </ScrollArea>
         )}
-        
+
+        {/* Footer */}
         {notifications.length > 10 && (
-          <>
-            <DropdownMenuSeparator />
-            <div className="p-2 text-center">
-              <Button variant="ghost" size="sm" className="text-xs">
-                View all notifications
-              </Button>
-            </div>
-          </>
+          <div className="border-t border-border px-4 py-2.5 text-center">
+            <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              View all notifications
+            </button>
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

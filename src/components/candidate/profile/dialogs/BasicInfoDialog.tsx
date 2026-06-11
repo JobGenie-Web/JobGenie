@@ -1,4 +1,5 @@
-// @ts-nocheck - Suppress react-hook-form type definition conflicts
+﻿/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -490,8 +491,8 @@ export function BasicInfoDialog({ open, onOpenChange, profile, onProfileUpdated 
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="bachelors_degree">Bachelor's Degree</SelectItem>
-                                            <SelectItem value="masters_degree">Master's Degree</SelectItem>
+                                            <SelectItem value="bachelors_degree">Bachelor&apos;s Degree</SelectItem>
+                                            <SelectItem value="masters_degree">Master&apos;s Degree</SelectItem>
                                             <SelectItem value="doctorate_phd">Doctorate/PhD</SelectItem>
                                             <SelectItem value="undergraduate">Undergraduate</SelectItem>
                                             <SelectItem value="post_graduate">Post Graduate</SelectItem>

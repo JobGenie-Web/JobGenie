@@ -57,7 +57,7 @@ export default async function RolePermissionsPage({
 
     // Extract assigned permission IDs
     const assignedPermissionIds = new Set<string>(
-        role.role_permissions.map((rp: any) => rp.permission.id as string)
+        role.role_permissions.map((rp: { permission: { id: string } }) => rp.permission.id)
     );
 
     return (

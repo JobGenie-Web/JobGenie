@@ -65,7 +65,7 @@ export function AddMISUserForm() {
                 
                 if (data.success) {
                     // Filter only active roles
-                    const activeRoles = data.roles.filter((role: any) => role.is_active);
+                    const activeRoles = data.roles.filter((role: { is_active: boolean }) => role.is_active);
                     setRoles(activeRoles);
                 }
             } catch (error) {

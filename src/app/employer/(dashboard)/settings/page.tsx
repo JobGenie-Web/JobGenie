@@ -24,7 +24,7 @@ export default async function SettingsPage() {
 
     if (!employer) redirect("/login");
 
-    const company = (employer as any).companies;
+    const company = (employer as Record<string, unknown>).companies as { approval_status?: string; company_name?: string } | null;
 
     return (
         <EmployerLayout

@@ -37,7 +37,7 @@ export async function GET() {
         }
 
         // Type assertion for nested company data
-        const company = (employer as any)?.companies;
+        const company = (employer as Record<string, unknown>)?.companies;
 
         return NextResponse.json({
             success: true,

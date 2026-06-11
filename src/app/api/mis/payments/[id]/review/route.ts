@@ -79,7 +79,7 @@ export async function POST(
             .eq("id", id);
 
         // Notify employer
-        const employerData = paymentRequest.employer as any;
+        const employerData = (paymentRequest.employer as unknown as { user_id: string }[])?.[0] ?? null;
         if (employerData?.user_id) {
             await notifyEmployerPaymentReview({
                 employer_user_id: employerData.user_id,

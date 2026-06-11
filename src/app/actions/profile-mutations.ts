@@ -23,7 +23,7 @@ import {
 type ActionResponse = {
     success: boolean;
     error?: string;
-    data?: any;
+    data?: unknown;
 };
 
 // ============= EXPERIENCE ACTIONS =============
@@ -90,7 +90,7 @@ export async function updateExperience(id: string, data: ExperienceFormData): Pr
             .eq("id", id)
             .single();
 
-        if (!experience || (experience.candidates as any).user_id !== user.id) {
+        if (!experience || (experience.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -134,7 +134,7 @@ export async function deleteExperience(id: string): Promise<ActionResponse> {
             .eq("id", id)
             .single();
 
-        if (!experience || (experience.candidates as any).user_id !== user.id) {
+        if (!experience || (experience.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -219,7 +219,7 @@ export async function updateProject(id: string, data: ProjectFormData): Promise<
             .eq("id", id)
             .single();
 
-        if (!project || (project.candidates as any).user_id !== user.id) {
+        if (!project || (project.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -260,7 +260,7 @@ export async function deleteProject(id: string): Promise<ActionResponse> {
             .eq("id", id)
             .single();
 
-        if (!project || (project.candidates as any).user_id !== user.id) {
+        if (!project || (project.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -344,7 +344,7 @@ export async function updateCertification(id: string, data: CertificationFormDat
             .eq("id", id)
             .single();
 
-        if (!cert || (cert.candidates as any).user_id !== user.id) {
+        if (!cert || (cert.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -385,7 +385,7 @@ export async function deleteCertification(id: string): Promise<ActionResponse> {
             .eq("id", id)
             .single();
 
-        if (!cert || (cert.candidates as any).user_id !== user.id) {
+        if (!cert || (cert.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -471,7 +471,7 @@ export async function updateAward(id: string, data: AwardFormData): Promise<Acti
             .eq("id", id)
             .single();
 
-        if (!award || (award.candidates as any).user_id !== user.id) {
+        if (!award || (award.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -520,7 +520,7 @@ export async function deleteAward(id: string): Promise<ActionResponse> {
             .eq("id", id)
             .single();
 
-        if (!award || (award.candidates as any).user_id !== user.id) {
+        if (!award || (award.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -606,7 +606,7 @@ export async function updateEducation(id: string, data: EducationFormData): Prom
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -657,7 +657,7 @@ export async function deleteEducation(id: string): Promise<ActionResponse> {
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 

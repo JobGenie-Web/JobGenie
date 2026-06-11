@@ -53,7 +53,7 @@ export function CertificationsSection({ certificates }: CertificationsSectionPro
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground text-center py-8">
-                        No certifications added yet. Click "Add Certification" to get started.
+                        No certifications added yet. Click &quot;Add Certification&quot; to get started.
                     </p>
                 </CardContent>
             </Card>

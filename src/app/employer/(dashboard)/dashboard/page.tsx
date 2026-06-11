@@ -37,7 +37,7 @@ export default async function EmployerDashboardPage() {
         .single();
 
     // Type assertion for nested company data
-    const company = (employerData as any)?.companies;
+    const company = (employerData as Record<string, unknown>)?.companies as { approval_status?: string } | null;
 
     // Check if company is pending approval
     if (company?.approval_status === 'pending') {

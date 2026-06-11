@@ -44,6 +44,10 @@ export function getInvitationJourneyDisplay(
     const round = Math.max(1, inv.current_round_number ?? 1);
 
     if (inv.invitation_canceled && inv.mis_rescheduled) {
+        // If the interview has progressed to round 2+, the reschedule is historical — show current round
+        if (round > 1) {
+            return { label: `Interview · Round ${round}`, variant: "info" };
+        }
         return { label: "Rescheduled", variant: "success" };
     }
     if (inv.invitation_canceled) {
@@ -101,18 +105,18 @@ export function getInvitationJourneyDisplay(
 export function journeyVariantToCandidateClasses(v: JourneyDisplay["variant"]): string {
     switch (v) {
         case "success":
-            return "border border-primary/25 bg-primary/10 text-primary dark:border-primary/30 dark:bg-primary/[0.14] dark:text-primary";
+            return "border border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400";
         case "warning":
-            return "border border-amber-500/25 bg-amber-500/10 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100/90";
+            return "border border-amber-500/30 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400";
         case "danger":
-            return "border border-destructive/30 bg-destructive/10 text-destructive dark:bg-destructive/15 dark:text-destructive";
+            return "border border-red-500/30 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400";
         case "info":
-            return "border border-accent/25 bg-accent/10 text-accent-foreground dark:border-accent/30 dark:bg-accent/[0.12] dark:text-accent-foreground";
+            return "border border-indigo-500/30 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-400";
         case "muted":
-            return "border border-border/70 bg-muted text-muted-foreground";
+            return "border border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400";
         case "pending":
         default:
-            return "border border-border bg-muted/90 text-foreground dark:bg-muted/80 dark:text-muted-foreground";
+            return "border border-blue-500/30 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400";
     }
 }
 

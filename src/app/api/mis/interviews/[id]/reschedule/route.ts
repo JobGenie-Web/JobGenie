@@ -178,9 +178,9 @@ export async function POST(
         await adminClient.from("interview_reminder_sent").delete().eq("job_invitation_id", id);
 
         // Send email notifications to both candidate and employer
-        const candidateData = updatedInterview.candidate as any;
-        const employerData = updatedInterview.employer as any;
-        const companyData = updatedInterview.company as any;
+        const candidateData = (updatedInterview.candidate as unknown as { id: string; user_id: string; first_name: string; last_name: string; email: string }[])?.[0];
+        const employerData = (updatedInterview.employer as unknown as { id: string; user_id: string; first_name: string; last_name: string; email: string }[])?.[0];
+        const companyData = (updatedInterview.company as unknown as { company_name: string }[])?.[0];
         const meetingLinkOrAddress = interview_mode === 'online' ? meeting_link : interview_address;
 
         const [candidateTz, employerTz] = await Promise.all([

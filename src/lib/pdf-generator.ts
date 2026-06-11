@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, type PDFFont, type Color } from "pdf-lib";
 import type { CompleteProfileData } from "@/lib/validations/profile-schema";
 
 export interface CandidateBasicInfo {
@@ -79,9 +79,9 @@ export async function generateCommonCV(
     text: string,
     x: number,
     maxWidth: number,
-    font: any,
+    font: PDFFont,
     size: number,
-    color: any
+    color: Color
   ) => {
     // Sanitize the text first
     const sanitizedText = sanitizeText(text);

@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
     Calendar,
     Clock,
@@ -45,6 +43,15 @@ interface JobOffer {
     created_at: string;
 }
 
+interface InterviewTimeSlot {
+    date: string;
+    time: string;
+    is_alternative?: boolean;
+    interview_mode?: string | null;
+    meeting_link?: string | null;
+    interview_address?: string | null;
+}
+
 interface InterviewRound {
     id: string;
     round_number: number;
@@ -56,17 +63,19 @@ interface InterviewRound {
     outcome_by: string | null;
     confirmed_at: string | null;
     interview_confirmed?: boolean;
-    selected_time_slot: any;
+    selected_time_slot: InterviewTimeSlot | null;
     interview_mode: string | null;
-    confirmed_time: any;
+    confirmed_time: string | null;
     meeting_link: string | null;
     interview_address: string | null;
+    map_link?: string | null;
+    given_time_slots?: InterviewTimeSlot[] | null;
     round_canceled?: boolean;
     canceled_by?: string | null;
     cancellation_reason?: string | null;
     canceled_at?: string | null;
     mis_rescheduled?: boolean;
-    mis_reschedule_data?: any;
+    mis_reschedule_data?: InterviewTimeSlot | null;
 }
 
 interface InterviewRoundsDisplayProps {
@@ -75,6 +84,69 @@ interface InterviewRoundsDisplayProps {
     jobTitle: string;
     onUpdate?: () => void;
     onOutcomeFound?: (hasOutcome: boolean) => void;
+    /** When true and no rounds exist, automatically seed round 1 without showing the manual button */
+    autoSeed?: boolean;
+    /** When true, renders the current active round's details as a top card (like the MIS card) */
+    showActiveRoundCard?: boolean;
+}
+
+function NoRoundsState({
+    invitationId,
+    onCreated,
+}: {
+    invitationId: string;
+    candidateName: string;
+    jobTitle: string;
+    onCreated: () => void;
+}) {
+    const [loading, setLoading] = useState(false);
+
+    const handleSeed = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/employer/invitations/${invitationId}/seed-round`, { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Round 1 created successfully");
+                onCreated();
+            } else {
+                toast.error(data.error || "Failed to create round");
+            }
+        } catch {
+            toast.error("An error occurred");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/60">
+                <MessageSquare className="h-5 w-5 text-muted-foreground/60" />
+            </div>
+            <div>
+                <p className="text-sm font-medium text-foreground">No interview rounds yet</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Initialize Round 1 from the confirmed interview details.</p>
+            </div>
+            <Button size="sm" onClick={handleSeed} disabled={loading}>
+                {loading && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Initialize Round 1
+            </Button>
+        </div>
+    );
+}
+
+const INTERVIEW_TIME_SLOTS = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+    "15:00", "15:30", "16:00", "16:30", "17:00",
+];
+
+function formatTimeSlotLabel(t: string) {
+    const [h, m] = t.split(":").map(Number);
+    const ampm = h < 12 ? "AM" : "PM";
+    const hour = h % 12 === 0 ? 12 : h % 12;
+    return `${hour}:${m === 0 ? "00" : m} ${ampm}`;
 }
 
 export function InterviewRoundsDisplay({
@@ -82,11 +154,13 @@ export function InterviewRoundsDisplay({
     candidateName,
     jobTitle,
     onUpdate,
-    onOutcomeFound
+    onOutcomeFound,
+    autoSeed = false,
+    showActiveRoundCard = false,
 }: InterviewRoundsDisplayProps) {
     const [rounds, setRounds] = useState<InterviewRound[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set());
+    const [autoSeeding, setAutoSeeding] = useState(false);
     const [offerExists, setOfferExists] = useState(false);
     const [offerDetails, setOfferDetails] = useState<JobOffer | null>(null);
     const [showOfferDetails, setShowOfferDetails] = useState(false);
@@ -115,7 +189,7 @@ export function InterviewRoundsDisplay({
         roundNumber: number;
         roundLabel: string | null;
         interviewMode: string | null;
-        selectedTimeSlot: any;
+        selectedTimeSlot: InterviewTimeSlot | null;
     }>({
         isOpen: false,
         roundId: "",
@@ -131,6 +205,18 @@ export function InterviewRoundsDisplay({
         roundLabel: string;
     }>({ isOpen: false, roundId: "", roundLabel: "" });
     const [cancelRoundReason, setCancelRoundReason] = useState("");
+
+    const [editRoundDialog, setEditRoundDialog] = useState<{
+        isOpen: boolean;
+        roundId: string;
+        roundLabel: string;
+    }>({ isOpen: false, roundId: "", roundLabel: "" });
+    const [editRoundSlots, setEditRoundSlots] = useState<{ id: string; date: string; time: string }[]>([]);
+    const [editRoundMode, setEditRoundMode] = useState("online");
+    const [editRoundMeetingLink, setEditRoundMeetingLink] = useState("");
+    const [editRoundAddress, setEditRoundAddress] = useState("");
+    const [editRoundMapLink, setEditRoundMapLink] = useState("");
+    const [isSavingEditRound, setIsSavingEditRound] = useState(false);
     const [isCancelingRound, setIsCancelingRound] = useState(false);
 
     useEffect(() => {
@@ -143,29 +229,45 @@ export function InterviewRoundsDisplay({
             const data = await response.json();
 
             if (data.success) {
-                setRounds(data.data);
-                // Auto-expand the latest round
-                if (data.data.length > 0) {
-                    setExpandedRounds(new Set([data.data[data.data.length - 1].id]));
-                }
-                
-                // Check if any round has an outcome
-                const hasOutcome = data.data.some((r: InterviewRound) => r.outcome);
-                if (onOutcomeFound) {
-                    onOutcomeFound(hasOutcome);
+                // If autoSeed and no rounds exist yet, seed round 1 automatically
+                if (autoSeed && data.data.length === 0) {
+                    setAutoSeeding(true);
+                    try {
+                        const seedRes = await fetch(`/api/employer/invitations/${invitationId}/seed-round`, { method: "POST" });
+                        const seedData = await seedRes.json();
+                        if (seedData.success || seedRes.status === 409) {
+                            // 409 = round already exists (race), either way re-fetch
+                            const retry = await fetch(`/api/employer/invitations/${invitationId}/rounds`);
+                            const retryData = await retry.json();
+                            if (retryData.success) {
+                                setRounds(retryData.data);
+                                if (retryData.data.length > 0) {
+                                }
+                                const hasOutcome = retryData.data.some((r: InterviewRound) => r.outcome);
+                                onOutcomeFound?.(hasOutcome);
+                            }
+                        } else {
+                            setRounds([]);
+                            onOutcomeFound?.(false);
+                        }
+                    } finally {
+                        setAutoSeeding(false);
+                    }
+                } else {
+                    setRounds(data.data);
+                    if (data.data.length > 0) {
+                    }
+                    const hasOutcome = data.data.some((r: InterviewRound) => r.outcome);
+                    onOutcomeFound?.(hasOutcome);
                 }
             } else {
                 toast.error("Failed to load interview rounds");
-                if (onOutcomeFound) {
-                    onOutcomeFound(false);
-                }
+                onOutcomeFound?.(false);
             }
         } catch (error) {
             console.error("Error fetching rounds:", error);
             toast.error("An error occurred while loading interview rounds");
-            if (onOutcomeFound) {
-                onOutcomeFound(false);
-            }
+            onOutcomeFound?.(false);
         } finally {
             setLoading(false);
         }
@@ -187,16 +289,6 @@ export function InterviewRoundsDisplay({
     useEffect(() => {
         checkOfferExists();
     }, [invitationId]);
-
-    const toggleRound = (roundId: string) => {
-        const newExpanded = new Set(expandedRounds);
-        if (newExpanded.has(roundId)) {
-            newExpanded.delete(roundId);
-        } else {
-            newExpanded.add(roundId);
-        }
-        setExpandedRounds(newExpanded);
-    };
 
     const handleFeedbackSuccess = () => {
         fetchRounds();
@@ -241,6 +333,44 @@ export function InterviewRoundsDisplay({
         } catch { toast.error("An error occurred"); } finally { setIsCancelingRound(false); }
     };
 
+    const openEditRoundDialog = (round: InterviewRound) => {
+        setEditRoundSlots((round.given_time_slots || []).map((s, i) => ({ id: String(i), date: s.date, time: s.time })));
+        setEditRoundMode(round.interview_mode || "online");
+        setEditRoundMeetingLink(round.meeting_link || "");
+        setEditRoundAddress(round.interview_address || "");
+        setEditRoundMapLink(round.map_link || "");
+        setEditRoundDialog({ isOpen: true, roundId: round.id, roundLabel: round.round_label || `Round ${round.round_number}` });
+    };
+
+    const handleSaveEditRound = async () => {
+        if (editRoundSlots.length === 0) { toast.error("Add at least one time slot"); return; }
+        if (editRoundSlots.some(s => !s.date || !s.time)) { toast.error("Complete all time slots"); return; }
+        if (editRoundMode === "physical" && !editRoundAddress) { toast.error("Interview address is required"); return; }
+        setIsSavingEditRound(true);
+        try {
+            const res = await fetch(`/api/employer/interview-rounds/${editRoundDialog.roundId}/edit`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    timeSlots: editRoundSlots.map((s, i) => ({ date: s.date, time: s.time, order: i + 1 })),
+                    interviewMode: editRoundMode,
+                    meetingLink: editRoundMeetingLink,
+                    interviewAddress: editRoundAddress,
+                    mapLink: editRoundMapLink,
+                }),
+            });
+            const d = await res.json();
+            if (d.success) {
+                toast.success("Round updated successfully");
+                setEditRoundDialog({ isOpen: false, roundId: "", roundLabel: "" });
+                fetchRounds();
+                if (onUpdate) onUpdate();
+            } else {
+                toast.error(d.error || "Failed to update round");
+            }
+        } catch { toast.error("An error occurred"); } finally { setIsSavingEditRound(false); }
+    };
+
     const getOutcomeInfo = (outcome: string | null) => {
         switch (outcome) {
             case 'advance':
@@ -272,7 +402,7 @@ export function InterviewRoundsDisplay({
         }
     };
 
-    if (loading) {
+    if (loading || autoSeeding) {
         return (
             <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -282,24 +412,92 @@ export function InterviewRoundsDisplay({
 
     if (rounds.length === 0) {
         return (
-            <div className="text-center py-8">
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                        <strong>Action Required:</strong> Run the database migration to enable automatic interview round creation.
-                    </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
-                        After running the migration, interview rounds will be created automatically when you confirm interviews.
-                    </p>
-                    <code className="block mt-3 text-xs bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded">
-                        npx supabase db push
-                    </code>
-                </div>
-            </div>
+            <NoRoundsState
+                invitationId={invitationId}
+                candidateName={candidateName}
+                jobTitle={jobTitle}
+                onCreated={() => { fetchRounds(); onUpdate?.(); }}
+            />
         );
     }
 
+    // Find the current active round (highest round_number with no outcome and not canceled)
+    const activeRound = showActiveRoundCard
+        ? [...rounds].sort((a, b) => b.round_number - a.round_number).find(r => !r.outcome && !r.round_canceled)
+        : null;
+
     return (
         <>
+            {/* Active round card — shown above the rounds list when showActiveRoundCard=true */}
+            {activeRound && activeRound.round_number > 1 && (() => {
+                const slot = activeRound.selected_time_slot;
+                const slots = activeRound.given_time_slots;
+                const mode = activeRound.interview_mode;
+                const label = activeRound.round_label || `Round ${activeRound.round_number}`;
+                return (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Calendar className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-semibold">{label}</span>
+                            <span className="ml-auto text-xs text-muted-foreground capitalize">{activeRound.status}</span>
+                        </div>
+                        {slot ? (
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-2">
+                                    <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                                    {formatUTCDate(slot.date, "MMM d, yyyy")}
+                                </div>
+                                <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-2">
+                                    <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                                    {formatUTCTime(slot.date, slot.time)}
+                                </div>
+                                {mode && (
+                                    <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-2">
+                                        {mode === "online" ? <Video className="h-3.5 w-3.5 text-primary shrink-0" /> : <MapPinned className="h-3.5 w-3.5 text-primary shrink-0" />}
+                                        {mode === "online" ? "Online" : "Physical"}
+                                    </div>
+                                )}
+                            </div>
+                        ) : slots && slots.length > 0 ? (
+                            <div className="space-y-1.5">
+                                <p className="text-xs text-muted-foreground mb-1">Offered time slots — awaiting candidate response</p>
+                                <div className="grid gap-1.5">
+                                    {slots.map((s, i) => (
+                                        <div key={i} className="flex items-center gap-2 rounded-lg bg-primary/10 px-2.5 py-2 text-xs">
+                                            <span className="text-muted-foreground w-3">{i + 1}.</span>
+                                            <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                                            <span>{formatUTCDate(s.date, "MMM d, yyyy")}</span>
+                                            <Clock className="h-3.5 w-3.5 text-primary shrink-0 ml-1" />
+                                            <span>{formatUTCTime(s.date, s.time)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                {mode && (
+                                    <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-2 text-xs mt-1 w-fit">
+                                        {mode === "online" ? <Video className="h-3.5 w-3.5 text-primary shrink-0" /> : <MapPinned className="h-3.5 w-3.5 text-primary shrink-0" />}
+                                        {mode === "online" ? "Online" : "Physical"}
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+                        {mode === "online" && activeRound.meeting_link && (
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="flex-1 text-xs truncate text-muted-foreground border border-border rounded px-2 py-1 bg-background">{activeRound.meeting_link}</span>
+                                <button onClick={() => { navigator.clipboard.writeText(activeRound.meeting_link!); }} className="h-7 w-7 flex items-center justify-center rounded border border-border bg-background hover:bg-muted transition-colors">
+                                    <ExternalLink className="h-3 w-3" />
+                                </button>
+                            </div>
+                        )}
+                        {mode === "physical" && activeRound.interview_address && (
+                            <div className="flex items-start gap-2 mt-2 text-xs text-muted-foreground">
+                                <MapPinned className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                <span>{activeRound.interview_address}</span>
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+
             {/* Job Offer Status Banner */}
             {offerExists && offerDetails && (
                 <div className={cn(
@@ -431,71 +629,57 @@ export function InterviewRoundsDisplay({
                 </div>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Interview Rounds ({rounds.length})</h3>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Interview Rounds ({rounds.length})</h3>
                 </div>
 
                 {rounds.map((round, index) => {
-                    const isExpanded = expandedRounds.has(round.id);
                     const outcomeInfo = getOutcomeInfo(round.outcome);
                     const isCanceled = !!round.round_canceled;
-                    const canAddFeedback = round.status === 'confirmed' && !round.outcome && !isCanceled;
+                    // MIS-rescheduled rounds are always confirmed — allow feedback regardless of status field
+                    const isConfirmedOrRescheduled = round.status === 'confirmed' || (!!round.mis_rescheduled && !!round.mis_reschedule_data);
+                    const isPending = round.status === 'pending' || round.status === 'viewed' || round.status === 'accepted';
+                    const canAddFeedback = (isConfirmedOrRescheduled || isPending) && !round.outcome && !isCanceled;
                     const needsConfirmation = round.status === 'accepted' && !round.confirmed_at && !isCanceled;
-                    const canCancelRound = (round.status === 'confirmed' || !!round.interview_confirmed) && !round.outcome && !isCanceled;
+                    // Cancel allowed for any active round (pending, confirmed, etc.)
+                    const canCancelRound = (isConfirmedOrRescheduled || isPending) && !round.outcome && !isCanceled;
+                    // Edit allowed before candidate accepts (pending/viewed)
+                    const canEditRound = isPending && !round.outcome && !isCanceled;
                     
                     // Check if next round exists (to hide "Schedule Next Round" button)
                     const nextRoundExists = rounds.some(r => r.round_number === round.round_number + 1);
                     
                     // Hide interview details if this round was advanced (outcome = 'advance')
                     const shouldShowInterviewDetails = round.outcome !== 'advance';
+                    // Dim completed/canceled rounds so the active round stands out
+                    const isDone = !!round.outcome || isCanceled;
 
                     return (
                         <Card key={round.id} className="overflow-hidden">
-                            <div
-                                className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => toggleRound(round.id)}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h4 className="font-semibold text-sm">
-                                                Round {round.round_number}
-                                                {round.round_label && ` - ${round.round_label}`}
-                                            </h4>
-                                            <Badge variant="outline" className="text-xs">
-                                                {round.status}
-                                            </Badge>
-                                        </div>
-                                        {round.confirmed_at && (
-                                            <p className="text-xs text-muted-foreground">
-                                                Confirmed: {formatTimestamp(round.confirmed_at, "MMM d, yyyy")}
-                                            </p>
-                                        )}
+                            <div className="px-3 py-1 space-y-1">
+                                {/* Round header + outcome — dimmed when done */}
+                                <div className={cn(isDone && "opacity-50")}>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold text-sm">
+                                            {round.round_label || `Round ${round.round_number}`}
+                                        </h4>
+                                        <Badge variant="outline" className="text-xs">{round.status}</Badge>
                                     </div>
-                                    <ChevronDown
-                                        className={`h-4 w-4 text-muted-foreground transition-transform ${
-                                            isExpanded ? 'rotate-180' : ''
-                                        }`}
-                                    />
+
+                                    {outcomeInfo && (
+                                        <div className={`mt-1 px-2 py-1 rounded-md ${outcomeInfo.bgColor} border ${outcomeInfo.borderColor}`}>
+                                            <div className="flex items-center gap-2">
+                                                <outcomeInfo.icon className={`h-3.5 w-3.5 ${outcomeInfo.color}`} />
+                                                <span className={`text-xs font-medium ${outcomeInfo.color}`}>{outcomeInfo.label}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {outcomeInfo && (
-                                    <div className={`mt-2 p-2 rounded-md ${outcomeInfo.bgColor} border ${outcomeInfo.borderColor}`}>
-                                        <div className="flex items-center gap-2">
-                                            <outcomeInfo.icon className={`h-4 w-4 ${outcomeInfo.color}`} />
-                                            <span className={`text-xs font-medium ${outcomeInfo.color}`}>
-                                                {outcomeInfo.label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <Collapsible open={isExpanded}>
-                                <CollapsibleContent>
-                                    <Separator />
-                                    <div className="p-3 space-y-3">
+                                <div className="space-y-1.5">
+                                        {/* Details section — dimmed when done */}
+                                        <div className={cn(isDone && "opacity-50")}>
                                         {/* Cancelled state */}
                                         {isCanceled && (
                                             <div className="rounded-md bg-red-50 border border-red-200 p-3 space-y-1 dark:bg-red-950/20 dark:border-red-800">
@@ -511,50 +695,109 @@ export function InterviewRoundsDisplay({
                                             </div>
                                         )}
 
-                                        {/* MIS rescheduled state */}
-                                        {round.mis_rescheduled && round.mis_reschedule_data && (
-                                            <div className="rounded-md bg-green-50 border border-green-200 p-3 space-y-1 dark:bg-green-950/20 dark:border-green-800">
-                                                <p className="text-xs font-medium text-green-700 dark:text-green-300">Rescheduled by MIS</p>
-                                                <p className="text-xs text-green-600 dark:text-green-400">
-                                                    {formatUTCTime(round.mis_reschedule_data.date, round.mis_reschedule_data.time)}
-                                                    {" · "}
-                                                    {round.mis_reschedule_data.interview_mode === "online" ? "Online" : "Physical"}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Interview Details - Hide if round was advanced to next round */}
-                                        {shouldShowInterviewDetails && round.selected_time_slot && (
-                                            <div className="space-y-2">
-                                                <p className="text-xs font-medium text-muted-foreground">Interview Details</p>
-                                                <div className="grid gap-2 text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                                        <span>
-                                                            {formatUTCDate(round.selected_time_slot.date)}
-                                                        </span>
-                                                    </div>
-                                                    {round.selected_time_slot.time && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                                            <span>
-                                                                {formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    {round.interview_mode && (
-                                                        <div className="flex items-center gap-2">
-                                                            {round.interview_mode === 'online' ? (
-                                                                <Video className="h-3.5 w-3.5 text-muted-foreground" />
-                                                            ) : (
-                                                                <MapPinned className="h-3.5 w-3.5 text-muted-foreground" />
+                                        {/* Interview Details — hidden for MIS-rescheduled rounds and for active round when top card is shown */}
+                                        {shouldShowInterviewDetails && !round.mis_rescheduled && !(showActiveRoundCard && isDone === false && round.round_number > 1) && (() => {
+                                            const slot = round.selected_time_slot;
+                                            const mis = round.mis_reschedule_data;
+                                            // Confirmed round: show selected slot
+                                            if (slot || mis) {
+                                                const date = slot?.date ?? mis?.date;
+                                                const time = slot?.time ?? mis?.time;
+                                                const mode = round.interview_mode ?? mis?.interview_mode;
+                                                const meetingLink = round.meeting_link ?? mis?.meeting_link;
+                                                const address = round.interview_address ?? mis?.interview_address;
+                                                return (
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-medium text-muted-foreground">Interview Details</p>
+                                                        <div className="grid gap-2 text-sm">
+                                                            {date && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    <span>{formatUTCDate(date)}</span>
+                                                                </div>
                                                             )}
-                                                            <span className="capitalize">{round.interview_mode} Interview</span>
+                                                            {date && time && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    <span>{formatUTCTime(date, time)}</span>
+                                                                </div>
+                                                            )}
+                                                            {mode && (
+                                                                <div className="flex items-center gap-2">
+                                                                    {mode === 'online' ? (
+                                                                        <Video className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    ) : (
+                                                                        <MapPinned className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    )}
+                                                                    <span className="capitalize">{mode} Interview</span>
+                                                                </div>
+                                                            )}
+                                                            {mode === 'online' && meetingLink && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <a href={meetingLink} target="_blank" rel="noopener noreferrer"
+                                                                        className="text-xs text-primary underline underline-offset-2 truncate flex items-center gap-1">
+                                                                        <ExternalLink className="h-3 w-3 shrink-0" />
+                                                                        {meetingLink}
+                                                                    </a>
+                                                                </div>
+                                                            )}
+                                                            {mode === 'physical' && address && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <MapPinned className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                                                                    <span className="text-xs">{address}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                                                    </div>
+                                                );
+                                            }
+                                            // Pending round (no selected slot yet): show offered time slots
+                                            if (round.given_time_slots && round.given_time_slots.length > 0) {
+                                                const mode = round.interview_mode;
+                                                const meetingLink = round.meeting_link;
+                                                const address = round.interview_address;
+                                                return (
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-medium text-muted-foreground">Offered Time Slots</p>
+                                                        <div className="space-y-1.5">
+                                                            {round.given_time_slots.map((s, i) => (
+                                                                <div key={i} className="flex items-center gap-3 text-sm">
+                                                                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                                                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                                    <span>{formatUTCDate(s.date)}</span>
+                                                                    <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                                    <span>{formatUTCTime(s.date, s.time)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        {mode && (
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                {mode === 'online' ? (
+                                                                    <Video className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                ) : (
+                                                                    <MapPinned className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                )}
+                                                                <span className="capitalize">{mode} Interview</span>
+                                                            </div>
+                                                        )}
+                                                        {mode === 'online' && meetingLink && (
+                                                            <a href={meetingLink} target="_blank" rel="noopener noreferrer"
+                                                                className="text-xs text-primary underline underline-offset-2 truncate flex items-center gap-1">
+                                                                <ExternalLink className="h-3 w-3 shrink-0" />
+                                                                {meetingLink}
+                                                            </a>
+                                                        )}
+                                                        {mode === 'physical' && address && (
+                                                            <div className="flex items-start gap-2">
+                                                                <MapPinned className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                                                                <span className="text-xs">{address}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
 
                                         {/* Feedback/Outcome */}
                                         {round.outcome_notes && (
@@ -573,6 +816,8 @@ export function InterviewRoundsDisplay({
                                                 </div>
                                             </div>
                                         )}
+
+                                        </div>{/* end details opacity wrapper */}
 
                                         {/* Action Buttons */}
                                         <div className="flex flex-wrap gap-2 pt-2">
@@ -618,7 +863,6 @@ export function InterviewRoundsDisplay({
                                             {round.outcome === 'advance' && !nextRoundExists && (
                                                 <Button
                                                     size="sm"
-                                                    variant="outline"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setNextRoundDialog({
@@ -627,7 +871,7 @@ export function InterviewRoundsDisplay({
                                                             nextRoundNumber: round.round_number + 1
                                                         });
                                                     }}
-                                                    className="flex-1"
+                                                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                                                 >
                                                     <Calendar className="h-3.5 w-3.5 mr-1.5" />
                                                     Schedule Next Round
@@ -706,25 +950,42 @@ export function InterviewRoundsDisplay({
                                                     </Button>
                                                 </div>
                                             )}
-                                            {canCancelRound && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setCancelRoundDialog({
-                                                            isOpen: true,
-                                                            roundId: round.id,
-                                                            roundLabel: round.round_label || `Round ${round.round_number}`
-                                                        });
-                                                    }}
-                                                    className="text-xs text-muted-foreground hover:text-red-500 transition-colors underline-offset-2 hover:underline mt-1"
-                                                >
-                                                    Cancel this round
-                                                </button>
-                                            )}
                                         </div>
+                                        {(canEditRound || canCancelRound) && (
+                                            <div className="flex items-center gap-1.5 pt-1 border-t border-border">
+                                                {canEditRound && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={(e) => { e.stopPropagation(); openEditRoundDialog(round); }}
+                                                        className="h-6 text-xs gap-1 px-2 cursor-pointer hover:bg-accent"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                        Edit
+                                                    </Button>
+                                                )}
+                                                {canCancelRound && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCancelRoundDialog({
+                                                                isOpen: true,
+                                                                roundId: round.id,
+                                                                roundLabel: round.round_label || `Round ${round.round_number}`
+                                                            });
+                                                        }}
+                                                        className="h-6 text-xs gap-1 px-2 cursor-pointer text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10 dark:hover:bg-destructive/20"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                                        Cancel Round
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                </CollapsibleContent>
-                            </Collapsible>
+                                </div>
                         </Card>
                     );
                 })}
@@ -776,6 +1037,79 @@ export function InterviewRoundsDisplay({
                 })}
                 onSuccess={handleConfirmSuccess}
             />
+
+            {/* Edit round dialog */}
+            <Dialog open={editRoundDialog.isOpen} onOpenChange={(open) => { if (!open) setEditRoundDialog({ isOpen: false, roundId: "", roundLabel: "" }); }}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Edit {editRoundDialog.roundLabel}</DialogTitle>
+                        <DialogDescription>Update time slots or interview details before the candidate responds.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium">Time Slots</p>
+                                {editRoundSlots.length < 3 && (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditRoundSlots([...editRoundSlots, { id: crypto.randomUUID(), date: "", time: "" }])}>
+                                        <span className="mr-1">+</span>Add Slot
+                                    </Button>
+                                )}
+                            </div>
+                            {editRoundSlots.map((slot) => (
+                                <div key={slot.id} className="flex items-center gap-2">
+                                    <input type="date" value={slot.date} onChange={e => setEditRoundSlots(editRoundSlots.map(s => s.id === slot.id ? { ...s, date: e.target.value } : s))} className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                                    <select value={slot.time} onChange={e => setEditRoundSlots(editRoundSlots.map(s => s.id === slot.id ? { ...s, time: e.target.value } : s))} className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-xs cursor-pointer">
+                                        <option value="">Select time</option>
+                                        {INTERVIEW_TIME_SLOTS.map(t => (
+                                            <option key={t} value={t}>{formatTimeSlotLabel(t)}</option>
+                                        ))}
+                                    </select>
+                                    {editRoundSlots.length > 1 && (
+                                        <button onClick={() => setEditRoundSlots(editRoundSlots.filter(s => s.id !== slot.id))} className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-red-500 transition-colors">
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Interview Mode</p>
+                            <div className="flex gap-2">
+                                {(["online", "physical"] as const).map(mode => (
+                                    <button key={mode} onClick={() => setEditRoundMode(mode)} className={cn("flex-1 h-9 rounded-md border text-xs font-medium capitalize transition-colors", editRoundMode === mode ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:border-primary/50")}>
+                                        {mode === "online" ? <><Video className="h-3.5 w-3.5 inline mr-1.5" />Online</> : <><MapPinned className="h-3.5 w-3.5 inline mr-1.5" />Physical</>}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {editRoundMode === "online" && (
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium text-muted-foreground">Meeting Link (optional)</p>
+                                <input type="url" value={editRoundMeetingLink} onChange={e => setEditRoundMeetingLink(e.target.value)} placeholder="https://meet.google.com/..." className="w-full h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                            </div>
+                        )}
+                        {editRoundMode === "physical" && (
+                            <div className="space-y-2">
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Interview Address *</p>
+                                    <input type="text" value={editRoundAddress} onChange={e => setEditRoundAddress(e.target.value)} placeholder="123 Main St, City" className="w-full h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Map Link (optional)</p>
+                                    <input type="url" value={editRoundMapLink} onChange={e => setEditRoundMapLink(e.target.value)} placeholder="https://maps.google.com/..." className="w-full h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditRoundDialog({ isOpen: false, roundId: "", roundLabel: "" })}>Cancel</Button>
+                        <Button onClick={handleSaveEditRound} disabled={isSavingEditRound}>
+                            {isSavingEditRound && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Cancel round dialog */}
             <Dialog open={cancelRoundDialog.isOpen} onOpenChange={(open) => { if (!open) { setCancelRoundDialog({ isOpen: false, roundId: "", roundLabel: "" }); setCancelRoundReason(""); } }}>

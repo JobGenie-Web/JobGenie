@@ -286,7 +286,7 @@ export function JobOfferCard({
                         <div className="flex items-center gap-2">
                             <Clock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                             <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">
-                                This offer has expired. Please contact the employer if you're still interested.
+                                This offer has expired. Please contact the employer if you&apos;re still interested.
                             </p>
                         </div>
                     </div>

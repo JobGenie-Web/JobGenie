@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 
 /**
  * Subscribes to Postgres changes on job_invitations for this candidate.
- * When combined with API routes that touch invitations or linked offers,
- * sidebar/badge counts and invitation lists update without manual refresh.
+ * Invalidates SWR cache for invitation list and detail API routes so they
+ * refetch when invitation data changes. Badge counts are handled separately
+ * by useUnopenedInvitationCount / usePendingInvitationCount via their own
+ * realtime subscriptions and do not depend on this bridge.
  */
 export function CandidateInvitationRealtimeBridge() {
     const { mutate } = useSWRConfig();
@@ -59,6 +61,8 @@ export function CandidateInvitationRealtimeBridge() {
 
 /**
  * Same pattern for employers: watch invitations for this company.
+ * Badge counts (pending-count, payment pending-count) have their own
+ * subscriptions and are not invalidated here.
  */
 export function EmployerInvitationRealtimeBridge() {
     const { mutate } = useSWRConfig();

@@ -287,7 +287,7 @@ export function SummaryStep({
                         </div>
                     )}
 
-                    {validCertificates.length > 0 && IT_INDUSTRIES.includes(industry as any) && (
+                    {validCertificates.length > 0 && (IT_INDUSTRIES as readonly string[]).includes(industry) && (
                         <div>
                             <h4 className="font-medium mb-2">Certificates ({validCertificates.length})</h4>
                             <ul className="text-sm text-muted-foreground space-y-3">

@@ -19,7 +19,7 @@ import {
 type ActionResponse = {
     success: boolean;
     error?: string;
-    data?: any;
+    data?: unknown;
 };
 
 // ============= FINANCE ACADEMIC EDUCATION ACTIONS =============
@@ -87,7 +87,7 @@ export async function updateFinanceAcademicEducation(id: string, data: FinanceAc
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -133,7 +133,7 @@ export async function deleteFinanceAcademicEducation(id: string): Promise<Action
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -221,7 +221,7 @@ export async function updateFinanceProfessionalEducation(id: string, data: Finan
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -267,7 +267,7 @@ export async function deleteFinanceProfessionalEducation(id: string): Promise<Ac
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -355,7 +355,7 @@ export async function updateBankingAcademicEducation(id: string, data: BankingAc
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -401,7 +401,7 @@ export async function deleteBankingAcademicEducation(id: string): Promise<Action
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -489,7 +489,7 @@ export async function updateBankingProfessionalEducation(id: string, data: Banki
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -535,7 +535,7 @@ export async function deleteBankingProfessionalEducation(id: string): Promise<Ac
             .eq("id", id)
             .single();
 
-        if (!education || (education.candidates as any).user_id !== user.id) {
+        if (!education || (education.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -624,7 +624,7 @@ export async function updateBankingSpecializedTraining(id: string, data: Banking
             .eq("id", id)
             .single();
 
-        if (!training || (training.candidates as any).user_id !== user.id) {
+        if (!training || (training.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -671,7 +671,7 @@ export async function deleteBankingSpecializedTraining(id: string): Promise<Acti
             .eq("id", id)
             .single();
 
-        if (!training || (training.candidates as any).user_id !== user.id) {
+        if (!training || (training.candidates as unknown as { user_id: string }[])[0].user_id !== user.id) {
             return { success: false, error: "Unauthorized" };
         }
 

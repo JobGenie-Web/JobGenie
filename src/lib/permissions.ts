@@ -172,7 +172,7 @@ export async function getUserPermissions(): Promise<
             return [];
         }
 
-        return (rolePermissions || []).map((rp: any) => rp.permission);
+        return (rolePermissions || []).map((rp: { permission: { resource: string; action: string; name: string }[] }) => rp.permission[0]).filter(Boolean);
     } catch (error) {
         console.error("Error getting user permissions:", error);
         return [];

@@ -41,7 +41,7 @@ export interface ActionState {
     success: boolean;
     message: string;
     errors?: Record<string, string[]>;
-    data?: any;
+    data?: unknown;
 }
 
 /**
@@ -89,7 +89,14 @@ export async function getEmployerProfileData(userId: string): Promise<ProfileDat
         }
 
         // Type assertion for nested company data
-        const company = (employerData as any).companies;
+        const company = (employerData as Record<string, unknown>).companies as {
+            id: string; company_name: string; business_registration_no: string;
+            industry: string; description: string | null; company_size: string | null;
+            website: string | null; headoffice_location: string | null; logo_url: string | null;
+            profile_completed: boolean;
+        } | null;
+
+        if (!company) return null;
 
         return {
             employer: {
@@ -324,7 +331,7 @@ export async function updateCompanyInfo(
         const now = new Date().toISOString();
 
         // Build update object with only provided fields
-        const companyUpdate: any = {
+        const companyUpdate: Record<string, unknown> = {
             updated_at: now,
         };
 

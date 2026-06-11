@@ -32,11 +32,11 @@ interface InterviewRound {
     outcome: string | null;
     outcome_notes: string | null;
     outcome_at: string | null;
-    given_time_slots: any;
-    alternative_dates: any;
-    selected_time_slot: any;
+    given_time_slots: { date: string; time?: string }[] | null;
+    alternative_dates: { date: string; time?: string }[] | null;
+    selected_time_slot: { date?: string; time?: string; is_alternative?: boolean } | null;
     interview_mode: string | null;
-    confirmed_time: any;
+    confirmed_time: string | null;
     meeting_link: string | null;
     interview_address: string | null;
     map_link: string | null;
@@ -44,6 +44,10 @@ interface InterviewRound {
     sent_at: string;
     viewed_at: string | null;
     responded_at: string | null;
+    round_canceled?: boolean;
+    canceled_by?: string | null;
+    canceled_at?: string | null;
+    mis_rescheduled?: boolean;
 }
 
 interface InterviewRoadmapProps {
@@ -118,6 +122,8 @@ export function InterviewRoadmap({
     };
 
     const getStatusIcon = (round: InterviewRound) => {
+        if (round.round_canceled && !round.mis_rescheduled) return { Icon: XCircle, color: 'text-slate-500', bg: 'bg-slate-100' };
+        if (round.round_canceled && round.mis_rescheduled) return { Icon: Clock, color: 'text-amber-600', bg: 'bg-amber-100' };
         if (round.outcome === 'advance') return { Icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' };
         if (round.outcome === 'reject') return { Icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
         if (round.outcome === 'offer') return { Icon: Award, color: 'text-blue-600', bg: 'bg-blue-100' };
@@ -128,11 +134,13 @@ export function InterviewRoadmap({
     };
 
     const getRoundStatus = (round: InterviewRound) => {
+        if (round.round_canceled && !round.mis_rescheduled) return { label: 'Cancelled', color: 'bg-slate-400' };
+        if (round.round_canceled && round.mis_rescheduled) return { label: 'Rescheduled', color: 'bg-amber-500' };
         if (round.outcome === 'advance') return { label: 'Passed', color: 'bg-green-500' };
         if (round.outcome === 'reject') return { label: 'Not Selected', color: 'bg-red-500' };
-        if (round.outcome === 'offer') return { 
-            label: userRole === 'candidate' ? 'Offer Received' : 'Offer Sent', 
-            color: 'bg-blue-500' 
+        if (round.outcome === 'offer') return {
+            label: userRole === 'candidate' ? 'Offer Received' : 'Offer Sent',
+            color: 'bg-blue-500'
         };
         if (round.status === 'confirmed') return { label: 'Confirmed', color: 'bg-green-500' };
         if (round.status === 'accepted') return { label: 'Awaiting Confirmation', color: 'bg-orange-500' };
@@ -159,7 +167,7 @@ export function InterviewRoadmap({
 
     // Determine the final outcome of the interview process
     const finalOutcome = rounds.find(r => r.outcome === 'reject' || r.outcome === 'offer');
-    const hasActiveRounds = rounds.some(r => !r.outcome || r.outcome === 'advance');
+    const hasActiveRounds = rounds.some(r => !r.outcome && !r.round_canceled && r.status !== 'canceled');
 
     return (
         <Card className={cn("border-2", className)}>
@@ -185,18 +193,21 @@ export function InterviewRoadmap({
             </CardHeader>
             <CardContent className="space-y-4">
                 {/* Pending Round Response (for candidates only) */}
-                {userRole === 'candidate' && rounds.some(r => r.status === 'pending' || r.status === 'viewed') && (
+                {userRole === 'candidate' && rounds.some(r => (r.status === 'pending' || r.status === 'viewed') && !r.round_canceled) && (
                     <>
                         {rounds
-                            .filter(r => r.status === 'pending' || r.status === 'viewed')
+                            .filter(r => (r.status === 'pending' || r.status === 'viewed') && !r.round_canceled)
                             .map(round => (
                                 <RoundResponseCard
                                     key={round.id}
                                     roundId={round.id}
                                     roundNumber={round.round_number}
                                     roundLabel={round.round_label}
-                                    givenTimeSlots={round.given_time_slots as any}
-                                    alternativeDates={round.alternative_dates as any}
+                                    interviewMode={round.interview_mode}
+                                    meetingLink={round.meeting_link}
+                                    interviewAddress={round.interview_address}
+                                    mapLink={round.map_link}
+                                    givenTimeSlots={(round.given_time_slots ?? []) as { date: string; time: string; order: number; is_alternative?: boolean }[]}
                                     onResponse={fetchRounds}
                                 />
                             ))
@@ -281,12 +292,12 @@ export function InterviewRoadmap({
                                                         <div className="grid gap-2 text-sm">
                                                             <div className="flex items-center gap-2">
                                                                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                <span>{formatUTCDate(round.selected_time_slot.date)}</span>
+                                                                <span>{formatUTCDate(round.selected_time_slot.date ?? '')}</span>
                                                             </div>
                                                             {round.selected_time_slot.time && (
                                                                 <div className="flex items-center gap-2">
                                                                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                    <span>{formatUTCTime(round.selected_time_slot.date, round.selected_time_slot.time)}</span>
+                                                                    <span>{formatUTCTime(round.selected_time_slot.date ?? '', round.selected_time_slot.time)}</span>
                                                                 </div>
                                                             )}
                                                             {round.interview_mode && (
@@ -336,7 +347,7 @@ export function InterviewRoadmap({
                                                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2 dark:bg-blue-950/20 dark:border-blue-800">
                                                         <p className="text-xs font-medium text-blue-900 dark:text-blue-100">Proposed Time Slots (Awaiting Candidate Response)</p>
                                                         <div className="space-y-1.5">
-                                                            {(round.given_time_slots as any[]).map((slot: any, idx: number) => (
+                                                            {(round.given_time_slots ?? []).map((slot: { date: string; time?: string }, idx: number) => (
                                                                 <div key={idx} className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
                                                                     <Calendar className="h-3 w-3" />
                                                                     <span>{formatUTCDate(slot.date)}</span>
@@ -349,12 +360,12 @@ export function InterviewRoadmap({
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                        {round.alternative_dates && (round.alternative_dates as any[]).length > 0 && (
+                                                        {round.alternative_dates && (round.alternative_dates ?? []).length > 0 && (
                                                             <>
                                                                 <Separator className="my-2" />
                                                                 <p className="text-xs font-medium text-blue-900 dark:text-blue-100">Alternative Dates</p>
                                                                 <div className="space-y-1.5">
-                                                                    {(round.alternative_dates as any[]).map((slot: any, idx: number) => (
+                                                                    {(round.alternative_dates ?? []).map((slot: { date: string; time?: string }, idx: number) => (
                                                                         <div key={idx} className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
                                                                             <Calendar className="h-3 w-3" />
                                                                             <span>{formatUTCDate(slot.date)}</span>

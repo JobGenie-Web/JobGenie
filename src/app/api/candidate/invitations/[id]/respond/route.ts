@@ -91,7 +91,7 @@ export async function POST(
         }
 
         // Update invitation based on action
-        let updateData: any = {};
+        let updateData: Record<string, unknown> = {};
 
         if (action === 'cancel') {
             // Reset to viewed and clear selected time slot (keep employer's interview mode)

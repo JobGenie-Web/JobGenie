@@ -114,9 +114,9 @@ export async function POST(
             .single();
 
         if (fullInvitation) {
-            const candidate = fullInvitation.candidate as any;
-            const employer = fullInvitation.employer as any;
-            const timeSlot = fullInvitation.selected_time_slot as any;
+            const candidate = fullInvitation.candidate as unknown as { first_name: string };
+            const employer = fullInvitation.employer as unknown as { first_name: string; email: string };
+            const timeSlot = fullInvitation.selected_time_slot as { time?: string; date?: string; is_alternative?: boolean } | null;
 
             const finalTime = timeSlot?.is_alternative && fullInvitation.confirmed_time
                 ? fullInvitation.confirmed_time

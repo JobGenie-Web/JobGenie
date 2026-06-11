@@ -20,7 +20,7 @@ export async function GET() {
         const employer = await getEmployerAndCompany(supabase, user.id);
         if (!employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
 
-        const company = (employer as any).companies;
+        const company = (employer as Record<string, unknown>).companies as { profile_visible?: boolean; show_company_size?: boolean; show_company_website?: boolean } | null;
         return NextResponse.json({
             success: true,
             data: {

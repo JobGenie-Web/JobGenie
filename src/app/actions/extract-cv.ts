@@ -154,11 +154,11 @@ export async function extractCVData(
             parts.push({ text: EXTRACTION_PROMPT + textContent });
         }
 
-        const result = await generateContentWithRetry([{ role: "user", parts: parts as any[] }]);
+        const result = await generateContentWithRetry([{ role: "user", parts: parts as { text: string }[] }]);
         const text = result.text || "";
 
         // Clean the response (remove markdown code blocks if present)
-        let cleanedText = text
+        const cleanedText = text
             .replace(/```json\n?/g, "")
             .replace(/```\n?/g, "")
             .trim();

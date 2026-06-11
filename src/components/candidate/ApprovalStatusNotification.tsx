@@ -70,7 +70,7 @@ export function ApprovalStatusNotification({
                             </>
                         ) : (
                             <>
-                                We've reviewed your profile and it needs some improvements before approval. Please
+                                We&apos;ve reviewed your profile and it needs some improvements before approval. Please
                                 update your profile and resubmit it for review.
                             </>
                         )}

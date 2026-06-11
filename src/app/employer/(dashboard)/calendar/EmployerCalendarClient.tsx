@@ -27,11 +27,12 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 type CalView = "Month" | "Week" | "Day";
 
-type StatusFilter = "all" | "confirmed" | "active" | "needs_action" | "declined" | "canceled";
+type StatusFilter = "all" | "confirmed" | "completed" | "active" | "needs_action" | "declined" | "canceled";
 
 const STATUS_FILTERS: { value: StatusFilter; label: string; color: string }[] = [
     { value: "all", label: "All", color: "" },
     { value: "confirmed", label: "Confirmed", color: "bg-emerald-500" },
+    { value: "completed", label: "Completed", color: "bg-violet-500" },
     { value: "active", label: "Active Pipeline", color: "bg-teal-500" },
     { value: "needs_action", label: "Needs Action", color: "bg-lime-500" },
     { value: "declined", label: "Declined", color: "bg-red-500" },
@@ -40,6 +41,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string; color: string }[] = 
 
 function getEventStatusCategory(resource: CalendarEvent["resource"]): StatusFilter {
     if (resource.isCanceled) return "canceled";
+    if (resource.isCompleted) return "completed";
     if (resource.status === "declined") return "declined";
     if (resource.isConfirmed) return "confirmed";
     if (resource.pipelineStatus && resource.pipelineStatus !== "initial") return "active";
@@ -172,7 +174,8 @@ function EventChip({ event, onClick }: { event: CalendarEvent; onClick: () => vo
             className={cn(
                 "w-full text-left truncate rounded px-1.5 py-0.5 text-[11px] font-medium leading-tight text-white transition-opacity",
                 clickable ? "cursor-pointer hover:opacity-80" : "cursor-default",
-                event.resource.isCanceled && "opacity-50 line-through",
+                event.resource.isCanceled && "opacity-40 line-through",
+                event.resource.isCompleted && "opacity-70",
             )}
             style={{ backgroundColor: color }}
         >
@@ -532,25 +535,27 @@ function CandidateRoadmapSidebar({ allEvents, filteredEvents, onSelectEvent }: {
 
 // ─── Stats bar ────────────────────────────────────────────────────────────────
 function StatsBar({ events, invitations }: { events: CalendarEvent[]; invitations: CalendarInvitation[] }) {
-    const confirmedCount = events.filter(e => e.resource.isConfirmed && !e.resource.isCanceled).length;
-    const upcomingCount = events.filter(e => !e.resource.isCanceled && e.start >= new Date()).length;
+    const confirmedCount = events.filter(e => e.resource.isConfirmed && !e.resource.isCanceled && !e.resource.isCompleted).length;
+    const completedCount = events.filter(e => e.resource.isCompleted).length;
+    const upcomingCount = events.filter(e => !e.resource.isCanceled && !e.resource.isCompleted && e.start >= new Date()).length;
     const totalCandidates = new Set(
-        invitations.map((i: CalendarInvitation) => (i as any).candidate?.id).filter(Boolean)
+        invitations.map((i: CalendarInvitation) => (i as unknown as { candidate?: { id: string } }).candidate?.id).filter(Boolean)
     ).size;
 
     const stats = [
-        { label: "Total", value: events.length, accent: false },
-        { label: "Upcoming", value: upcomingCount, accent: true },
-        { label: "Confirmed", value: confirmedCount, accent: true },
-        { label: "Candidates", value: totalCandidates, accent: false },
+        { label: "Total", value: events.length, accent: false, color: "" },
+        { label: "Upcoming", value: upcomingCount, accent: true, color: "" },
+        { label: "Confirmed", value: confirmedCount, accent: true, color: "" },
+        { label: "Completed", value: completedCount, accent: false, color: "text-violet-500" },
+        { label: "Candidates", value: totalCandidates, accent: false, color: "" },
     ];
 
     return (
-        <div className="grid grid-cols-4 gap-2 flex-shrink-0">
+        <div className="grid grid-cols-5 gap-2 flex-shrink-0">
             {stats.map(s => (
                 <div key={s.label} className="rounded-xl border border-border bg-card px-3 py-2.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
-                    <p className={cn("text-xl font-bold tabular-nums", s.accent ? "text-primary" : "text-foreground")}>{s.value}</p>
+                    <p className={cn("text-xl font-bold tabular-nums", s.color || (s.accent ? "text-primary" : "text-foreground"))}>{s.value}</p>
                 </div>
             ))}
         </div>

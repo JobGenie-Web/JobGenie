@@ -15,7 +15,7 @@ export async function POST(
         const authClient = await createClient();
         const { roundId } = await params;
         const body = await request.json();
-        const { confirmed_time, meeting_link, interview_address, map_link } = body;
+        const { confirmed_time, meeting_link } = body;
 
         // Get the current user
         const { data: { user } } = await authClient.auth.getUser();
@@ -52,6 +52,7 @@ export async function POST(
                 status,
                 selected_time_slot,
                 interview_mode,
+                interview_address,
                 invitation:job_invitations!inner(
                     id,
                     company_id,
@@ -74,7 +75,7 @@ export async function POST(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { id: string; company_id: string; candidate_id: string; job_designation: string; candidate: { first_name: string; last_name: string; email: string }[] };
 
         // Verify the round belongs to this company
         if (invitation.company_id !== employer.company_id) {
@@ -93,7 +94,7 @@ export async function POST(
         }
 
         // Validate required fields based on interview mode
-        const selectedSlot = round.selected_time_slot as any;
+        const selectedSlot = round.selected_time_slot as { is_alternative?: boolean; date?: string; time?: string } | null;
         const isAlternative = selectedSlot?.is_alternative;
 
         if (isAlternative && !confirmed_time) {
@@ -109,16 +110,10 @@ export async function POST(
                 { status: 400 }
             );
         }
-
-        if (round.interview_mode === 'physical' && !interview_address) {
-            return NextResponse.json(
-                { success: false, error: "Interview address is required for physical interviews" },
-                { status: 400 }
-            );
-        }
+        // Physical: address was already provided when the round was created — no re-entry needed
 
         // Update the round with confirmation details
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             interview_confirmed: true,
             status: 'confirmed',
             confirmed_at: new Date().toISOString()
@@ -129,12 +124,6 @@ export async function POST(
         }
         if (meeting_link) {
             updateData.meeting_link = meeting_link;
-        }
-        if (interview_address) {
-            updateData.interview_address = interview_address;
-        }
-        if (map_link) {
-            updateData.map_link = map_link;
         }
 
         const { error: updateError } = await supabase
@@ -158,16 +147,16 @@ export async function POST(
             .single();
 
         // Send confirmation email to candidate
-        const candidate = invitation.candidate;
+        const candidate = invitation.candidate?.[0] ?? null;
         if (candidate && company) {
             const recipientTz = await getUserTimezoneByEmail(candidate.email);
-            const interviewDate = selectedSlot?.date;
+            const interviewDate = selectedSlot?.date ?? '';
             const interviewTime = confirmed_time || selectedSlot?.time;
             
-            // Combine meeting link/address based on interview mode
-            const meetingLinkOrAddress = round.interview_mode === 'online' 
-                ? meeting_link 
-                : interview_address || '';
+            // For online use the newly provided meeting link; for physical use address already on the round
+            const meetingLinkOrAddress = round.interview_mode === 'online'
+                ? meeting_link
+                : (round.interview_address ?? '');
             
             sendInterviewConfirmedEmail(
                 candidate.email,

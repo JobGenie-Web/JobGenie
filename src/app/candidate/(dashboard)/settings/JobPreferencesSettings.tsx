@@ -223,7 +223,7 @@ export function JobPreferencesSettings() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-muted-foreground">Add up to 3 roles you're targeting</p>
+                        <p className="text-xs text-muted-foreground">Add up to 3 roles you&apos;re targeting</p>
                     )}
                 </div>
             </div>

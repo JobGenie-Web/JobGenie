@@ -125,7 +125,7 @@ export function InterviewFeedbackDialog({
                 <DialogHeader>
                     <DialogTitle>Interview Feedback - Round {roundNumber}</DialogTitle>
                     <DialogDescription>
-                        Provide feedback for {candidateName}'s interview performance
+                        Provide feedback for {candidateName}&apos;s interview performance
                     </DialogDescription>
                 </DialogHeader>
 
@@ -193,7 +193,7 @@ export function InterviewFeedbackDialog({
                     {outcome === 'advance' && (
                         <div className="bg-green-50 border border-green-200 rounded-md p-3 dark:bg-green-950/45 dark:border-green-800">
                             <p className="text-sm text-green-800 dark:text-green-100">
-                                After saving, you'll be able to schedule the next interview round for this candidate.
+                                After saving, you&apos;ll be able to schedule the next interview round for this candidate.
                             </p>
                         </div>
                     )}
@@ -207,7 +207,7 @@ export function InterviewFeedbackDialog({
                     {outcome === 'offer' && (
                         <div className="bg-blue-50 border border-blue-200 rounded-md p-3 dark:bg-blue-950/45 dark:border-blue-800">
                             <p className="text-sm text-blue-800 dark:text-blue-100">
-                                After saving, you'll be able to create and send a formal job offer to this candidate.
+                                After saving, you&apos;ll be able to create and send a formal job offer to this candidate.
                             </p>
                         </div>
                     )}

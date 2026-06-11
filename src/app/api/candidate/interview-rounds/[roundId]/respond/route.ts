@@ -31,12 +31,7 @@ export async function POST(
                     { status: 400 }
                 );
             }
-            if (!interview_mode || !['online', 'physical'].includes(interview_mode)) {
-                return NextResponse.json(
-                    { success: false, error: "Valid interview mode (online/physical) is required when accepting" },
-                    { status: 400 }
-                );
-            }
+            // interview_mode is pre-set by employer; accept if provided, skip validation if absent
         }
 
         // Get the current user
@@ -89,7 +84,7 @@ export async function POST(
             );
         }
 
-        const invitation = round.invitation as any;
+        const invitation = round.invitation as unknown as { id: string; candidate_id: string };
 
         // Verify the round belongs to this candidate
         if (invitation.candidate_id !== candidate.id) {
@@ -108,7 +103,7 @@ export async function POST(
         }
 
         // Update the round based on action
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
             status: action === 'accept' ? 'accepted' : 'declined',
             responded_at: new Date().toISOString()
         };

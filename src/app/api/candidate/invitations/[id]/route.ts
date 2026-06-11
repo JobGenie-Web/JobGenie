@@ -90,7 +90,7 @@ export async function GET(
 
         // Mark as viewed if not already; notify employer (clear their seen flag) when candidate first opens
         if (!invitation.viewed_at) {
-            const updateData: any = {
+            const updateData: Record<string, unknown> = {
                 viewed_at: new Date().toISOString(),
                 employer_last_seen_at: null,
             };

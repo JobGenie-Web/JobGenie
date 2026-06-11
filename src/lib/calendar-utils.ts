@@ -75,6 +75,8 @@ export interface EventResource {
     interviewMode: string | null;
     isConfirmed: boolean;
     isCanceled: boolean;
+    isCompleted: boolean;
+    outcome: string | null;
     status: string;
     pipelineStatus: string | null;
     meetingLink: string | null;
@@ -241,6 +243,8 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                     interviewMode: invMode,
                     isConfirmed: inv.interview_confirmed,
                     isCanceled: invIsCanceled,
+                    isCompleted: false,
+                    outcome: null,
                     status: inv.status,
                     pipelineStatus: inv.pipeline_status,
                     meetingLink: invMeetingLink,
@@ -279,6 +283,7 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                 // Parent invitation canceled propagates only when not rescheduled
                 const isCanceled = roundActuallyCanceled || (inv.invitation_canceled && !inv.mis_rescheduled);
                 const isConfirmed = round.status === 'confirmed' || round.confirmed_at !== null;
+                const isCompleted = !!round.outcome && !isCanceled;
 
                 // Use rescheduled details if available
                 const roundMode = roundMisRescheduled && round.mis_reschedule_data?.interview_mode
@@ -309,6 +314,8 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
                         interviewMode: roundMode,
                         isConfirmed,
                         isCanceled,
+                        isCompleted,
+                        outcome: round.outcome ?? null,
                         status: round.status,
                         pipelineStatus: inv.pipeline_status,
                         meetingLink: roundMeetingLink,
@@ -334,6 +341,9 @@ export function buildCalendarEvents(invitations: CalendarInvitation[], role: 'ca
 }
 
 export function getEventColor(resource: EventResource): string {
+    if (resource.isCompleted) return "#8b5cf6"; // violet – completed rounds (has outcome)
+    if (resource.isCanceled)  return "#64748b"; // slate  – canceled
+
     const offer = normalizeEmbeddedOffer(resource.jobOffers);
     const journey = getInvitationJourneyDisplay({
         status: resource.status,
@@ -350,7 +360,7 @@ export function getEventColor(resource: EventResource): string {
         case "info":      return "#6366f1"; // indigo   – active round
         case "warning":   return "#f59e0b"; // amber    – needs action / reschedule requested / offered
         case "pending":   return "#3b82f6"; // blue     – pending / viewed
-        case "danger":    return "#ef4444"; // red      – declined / rejected / job rejected
+        case "danger":    return "#ef4444"; // red      – declined / rejected
         case "muted":     return "#64748b"; // slate    – canceled / expired / withdrawn
         default:          return "#6366f1";
     }

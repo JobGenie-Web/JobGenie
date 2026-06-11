@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const company = (employer as any).companies;
+        const company = (employer as Record<string, unknown>).companies as { logo_url?: string | null } | null;
         const oldLogoUrl = company?.logo_url;
 
         // Create unique filename

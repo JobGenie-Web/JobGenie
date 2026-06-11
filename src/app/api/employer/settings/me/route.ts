@@ -23,7 +23,7 @@ export async function GET() {
 
         if (error || !employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
 
-        const company = (employer as any).companies;
+        const company = (employer as Record<string, unknown>).companies as { company_name?: string; approval_status?: string } | null;
 
         return NextResponse.json({
             success: true,

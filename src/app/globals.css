@@ -132,38 +132,38 @@
   --shadow-glow-accent: 0 0 20px oklch(0.42 0.19 175 / 0.40);
 }
 
-/* ─── JobGenie Dark — deep gray canvas; vivid emerald accents ─ */
+/* ─── JobGenie Dark — slate canvas; vivid emerald accents ─── */
 .dark {
-  --background: oklch(0.13 0.006 155);
-  --foreground: oklch(0.95 0.006 145);
-  --card: oklch(0.17 0.008 155);
-  --card-foreground: oklch(0.95 0.006 145);
-  --popover: oklch(0.19 0.008 155);
-  --popover-foreground: oklch(0.95 0.006 145);
+  --background: oklch(0.17 0.012 240);
+  --foreground: oklch(0.93 0.008 240);
+  --card: oklch(0.20 0.014 240);
+  --card-foreground: oklch(0.93 0.008 240);
+  --popover: oklch(0.22 0.014 240);
+  --popover-foreground: oklch(0.93 0.008 240);
   --primary: oklch(0.65 0.20 155);
   --primary-foreground: oklch(0.12 0.04 155);
-  --secondary: oklch(0.27 0.012 155);
-  --secondary-foreground: oklch(0.95 0.005 145);
-  --muted: oklch(0.21 0.008 155);
-  --muted-foreground: oklch(0.62 0.015 155);
+  --secondary: oklch(0.27 0.014 240);
+  --secondary-foreground: oklch(0.93 0.008 240);
+  --muted: oklch(0.24 0.012 240);
+  --muted-foreground: oklch(0.60 0.016 240);
   --accent: oklch(0.60 0.16 175);
   --accent-foreground: oklch(0.98 0.005 175);
   --destructive: oklch(0.7 0.2 25);
-  --border: oklch(0.26 0.012 155);
-  --input: oklch(0.23 0.010 155);
+  --border: oklch(0.30 0.014 240);
+  --input: oklch(0.26 0.012 240);
   --ring: oklch(0.65 0.20 155);
   --chart-1: oklch(0.65 0.20 155);
   --chart-2: oklch(0.60 0.16 175);
   --chart-3: oklch(0.52 0.08 265);
   --chart-4: oklch(0.60 0.14 75);
   --chart-5: oklch(0.58 0.12 200);
-  --sidebar: oklch(0.115 0.006 155);
-  --sidebar-foreground: oklch(0.92 0.006 145);
+  --sidebar: oklch(0.15 0.012 240);
+  --sidebar-foreground: oklch(0.91 0.008 240);
   --sidebar-primary: oklch(0.65 0.20 155);
   --sidebar-primary-foreground: oklch(0.12 0.04 155);
   --sidebar-accent: oklch(0.65 0.20 155 / 0.14);
-  --sidebar-accent-foreground: oklch(0.92 0.006 145);
-  --sidebar-border: oklch(0.23 0.010 155);
+  --sidebar-accent-foreground: oklch(0.91 0.008 240);
+  --sidebar-border: oklch(0.27 0.012 240);
   --sidebar-ring: oklch(0.65 0.20 155);
   /* Richer accent palette — higher lightness for dark mode */
   --accent-violet: oklch(0.65 0.20 290);
@@ -195,14 +195,6 @@
     overflow-x: hidden;
     max-width: 100vw;
     position: relative;
-    /* Mesh + subtle grid texture */
-    background-image:
-      linear-gradient(to right, oklch(0.52 0.20 155 / 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(0.52 0.20 155 / 0.04) 1px, transparent 1px),
-      radial-gradient(ellipse 70% 55% at 15% 20%, oklch(0.52 0.20 155 / 0.10), transparent 55%),
-      radial-gradient(ellipse 60% 50% at 85% 75%, oklch(0.54 0.17 175 / 0.08), transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, oklch(0.50 0.14 145 / 0.06), transparent 60%);
-    background-size: 48px 48px, 48px 48px, auto, auto, auto;
     background-attachment: scroll;
     transition: background-color 200ms ease, color 200ms ease;
   }
@@ -430,13 +422,12 @@
 
 /* ─── Authenticated portals (candidate / employer) ───────────────────────── */
 .portal-main {
-  background-color: color-mix(in oklch, var(--muted) 42%, var(--background));
-  /* Keep grain/grid blending scoped so scrolling does not reparent expensive blend chains */
+  background-color: var(--background);
   isolation: isolate;
 }
 
 .dark .portal-main {
-  background-color: color-mix(in oklch, var(--muted) 52%, var(--background));
+  background-color: var(--background);
 }
 
 .portal-main--candidate::before,
@@ -456,12 +447,9 @@
     radial-gradient(ellipse 42% 36% at 72% 100%, oklch(0.52 0.20 155 / 0.07), transparent 50%);
 }
 
-/* Employer canvas — teal wash (light) */
+/* Employer canvas — no tint overlay in light mode */
 .portal-main--employer::before {
-  background:
-    radial-gradient(ellipse 64% 50% at 100% 0%, oklch(0.54 0.17 175 / 0.13), transparent 52%),
-    radial-gradient(ellipse 48% 42% at 0% 96%, oklch(0.52 0.20 155 / 0.09), transparent 48%),
-    radial-gradient(ellipse 40% 34% at 58% 100%, oklch(0.60 0.16 175 / 0.08), transparent 50%);
+  background: none;
 }
 
 .dark .portal-main--candidate::before {
@@ -479,24 +467,23 @@
 
 .portal-main-noise {
   z-index: 0;
-  opacity: 0.2;
-  /* Avoid multiply/overlay: full-viewport blend modes force extra compositing while scrolling */
+  opacity: 0;
   mix-blend-mode: normal;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 
 .dark .portal-main-noise {
-  opacity: 0.14;
+  opacity: 0.06;
   mix-blend-mode: normal;
 }
 
 .portal-main-vignette {
   z-index: 0;
-  box-shadow: inset 0 0 120px oklch(0 0 0 / 0.04);
+  box-shadow: none;
 }
 
 .dark .portal-main-vignette {
-  box-shadow: inset 0 0 160px oklch(0 0 0 / 0.35);
+  box-shadow: inset 0 0 80px oklch(0 0 0 / 0.12);
 }
 
 .portal-main-grid {

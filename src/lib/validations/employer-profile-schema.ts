@@ -20,7 +20,7 @@ export const companyProfileCompletionSchema = z.object({
 
     company_size: z
         .string()
-        .refine((val) => COMPANY_SIZES.includes(val as any), {
+        .refine((val) => (COMPANY_SIZES as readonly string[]).includes(val), {
             message: "Please select a valid company size",
         }),
 
