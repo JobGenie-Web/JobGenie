@@ -6,10 +6,9 @@ export default function MISJobsPage() {
         <MISLayout
             pageTitle="Job Advertisements"
             pageDescription="View and manage all job advertisements on the platform"
+            fullHeight
         >
-            <div className="max-w-7xl mx-auto">
-                <MisJobsClient />
-            </div>
+            <MisJobsClient />
         </MISLayout>
     );
 }

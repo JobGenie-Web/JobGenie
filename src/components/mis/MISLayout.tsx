@@ -9,6 +9,7 @@ interface MISLayoutProps {
     children: React.ReactNode;
     pageTitle?: string;
     pageDescription?: string;
+    fullHeight?: boolean;
 }
 
 async function getCurrentUser() {
@@ -36,7 +37,7 @@ async function getCurrentUser() {
     };
 }
 
-export async function MISLayout({ children, pageTitle, pageDescription }: MISLayoutProps) {
+export async function MISLayout({ children, pageTitle, pageDescription, fullHeight }: MISLayoutProps) {
     const user = await getCurrentUser();
 
     if (!user) {
@@ -52,11 +53,17 @@ export async function MISLayout({ children, pageTitle, pageDescription }: MISLay
                     pageTitle={pageTitle}
                     pageDescription={pageDescription}
                 />
-                <div className="flex-1 overflow-y-auto min-h-0">
+                <div className={fullHeight ? "flex-1 min-h-0 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto min-h-0"}>
                     <PageTransitionWrapper>
-                        <div className="bg-muted/30 p-4 md:p-6 min-h-full">
-                            {children}
-                        </div>
+                        {fullHeight ? (
+                            <div className="h-full overflow-hidden flex flex-col">
+                                {children}
+                            </div>
+                        ) : (
+                            <div className="bg-muted/30 p-4 md:p-6 min-h-full">
+                                {children}
+                            </div>
+                        )}
                     </PageTransitionWrapper>
                 </div>
             </SidebarInset>

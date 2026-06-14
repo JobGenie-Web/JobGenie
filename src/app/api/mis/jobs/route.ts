@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         const search = url.searchParams.get("search") || "";
         const statusFilter = url.searchParams.get("status") || "";
         const companyId = url.searchParams.get("company_id") || "";
+        const employerId = url.searchParams.get("employer_id") || "";
         const industry = url.searchParams.get("industry") || "";
         const jobType = url.searchParams.get("job_type") || "";
         const dateFrom = url.searchParams.get("date_from") || "";
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
 
         if (search) query = query.ilike("job_title", `%${search}%`);
         if (companyId) query = query.eq("company_id", companyId);
+        if (employerId) query = query.eq("employer_id", employerId);
         if (industry) query = query.eq("industry", industry);
         if (jobType) query = query.eq("job_type", jobType);
         if (dateFrom) query = query.gte("created_at", dateFrom);
