@@ -1,6 +1,5 @@
-import { FileText } from "lucide-react";
 import { CandidateLayout } from "@/components/candidate";
-import { PortalRichPlaceholder } from "@/components/shared/PortalRichPlaceholder";
+import { ApplicationsClient } from "./ApplicationsClient";
 
 export default function ApplicationsPage() {
     return (
@@ -8,13 +7,9 @@ export default function ApplicationsPage() {
             pageTitle="My Applications"
             pageDescription="Track the status of your job applications"
         >
-            <PortalRichPlaceholder
-                icon={FileText}
-                title="No applications logged yet"
-                description="Once you apply to published roles, each submission will land here with its current stage. Until then, nurture warm conversations inside Invitations."
-                primaryAction={{ label: "View invitations", href: "/candidate/invitations" }}
-                secondaryAction={{ label: "Open calendar", href: "/candidate/calendar" }}
-            />
+            <div className="max-w-4xl mx-auto">
+                <ApplicationsClient />
+            </div>
         </CandidateLayout>
     );
 }

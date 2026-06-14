@@ -29,6 +29,27 @@ const NEW_PERMISSIONS: Permission[] = [
     action: "configure_reminders",
     description: "Configure interview email reminder schedule (MIS)",
   },
+  // Job Advertisement permissions
+  {
+    resource: "jobs",
+    action: "approve",
+    description: "Approve or reject payment for job advertisements — triggers publish/reject workflow",
+  },
+  {
+    resource: "jobs",
+    action: "manage_status",
+    description: "Force-change job status (publish without payment, pause, expire, restore deleted)",
+  },
+  {
+    resource: "jobs",
+    action: "view_applications",
+    description: "View all candidate applications across any job",
+  },
+  {
+    resource: "jobs",
+    action: "manage_applications",
+    description: "Update application status and add internal notes",
+  },
 ];
 
 // ============================================

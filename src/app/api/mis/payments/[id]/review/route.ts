@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { logBusiness, logError } from "@/lib/logger";
 import { notifyEmployerPaymentReview } from "@/lib/payments";
+import { handleJobAdPaymentAction } from "@/lib/job-advertisement";
 
 // POST /api/mis/payments/[id]/review — approve or reject the latest payment proof
 export async function POST(
@@ -90,6 +91,9 @@ export async function POST(
                 currency: paymentRequest.currency,
             });
         }
+
+        // Trigger job status change if this payment is for a job advertisement
+        await handleJobAdPaymentAction(id, action === "approve" ? "approve" : "reject", review_notes);
 
         await logBusiness(
             `payment_proof_${action}d`,

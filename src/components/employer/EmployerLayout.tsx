@@ -11,6 +11,8 @@ interface EmployerLayoutProps {
     children: React.ReactNode;
     pageTitle?: string;
     pageDescription?: string;
+    /** When true, the layout scroll container is suppressed so the page can manage its own scrolling columns */
+    fullHeight?: boolean;
 }
 
 async function getCurrentEmployer() {
@@ -51,7 +53,7 @@ async function getCurrentEmployer() {
     };
 }
 
-export async function EmployerLayout({ children, pageTitle, pageDescription }: EmployerLayoutProps) {
+export async function EmployerLayout({ children, pageTitle, pageDescription, fullHeight }: EmployerLayoutProps) {
     const user = await getCurrentEmployer();
 
     if (!user) {
@@ -59,21 +61,28 @@ export async function EmployerLayout({ children, pageTitle, pageDescription }: E
     }
 
     return (
-        <SidebarProvider className="h-dvh! min-h-0! overflow-hidden">
+        <SidebarProvider className="sidebar-fullheight-wrapper">
             <EmployerSidebar />
-            <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+            <SidebarInset className="flex flex-col overflow-hidden" style={{ minHeight: 0, height: "100%", maxHeight: "100dvh" }}>
                 <EmployerHeader
                     user={user}
                     pageTitle={pageTitle}
                     pageDescription={pageDescription}
                 />
-                <div className="flex-1 overflow-y-auto min-h-0 bg-background">
-                    <PageTransitionWrapper>
-                        <div className="p-5 md:p-6">
-                            {children}
-                        </div>
-                    </PageTransitionWrapper>
-                </div>
+                {fullHeight ? (
+                    // Page manages its own scroll — no padding, no overflow wrapper
+                    <div className="flex-1 min-h-0 overflow-hidden bg-background">
+                        {children}
+                    </div>
+                ) : (
+                    <div className="flex-1 overflow-y-auto min-h-0 bg-background" id="employer-scroll-container">
+                        <PageTransitionWrapper>
+                            <div className="p-5 md:p-6">
+                                {children}
+                            </div>
+                        </PageTransitionWrapper>
+                    </div>
+                )}
             </SidebarInset>
             <Toaster />
         </SidebarProvider>

@@ -1456,3 +1456,195 @@ footer {
   max-width: 100vw;
   overflow-x: hidden;
 }
+
+/* MDX Editor — ensure no fixed heights cause dead space */
+.mdxeditor { height: auto !important; }
+
+/* Full-height layout: force the SidebarProvider wrapper to exactly viewport height */
+.sidebar-fullheight-wrapper {
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+/* MDX editor — prevent Lexical's internal overflow from pushing content upward */
+.mdxeditor { height: auto !important; overflow: visible !important; }
+.mdxeditor > div { height: auto !important; overflow: visible !important; }
+.mdxeditor div[class] { overflow: visible !important; }
+/* The rich-text scroll container Lexical injects */
+.mdxeditor-rich-text-editor { overflow: visible !important; height: auto !important; }
+/* Lexical contenteditable host */
+[data-lexical-editor="true"] { overflow: visible !important; }
+
+/* Restore list styles inside MDX editor (Tailwind base reset removes them) */
+.mdxeditor ul,
+.mdxeditor .prose ul,
+[data-lexical-editor="true"] ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.mdxeditor ol,
+.mdxeditor .prose ol,
+[data-lexical-editor="true"] ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.mdxeditor li,
+.mdxeditor .prose li,
+[data-lexical-editor="true"] li {
+  display: list-item !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* ── MDX Editor — full theme remapping (light + dark) ────────────────────────
+   @mdxeditor/editor ships its own CSS with hardcoded light-mode values.
+   We override every relevant internal variable AND force colour on the actual
+   DOM elements so dark-mode renders correctly.
+────────────────────────────────────────────────────────────────────────────── */
+
+/* Base variable remapping — applied in both modes */
+.mdxeditor {
+  --basePageBg:       var(--background);
+  --baseBase:         var(--background);
+  --baseBgSubtle:     var(--muted);
+  --baseBg:           var(--muted);
+  --baseBgHover:      color-mix(in oklch, var(--accent) 30%, transparent);
+  --baseBgActive:     color-mix(in oklch, var(--accent) 50%, transparent);
+  --baseLine:         var(--border);
+  --baseBorder:       var(--border);
+  --baseBorderHover:  var(--border);
+  --baseSolid:        var(--foreground);
+  --baseSolidHover:   var(--foreground);
+  --baseText:         var(--foreground);
+  --baseTextContrast: var(--foreground);
+  color:              var(--foreground);
+  background-color:   var(--background);
+}
+
+/* Force ALL child elements to inherit theme foreground — catches any inline
+   colour the editor's own stylesheet sets on nested divs / spans */
+.dark .mdxeditor,
+.dark .mdxeditor *,
+.dark [data-lexical-editor="true"],
+.dark [data-lexical-editor="true"] * {
+  color: inherit;
+}
+
+/* Root text colour in dark mode */
+.dark .mdxeditor {
+  color: var(--foreground) !important;
+  background-color: var(--background) !important;
+}
+
+/* Lexical content-editable host */
+.dark [data-lexical-editor="true"] {
+  color: var(--foreground) !important;
+  background-color: transparent !important;
+}
+
+/* Prose typography (both editor and viewer) */
+.dark .mdxeditor .prose,
+.dark .mdxeditor .prose *,
+.dark [data-lexical-editor="true"] p,
+.dark [data-lexical-editor="true"] li,
+.dark [data-lexical-editor="true"] h1,
+.dark [data-lexical-editor="true"] h2,
+.dark [data-lexical-editor="true"] h3,
+.dark [data-lexical-editor="true"] h4,
+.dark [data-lexical-editor="true"] h5,
+.dark [data-lexical-editor="true"] h6,
+.dark [data-lexical-editor="true"] strong,
+.dark [data-lexical-editor="true"] em,
+.dark [data-lexical-editor="true"] span {
+  color: var(--foreground) !important;
+}
+
+.dark [data-lexical-editor="true"] a {
+  color: var(--primary) !important;
+}
+
+/* Toolbar: target the first child div of mdxeditor (toolbar container) */
+.dark .mdxeditor > div:first-child {
+  background-color: var(--muted) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+/* All toolbar children — buttons, spans, svgs, selects */
+.dark .mdxeditor > div:first-child *,
+.dark .mdxeditor > div:first-child button,
+.dark .mdxeditor > div:first-child select,
+.dark .mdxeditor > div:first-child span,
+.dark .mdxeditor > div:first-child svg {
+  color: var(--foreground) !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.dark .mdxeditor > div:first-child button:hover {
+  background-color: color-mix(in oklch, var(--accent) 25%, transparent) !important;
+}
+
+/* Separator bars in toolbar */
+.dark .mdxeditor > div:first-child [class*="separator"],
+.dark .mdxeditor > div:first-child hr {
+  background-color: var(--border) !important;
+  border-color: var(--border) !important;
+}
+
+/* Block type select dropdown overlay */
+.dark .mdxeditor [role="listbox"],
+.dark .mdxeditor [role="option"],
+.dark .mdxeditor [data-radix-popper-content-wrapper],
+.dark .mdxeditor [class*="selectContent"],
+.dark .mdxeditor [class*="popupContainer"],
+.dark .mdxeditor [class*="tableEditor"] {
+  background-color: var(--popover) !important;
+  border-color: var(--border) !important;
+  color: var(--popover-foreground) !important;
+}
+
+.dark .mdxeditor [role="option"]:hover,
+.dark .mdxeditor [role="option"][aria-selected="true"] {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* Empty paragraphs in MDX editor/viewer — show as blank lines so editor and preview match */
+[data-lexical-editor="true"] p:empty,
+[data-lexical-editor="true"] p br:only-child,
+.mdxeditor p:empty,
+.mdxeditor p br:only-child {
+  display: block !important;
+  min-height: 1.4em !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Preserve paragraph spacing inside prose so empty lines create visual gaps.
+   prose-sm resets first/last child margins to 0 — override that so an empty
+   <p><br></p> between sections still occupies vertical space. */
+.mdxeditor .prose p,
+.mdxeditor .prose-sm p,
+[data-lexical-editor="true"] p {
+  margin-top: 0.6em !important;
+  margin-bottom: 0.6em !important;
+}
+
+.mdxeditor .prose p:first-child,
+.mdxeditor .prose-sm p:first-child,
+[data-lexical-editor="true"] p:first-child {
+  margin-top: 0 !important;
+}
+
+.mdxeditor .prose p:last-child,
+.mdxeditor .prose-sm p:last-child,
+[data-lexical-editor="true"] p:last-child {
+  margin-bottom: 0 !important;
+}
