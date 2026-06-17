@@ -15,10 +15,12 @@ const navLinks = [
     { href: '#portals', id: 'portals', label: 'Portals' },
 ] as const;
 
+const navLinkIds = navLinks.map((l) => l.id);
+
 export function Header({ showSignIn = true }: { showSignIn?: boolean }) {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const activeId = useLandingSectionSpy(navLinks.map((l) => l.id));
+    const activeId = useLandingSectionSpy(navLinkIds);
 
     useEffect(() => {
         const fn = () => setScrolled(window.scrollY > 20);

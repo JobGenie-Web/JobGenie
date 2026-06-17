@@ -2,43 +2,31 @@
 
 import { useEffect, useState } from 'react';
 
-const HEADER_OFFSET = 88;
-
-function getSectionTop(el: HTMLElement) {
-    return el.getBoundingClientRect().top + window.scrollY;
-}
+const HEADER_OFFSET = 96;
 
 /**
- * Highlights the landing nav item for the section currently in view.
- * Sections are resolved in DOM order (not nav label order).
+ * Returns the nav id of the section currently in view.
+ * Active = the last section whose top edge has scrolled past the header.
+ * On initial load, reads window.location.hash to avoid the flash where
+ * the first section appears active before scroll position is measured.
  */
-export function useLandingSectionSpy(sectionIds: string[]) {
-    const [activeId, setActiveId] = useState('');
+export function useLandingSectionSpy(sectionIds: readonly string[]) {
+    const [activeId, setActiveId] = useState(() => {
+        // Server-safe: window doesn't exist during SSR
+        if (typeof window === 'undefined') return '';
+        const hash = window.location.hash.replace('#', '');
+        return sectionIds.includes(hash) ? hash : '';
+    });
 
     useEffect(() => {
-        const resolveSections = () =>
-            sectionIds
-                .map((id) => document.getElementById(id))
-                .filter((el): el is HTMLElement => el !== null)
-                .sort((a, b) => getSectionTop(a) - getSectionTop(b));
-
         const computeActive = () => {
-            const sections = resolveSections();
-            if (!sections.length) return;
-
             const marker = window.scrollY + HEADER_OFFSET;
-            const firstTop = getSectionTop(sections[0]);
-
-            if (marker < firstTop - 48) {
-                setActiveId('');
-                return;
-            }
-
-            let current = sections[0].id;
-            for (const section of sections) {
-                if (getSectionTop(section) <= marker) {
-                    current = section.id;
-                }
+            let current = '';
+            for (const id of sectionIds) {
+                const el = document.getElementById(id);
+                if (!el) continue;
+                const top = el.getBoundingClientRect().top + window.scrollY;
+                if (top <= marker) current = id;
             }
             setActiveId(current);
         };
@@ -49,6 +37,7 @@ export function useLandingSectionSpy(sectionIds: string[]) {
             raf = requestAnimationFrame(computeActive);
         };
 
+        // Run once after mount so scroll position is accurate
         computeActive();
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', onScroll);
@@ -58,7 +47,7 @@ export function useLandingSectionSpy(sectionIds: string[]) {
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('resize', onScroll);
         };
-    }, [sectionIds.join('|')]);
+    }, [sectionIds]);
 
     return activeId;
 }
